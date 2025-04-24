@@ -44,9 +44,14 @@ $valorPromo = $stmt->fetchColumn();
 
 $valorProduto = $valorPromo ?: $produto['valor_produto'];
 
-// Buscar tipos de adicionais permitidos
+// Buscar adicionais inclusos
+$stmt = $pdo->prepare("SELECT id_adicional FROM tb_produto_adicional_incluso WHERE id_produto = ?");
+$stmt->execute([$idProduto]);
+$adicionaisInclusos = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id_adicional');
+
+// Buscar tipos de adicionais permitidos com max_inclusos
 $stmtTipos = $pdo->prepare("
-    SELECT ta.id_tipo_adicional, ta.nome_tipo_adicional 
+    SELECT ta.id_tipo_adicional, ta.nome_tipo_adicional, pta.max_inclusos 
     FROM tb_produto_tipo_adicional pta
     JOIN tb_tipo_adicional ta ON ta.id_tipo_adicional = pta.id_tipo_adicional
     WHERE pta.id_produto = ?
@@ -62,30 +67,49 @@ foreach ($tiposAdicionais as $tipo) {
         WHERE id_tipo_adicional = ? AND adicional_ativo = 1
     ");
     $stmtAdd->execute([$tipo['id_tipo_adicional']]);
-    $adicionaisPorTipo[$tipo['nome_tipo_adicional']] = $stmtAdd->fetchAll(PDO::FETCH_ASSOC);
+    $adicionaisPorTipo[] = [
+        'tipo' => $tipo,
+        'adicionais' => $stmtAdd->fetchAll(PDO::FETCH_ASSOC)
+    ];
 }
 ?>
 
 <div class="container mx-auto px-4 py-10 max-w-2xl">
-    <h1 class="text-3xl font-bold mb-2"><?= htmlspecialchars($produto['nome_produto']) ?></h1>
+    <div class="flex items-center justify-center relative mb-6">
+        <a href="index.php" class="absolute left-0 text-primary hover:underline flex items-center gap-1">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        <h1 class="text-xl font-bold text-center"><?= htmlspecialchars($produto['nome_produto']) ?></h1>
+    </div>
+
     <p class="text-gray-500 mb-6"><?= nl2br(htmlspecialchars($produto['descricao_produto'] ?? '')) ?></p>
 
     <form id="formProduto" method="post" action="adicionar_carrinho.php">
         <input type="hidden" name="id_produto" value="<?= $idProduto ?>">
         <div class="space-y-6">
 
-            <?php foreach ($adicionaisPorTipo as $tipo => $adicionais): ?>
-                <div>
-                    <label class="font-semibold block mb-1"><?= htmlspecialchars($tipo) ?></label>
-                    <div class="space-y-2">
+            <?php foreach ($adicionaisPorTipo as $grupo): ?>
+                <?php $tipo = $grupo['tipo'];
+                $adicionais = $grupo['adicionais']; ?>
+                <div data-tipo-id="<?= $tipo['id_tipo_adicional'] ?>" data-max-inclusos="<?= $tipo['max_inclusos'] ?>">
+                    <label class="font-semibold block mb-1"><?= htmlspecialchars($tipo['nome_tipo_adicional']) ?>
+                        <?php if ($tipo['max_inclusos'] > 0): ?>
+                            <span class="text-sm text-gray-400">(até <?= $tipo['max_inclusos'] ?> inclusos)</span>
+                        <?php endif; ?>
+                    </label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <?php foreach ($adicionais as $add): ?>
                             <label class="flex items-center gap-2">
-                                <input type="checkbox" class="checkbox adicional"
-                                    name="adicionais[]"
+                                <input type="checkbox" class="checkbox checkbox-sm adicional"
+                                    name="adicionais[<?= $tipo['id_tipo_adicional'] ?>][]"
+                                    data-tipo="<?= $tipo['id_tipo_adicional'] ?>"
                                     data-valor="<?= $add['valor_adicional'] ?>"
-                                    value="<?= $add['id_adicional'] ?>">
-                                <?= htmlspecialchars($add['nome_adicional']) ?>
-                                <span class="text-sm text-gray-500">R$<?= number_format($add['valor_adicional'], 2, ',', '.') ?></span>
+                                    value="<?= $add['id_adicional'] ?>"
+                                    <?= in_array((int)$add['id_adicional'], $adicionaisInclusos) ? 'checked' : '' ?>>
+                                <span class="text-sm"><?= htmlspecialchars($add['nome_adicional']) ?></span>
+                                <span class="text-xs text-gray-500 valor-adicional">
+                                    R$<?= number_format($add['valor_adicional'], 2, ',', '.') ?>
+                                </span>
                             </label>
                         <?php endforeach; ?>
                     </div>
@@ -111,17 +135,45 @@ foreach ($tiposAdicionais as $tipo) {
         function calcularTotal() {
             let base = parseFloat(<?= $valorProduto ?>);
             let qtd = parseInt($('#quantidade').val()) || 1;
-            let adicionais = 0;
+            let totalExtras = 0;
 
-            $('.adicional:checked').each(function() {
-                adicionais += parseFloat($(this).data('valor'));
+            $('[data-tipo-id]').each(function() {
+                const tipoId = $(this).data('tipo-id');
+                const maxInclusos = parseInt($(this).data('max-inclusos')) || 0;
+                const checkboxes = $(`input[data-tipo='${tipoId}']:checked`);
+
+                const sorted = checkboxes.toArray().sort((a, b) => {
+                    return parseFloat($(a).data('valor')) - parseFloat($(b).data('valor'));
+                });
+
+                sorted.forEach((el, index) => {
+                    const $el = $(el);
+                    const valor = parseFloat($el.data('valor'));
+                    const span = $el.closest('label').find('.valor-adicional');
+
+                    if (index < maxInclusos) {
+                        span.removeClass('text-red-500').addClass('text-gray-500').text('Incluso');
+                    } else {
+                        totalExtras += valor;
+                        span.removeClass('text-gray-500').addClass('text-red-500')
+                            .text('R$' + valor.toFixed(2).replace('.', ',') + ' (extra)');
+                    }
+                });
+
+                $(`input[data-tipo='${tipoId}']:not(:checked)`).each(function() {
+                    const valor = parseFloat($(this).data('valor'));
+                    $(this).closest('label').find('.valor-adicional')
+                        .removeClass('text-red-500').addClass('text-gray-500')
+                        .text('R$' + valor.toFixed(2).replace('.', ','));
+                });
             });
 
-            const total = (base + adicionais) * qtd;
+            const total = (base + totalExtras) * qtd;
             $('#valorTotal').text('R$' + total.toFixed(2).replace('.', ','));
         }
 
         $('.adicional, #quantidade').on('change keyup', calcularTotal);
+        calcularTotal(); // chama ao carregar
     });
 </script>
 

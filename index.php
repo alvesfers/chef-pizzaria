@@ -1,13 +1,13 @@
 <?php
 include_once 'header.php';
 
-// Horário da pizzaria
+// Horário
 date_default_timezone_set('America/Sao_Paulo');
 $hora = date('H:i');
 $aberta = ($hora >= '18:00' && $hora <= '23:59');
 $statusLoja = $aberta ? 'Estamos aceitando pedidos!' : 'Estamos fechados no momento.';
 
-// Mapeamento de dias da semana
+// Dias
 $diaIngles = strtolower(date('l'));
 $mapaDias = [
     'monday'    => 'segunda',
@@ -20,16 +20,16 @@ $mapaDias = [
 ];
 $diaSemana = $mapaDias[$diaIngles];
 
-// Buscar categorias
+// Categorias
 $categorias = $pdo->query("SELECT * FROM tb_categoria WHERE categoria_ativa = 1 ORDER BY ordem_exibicao")->fetchAll(PDO::FETCH_ASSOC);
 
-// Buscar subcategorias
+// Subcategorias
 $subcategorias = $pdo->query("SELECT * FROM tb_subcategoria WHERE subcategoria_ativa = 1")->fetchAll(PDO::FETCH_ASSOC);
 
-// Buscar produtos ativos
+// Produtos
 $produtos = $pdo->query("SELECT * FROM tb_produto WHERE produto_ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
 
-// Buscar promoções do dia
+// Promoções
 $stmtPromo = $pdo->prepare("
     SELECT p.nome_produto, c.valor_promocional
     FROM tb_campanha_produto_dia c
@@ -39,7 +39,7 @@ $stmtPromo = $pdo->prepare("
 $stmtPromo->execute([$diaSemana]);
 $promocoes = $stmtPromo->fetchAll(PDO::FETCH_ASSOC);
 
-// Buscar brindes do dia
+// Brindes
 $stmtBrinde = $pdo->prepare("
     SELECT nome_campanha, quantidade_min_produtos, descricao_brinde
     FROM tb_campanha_brinde
@@ -90,6 +90,11 @@ $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
     <div class="container mx-auto px-4">
         <h2 class="text-3xl font-bold text-center mb-6">Nosso Cardápio</h2>
 
+        <!-- Input de busca por nome -->
+        <div class="mb-6 flex justify-center">
+            <input type="text" id="buscaProduto" class="input input-bordered w-full max-w-md" placeholder="Buscar por nome...">
+        </div>
+
         <!-- Filtro de Categorias -->
         <div class="mb-4 overflow-x-auto">
             <div class="flex space-x-2 w-max min-w-full px-2" id="filtroCategorias">
@@ -115,19 +120,21 @@ $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
 
-        <!-- Lista de Produtos -->
-        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Produtos -->
+        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3" id="listaProdutos">
             <?php foreach ($produtos as $produto): ?>
                 <?php
-                $stmt = $pdo->prepare("SELECT id_subcategoria FROM tb_subcategoria_categoria WHERE id_categoria = ?");
-                $stmt->execute([$produto['id_categoria']]);
+                // Buscar subcategorias do produto corretamente
+                $stmt = $pdo->prepare("SELECT id_subcategoria FROM tb_subcategoria_produto WHERE id_produto = ?");
+                $stmt->execute([$produto['id_produto']]);
                 $subs = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 $subList = implode(',', $subs);
                 $isCombo = stripos($produto['nome_produto'], 'combo') !== false;
                 ?>
                 <div class="card bg-base-100 shadow-xl"
                      data-categoria="<?= $isCombo ? 'combo' : $produto['id_categoria'] ?>"
-                     data-subcategorias="<?= $subList ?>">
+                     data-subcategorias="<?= $subList ?>"
+                     data-nome="<?= strtolower($produto['nome_produto']) ?>">
                     <div class="card-body flex flex-col justify-between">
                         <div>
                             <h3 class="card-title"><?= htmlspecialchars($produto['nome_produto']) ?></h3>
@@ -144,36 +151,39 @@ $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
 </section>
 
 <script>
-    $(document).ready(function() {
-        $('#filtroCategorias a').on('click', function(e) {
+    $(document).ready(function () {
+        // Filtro por categoria
+        $('#filtroCategorias a').on('click', function (e) {
             e.preventDefault();
             $('#filtroCategorias a').removeClass('btn-primary').addClass('btn-outline');
             $(this).removeClass('btn-outline').addClass('btn-primary');
-            const idCategoria = $(this).data('categoria');
 
-            $('.card[data-categoria]').each(function() {
-                const cat = $(this).data('categoria');
-                if (idCategoria === 'todas' || cat == idCategoria) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
+            const categoria = $(this).data('categoria');
+            $('.card[data-categoria]').each(function () {
+                const cardCat = $(this).data('categoria');
+                $(this).toggle(categoria === 'todas' || cardCat == categoria);
             });
         });
 
-        $('#filtroSubcategorias a').on('click', function(e) {
+        // Filtro por subcategoria
+        $('#filtroSubcategorias a').on('click', function (e) {
             e.preventDefault();
             $('#filtroSubcategorias a').removeClass('btn-primary').addClass('btn-outline');
             $(this).removeClass('btn-outline').addClass('btn-primary');
-            const idSub = $(this).data('subcategoria');
 
-            $('.card[data-subcategorias]').each(function() {
-                const subs = $(this).data('subcategorias').toString().split(',');
-                if (idSub === 'todas' || subs.includes(idSub.toString())) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
+            const sub = $(this).data('subcategoria');
+            $('.card[data-subcategorias]').each(function () {
+                const lista = $(this).data('subcategorias').toString().split(',');
+                $(this).toggle(sub === 'todas' || lista.includes(sub.toString()));
+            });
+        });
+
+        // Filtro por nome
+        $('#buscaProduto').on('keyup', function () {
+            const termo = $(this).val().toLowerCase();
+            $('.card[data-nome]').each(function () {
+                const nome = $(this).data('nome');
+                $(this).toggle(nome.includes(termo));
             });
         });
     });

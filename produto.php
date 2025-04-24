@@ -1,7 +1,7 @@
 <?php
 include_once 'header.php';
 
-if (!isset($_GET['id'])) {
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     echo "<p class='text-center mt-10 text-red-500'>Produto não encontrado.</p>";
     include_once 'footer.php';
     exit;
@@ -9,20 +9,19 @@ if (!isset($_GET['id'])) {
 
 $idProduto = (int) $_GET['id'];
 
-// Mapeia dia da semana
 date_default_timezone_set('America/Sao_Paulo');
 $mapaDias = [
-    'monday' => 'segunda',
-    'tuesday' => 'terça',
+    'monday'    => 'segunda',
+    'tuesday'   => 'terça',
     'wednesday' => 'quarta',
-    'thursday' => 'quinta',
-    'friday' => 'sexta',
-    'saturday' => 'sábado',
-    'sunday' => 'domingo'
+    'thursday'  => 'quinta',
+    'friday'    => 'sexta',
+    'saturday'  => 'sábado',
+    'sunday'    => 'domingo',
 ];
 $diaSemana = $mapaDias[strtolower(date('l'))];
 
-// Buscar dados do produto
+// Produto
 $stmt = $pdo->prepare("SELECT * FROM tb_produto WHERE id_produto = ? AND produto_ativo = 1");
 $stmt->execute([$idProduto]);
 $produto = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -33,23 +32,18 @@ if (!$produto) {
     exit;
 }
 
-// Buscar valor promocional (se houver)
-$stmt = $pdo->prepare("
-    SELECT valor_promocional 
-    FROM tb_campanha_produto_dia 
-    WHERE id_produto = ? AND dia_semana = ? AND ativo = 1
-");
+// Preço promocional
+$stmt = $pdo->prepare("SELECT valor_promocional FROM tb_campanha_produto_dia WHERE id_produto = ? AND dia_semana = ? AND ativo = 1");
 $stmt->execute([$idProduto, $diaSemana]);
 $valorPromo = $stmt->fetchColumn();
-
 $valorProduto = $valorPromo ?: $produto['valor_produto'];
 
-// Buscar adicionais inclusos
+// Adicionais inclusos
 $stmt = $pdo->prepare("SELECT id_adicional FROM tb_produto_adicional_incluso WHERE id_produto = ?");
 $stmt->execute([$idProduto]);
-$adicionaisInclusos = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id_adicional');
+$adicionaisInclusos = array_map('intval', array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'id_adicional'));
 
-// Buscar tipos de adicionais permitidos com max_inclusos
+// Tipos de adicionais
 $stmtTipos = $pdo->prepare("
     SELECT ta.id_tipo_adicional, ta.nome_tipo_adicional, pta.max_inclusos 
     FROM tb_produto_tipo_adicional pta
@@ -59,13 +53,10 @@ $stmtTipos = $pdo->prepare("
 $stmtTipos->execute([$idProduto]);
 $tiposAdicionais = $stmtTipos->fetchAll(PDO::FETCH_ASSOC);
 
-// Buscar adicionais por tipo
+// Adicionais por tipo
 $adicionaisPorTipo = [];
 foreach ($tiposAdicionais as $tipo) {
-    $stmtAdd = $pdo->prepare("
-        SELECT * FROM tb_adicional 
-        WHERE id_tipo_adicional = ? AND adicional_ativo = 1
-    ");
+    $stmtAdd = $pdo->prepare("SELECT * FROM tb_adicional WHERE id_tipo_adicional = ? AND adicional_ativo = 1");
     $stmtAdd->execute([$tipo['id_tipo_adicional']]);
     $adicionaisPorTipo[] = [
         'tipo' => $tipo,
@@ -84,28 +75,28 @@ foreach ($tiposAdicionais as $tipo) {
 
     <p class="text-gray-500 mb-6"><?= nl2br(htmlspecialchars($produto['descricao_produto'] ?? '')) ?></p>
 
-    <form id="formProduto" method="post" action="adicionar_carrinho.php">
+    <form id="formProduto">
         <input type="hidden" name="id_produto" value="<?= $idProduto ?>">
         <div class="space-y-6">
 
             <?php foreach ($adicionaisPorTipo as $grupo): ?>
-                <?php $tipo = $grupo['tipo'];
-                $adicionais = $grupo['adicionais']; ?>
+                <?php $tipo = $grupo['tipo']; ?>
                 <div data-tipo-id="<?= $tipo['id_tipo_adicional'] ?>" data-max-inclusos="<?= $tipo['max_inclusos'] ?>">
-                    <label class="font-semibold block mb-1"><?= htmlspecialchars($tipo['nome_tipo_adicional']) ?>
+                    <label class="font-semibold block mb-1">
+                        <?= htmlspecialchars($tipo['nome_tipo_adicional']) ?>
                         <?php if ($tipo['max_inclusos'] > 0): ?>
                             <span class="text-sm text-gray-400">(até <?= $tipo['max_inclusos'] ?> inclusos)</span>
                         <?php endif; ?>
                     </label>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        <?php foreach ($adicionais as $add): ?>
+                        <?php foreach ($grupo['adicionais'] as $add): ?>
                             <label class="flex items-center gap-2">
                                 <input type="checkbox" class="checkbox checkbox-sm adicional"
                                     name="adicionais[<?= $tipo['id_tipo_adicional'] ?>][]"
                                     data-tipo="<?= $tipo['id_tipo_adicional'] ?>"
                                     data-valor="<?= $add['valor_adicional'] ?>"
                                     value="<?= $add['id_adicional'] ?>"
-                                    <?= in_array((int)$add['id_adicional'], $adicionaisInclusos) ? 'checked' : '' ?>>
+                                    <?= in_array($add['id_adicional'], $adicionaisInclusos) ? 'checked' : '' ?>>
                                 <span class="text-sm"><?= htmlspecialchars($add['nome_adicional']) ?></span>
                                 <span class="text-xs text-gray-500 valor-adicional">
                                     R$<?= number_format($add['valor_adicional'], 2, ',', '.') ?>
@@ -130,14 +121,15 @@ foreach ($tiposAdicionais as $tipo) {
     </form>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
         function calcularTotal() {
             let base = parseFloat(<?= $valorProduto ?>);
             let qtd = parseInt($('#quantidade').val()) || 1;
             let totalExtras = 0;
 
-            $('[data-tipo-id]').each(function() {
+            $('[data-tipo-id]').each(function () {
                 const tipoId = $(this).data('tipo-id');
                 const maxInclusos = parseInt($(this).data('max-inclusos')) || 0;
                 const checkboxes = $(`input[data-tipo='${tipoId}']:checked`);
@@ -160,7 +152,7 @@ foreach ($tiposAdicionais as $tipo) {
                     }
                 });
 
-                $(`input[data-tipo='${tipoId}']:not(:checked)`).each(function() {
+                $(`input[data-tipo='${tipoId}']:not(:checked)`).each(function () {
                     const valor = parseFloat($(this).data('valor'));
                     $(this).closest('label').find('.valor-adicional')
                         .removeClass('text-red-500').addClass('text-gray-500')
@@ -173,7 +165,33 @@ foreach ($tiposAdicionais as $tipo) {
         }
 
         $('.adicional, #quantidade').on('change keyup', calcularTotal);
-        calcularTotal(); // chama ao carregar
+        calcularTotal();
+
+        $('#formProduto').on('submit', function (e) {
+            e.preventDefault();
+            const formData = $(this).serialize();
+
+            $.post('adicionar_carrinho.php', formData, function (res) {
+                if (res.status === 'ok') {
+                    Swal.fire({
+                        title: 'Adicionado ao Carrinho!',
+                        text: 'Deseja escolher mais produtos ou ir para o carrinho?',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ir para o Carrinho',
+                        cancelButtonText: 'Escolher mais'
+                    }).then(result => {
+                        if (result.isConfirmed) {
+                            window.location.href = 'carrinho.php';
+                        } else {
+                            window.location.href = 'index.php';
+                        }
+                    });
+                } else {
+                    Swal.fire('Erro', res.mensagem, 'error');
+                }
+            }, 'json');
+        });
     });
 </script>
 

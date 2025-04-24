@@ -1,22 +1,17 @@
 <?php
 include_once 'header.php';
 
-// Horário
+// Horário da pizzaria
 date_default_timezone_set('America/Sao_Paulo');
 $hora = date('H:i');
 $aberta = ($hora >= '18:00' && $hora <= '23:59');
 $statusLoja = $aberta ? 'Estamos aceitando pedidos!' : 'Estamos fechados no momento.';
 
-// Dias
+// Dias da semana
 $diaIngles = strtolower(date('l'));
 $mapaDias = [
-    'monday'    => 'segunda',
-    'tuesday'   => 'terça',
-    'wednesday' => 'quarta',
-    'thursday'  => 'quinta',
-    'friday'    => 'sexta',
-    'saturday'  => 'sábado',
-    'sunday'    => 'domingo'
+    'monday' => 'segunda', 'tuesday' => 'terça', 'wednesday' => 'quarta',
+    'thursday' => 'quinta', 'friday' => 'sexta', 'saturday' => 'sábado', 'sunday' => 'domingo'
 ];
 $diaSemana = $mapaDias[$diaIngles];
 
@@ -30,21 +25,12 @@ $subcategorias = $pdo->query("SELECT * FROM tb_subcategoria WHERE subcategoria_a
 $produtos = $pdo->query("SELECT * FROM tb_produto WHERE produto_ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
 
 // Promoções
-$stmtPromo = $pdo->prepare("
-    SELECT p.nome_produto, c.valor_promocional
-    FROM tb_campanha_produto_dia c
-    JOIN tb_produto p ON p.id_produto = c.id_produto
-    WHERE c.dia_semana = ? AND c.ativo = 1
-");
+$stmtPromo = $pdo->prepare("SELECT p.nome_produto, c.valor_promocional FROM tb_campanha_produto_dia c JOIN tb_produto p ON p.id_produto = c.id_produto WHERE c.dia_semana = ? AND c.ativo = 1");
 $stmtPromo->execute([$diaSemana]);
 $promocoes = $stmtPromo->fetchAll(PDO::FETCH_ASSOC);
 
 // Brindes
-$stmtBrinde = $pdo->prepare("
-    SELECT nome_campanha, quantidade_min_produtos, descricao_brinde
-    FROM tb_campanha_brinde
-    WHERE dia_semana = ? AND ativo = 1
-");
+$stmtBrinde = $pdo->prepare("SELECT nome_campanha, quantidade_min_produtos, descricao_brinde FROM tb_campanha_brinde WHERE dia_semana = ? AND ativo = 1");
 $stmtBrinde->execute([$diaSemana]);
 $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -55,42 +41,34 @@ $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
 </section>
 
 <?php if (count($promocoes) > 0 || count($brindes) > 0): ?>
-    <section class="px-4 mt-2">
-        <button onclick="$('#promocoesBox').toggle()" class="btn btn-sm btn-outline btn-accent mb-2">
-            Ver promoções do dia
-        </button>
-        <div id="promocoesBox" class="hidden bg-base-100 shadow p-4 rounded-lg">
-            <h3 class="text-lg font-bold mb-2">Promoções de <?= ucfirst($diaSemana) ?></h3>
-            <?php if (count($promocoes) > 0): ?>
-                <ul class="list-disc list-inside text-sm space-y-1 mb-3">
-                    <?php foreach ($promocoes as $promo): ?>
-                        <li>
-                            <?= htmlspecialchars($promo['nome_produto']) ?> por
-                            <span class="font-semibold text-green-600">R$<?= number_format($promo['valor_promocional'], 2, ',', '.') ?></span>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php endif; ?>
-
-            <?php if (count($brindes) > 0): ?>
-                <h4 class="text-md font-semibold mb-1">Brindes:</h4>
-                <ul class="list-disc list-inside text-sm space-y-1">
-                    <?php foreach ($brindes as $brinde): ?>
-                        <li>
-                            <?= htmlspecialchars($brinde['nome_campanha']) ?>: ao comprar <?= $brinde['quantidade_min_produtos'] ?> produto(s), <?= htmlspecialchars($brinde['descricao_brinde']) ?>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php endif; ?>
-        </div>
-    </section>
+<section class="px-4 mt-2">
+    <button onclick="$('#promocoesBox').toggle()" class="btn btn-sm btn-outline btn-accent mb-2">
+        Ver promoções do dia
+    </button>
+    <div id="promocoesBox" class="hidden bg-base-100 shadow p-4 rounded-lg">
+        <h3 class="text-lg font-bold mb-2">Promoções de <?= ucfirst($diaSemana) ?></h3>
+        <ul class="list-disc list-inside text-sm space-y-1 mb-3">
+            <?php foreach ($promocoes as $promo): ?>
+                <li><?= htmlspecialchars($promo['nome_produto']) ?> por <span class="font-semibold text-green-600">R$<?= number_format($promo['valor_promocional'], 2, ',', '.') ?></span></li>
+            <?php endforeach; ?>
+        </ul>
+        <?php if ($brindes): ?>
+            <h4 class="text-md font-semibold mb-1">Brindes:</h4>
+            <ul class="list-disc list-inside text-sm space-y-1">
+                <?php foreach ($brindes as $brinde): ?>
+                    <li><?= htmlspecialchars($brinde['nome_campanha']) ?>: ao comprar <?= $brinde['quantidade_min_produtos'] ?> produto(s), <?= htmlspecialchars($brinde['descricao_brinde']) ?></li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </div>
+</section>
 <?php endif; ?>
 
 <section id="cardapio" class="py-10 bg-base-200">
     <div class="container mx-auto px-4">
         <h2 class="text-3xl font-bold text-center mb-6">Nosso Cardápio</h2>
 
-        <!-- Input de busca por nome -->
+        <!-- Filtro por nome -->
         <div class="mb-6 flex justify-center">
             <input type="text" id="buscaProduto" class="input input-bordered w-full max-w-md" placeholder="Buscar por nome...">
         </div>
@@ -120,11 +98,10 @@ $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
 
-        <!-- Produtos -->
+        <!-- Lista de produtos -->
         <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3" id="listaProdutos">
             <?php foreach ($produtos as $produto): ?>
                 <?php
-                // Buscar subcategorias do produto corretamente
                 $stmt = $pdo->prepare("SELECT id_subcategoria FROM tb_subcategoria_produto WHERE id_produto = ?");
                 $stmt->execute([$produto['id_produto']]);
                 $subs = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -152,25 +129,20 @@ $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
 
 <script>
     $(document).ready(function () {
-        // Filtro por categoria
         $('#filtroCategorias a').on('click', function (e) {
             e.preventDefault();
             $('#filtroCategorias a').removeClass('btn-primary').addClass('btn-outline');
             $(this).removeClass('btn-outline').addClass('btn-primary');
-
-            const categoria = $(this).data('categoria');
+            const cat = $(this).data('categoria');
             $('.card[data-categoria]').each(function () {
-                const cardCat = $(this).data('categoria');
-                $(this).toggle(categoria === 'todas' || cardCat == categoria);
+                $(this).toggle(cat === 'todas' || $(this).data('categoria') == cat);
             });
         });
 
-        // Filtro por subcategoria
         $('#filtroSubcategorias a').on('click', function (e) {
             e.preventDefault();
             $('#filtroSubcategorias a').removeClass('btn-primary').addClass('btn-outline');
             $(this).removeClass('btn-outline').addClass('btn-primary');
-
             const sub = $(this).data('subcategoria');
             $('.card[data-subcategorias]').each(function () {
                 const lista = $(this).data('subcategorias').toString().split(',');
@@ -178,7 +150,6 @@ $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
             });
         });
 
-        // Filtro por nome
         $('#buscaProduto').on('keyup', function () {
             const termo = $(this).val().toLowerCase();
             $('.card[data-nome]').each(function () {

@@ -12,4 +12,8 @@
 </footer>
 
 </body>
+<script>
+    $('#telefone').mask('(00) 00000-0000');
+</script>
+
 </html>

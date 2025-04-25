@@ -30,7 +30,7 @@ switch ($acao) {
 
 function usuarioExiste($pdo, $telefone)
 {
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM tb_usuario WHERE telefone = ?");
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM tb_usuario WHERE telefone_usuario = ?");
     $stmt->execute([$telefone]);
     return $stmt->fetchColumn() > 0;
 }
@@ -52,7 +52,7 @@ function cadastrar($pdo)
         return;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO tb_usuario (nome, telefone, senha, tipo_usuario) VALUES (?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO tb_usuario (nome, telefone_usuario, senha, tipo_usuario) VALUES (?, ?, ?, ?)");
     $stmt->execute([$nome, $telefone, password_hash($senha, PASSWORD_DEFAULT), $tipo]);
     $idUsuario = $pdo->lastInsertId();
 
@@ -84,7 +84,7 @@ function cadastrarELogar($pdo)
         return;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO tb_usuario (nome, telefone, senha, tipo_usuario) VALUES (?, ?, ?, 'cliente')");
+    $stmt = $pdo->prepare("INSERT INTO tb_usuario (nome, telefone_usuario, senha, tipo_usuario) VALUES (?, ?, ?, 'cliente')");
     $stmt->execute([$nome, $telefone, password_hash($senha, PASSWORD_DEFAULT)]);
     $idUsuario = $pdo->lastInsertId();
 
@@ -108,7 +108,7 @@ function login($pdo)
         return;
     }
 
-    $stmt = $pdo->prepare("SELECT * FROM tb_usuario WHERE telefone = ?");
+    $stmt = $pdo->prepare("SELECT * FROM tb_usuario WHERE telefone_usuario = ?");
     $stmt->execute([$telefone]);
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 

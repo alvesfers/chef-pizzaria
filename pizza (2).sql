@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 24/04/2025 às 17:21
+-- Tempo de geração: 25/04/2025 às 16:43
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -189,6 +189,65 @@ INSERT INTO `tb_cupom` (`id_cupom`, `codigo`, `descricao`, `tipo`, `valor`, `uso
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `tb_dados_loja`
+--
+
+CREATE TABLE `tb_dados_loja` (
+  `id_loja` int(11) NOT NULL,
+  `nome_loja` varchar(150) DEFAULT NULL,
+  `cep` varchar(10) DEFAULT NULL,
+  `endereco_completo` text DEFAULT NULL,
+  `logo` varchar(255) DEFAULT NULL,
+  `tema` varchar(50) DEFAULT NULL,
+  `instagram` varchar(100) DEFAULT NULL,
+  `whatsapp` varchar(20) DEFAULT NULL,
+  `google` varchar(255) DEFAULT NULL,
+  `preco_base` decimal(10,2) DEFAULT 5.00,
+  `preco_km` decimal(10,2) DEFAULT 2.00,
+  `tempo_entrega` int(11) DEFAULT 45,
+  `tempo_retirada` int(11) DEFAULT 20
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `tb_endereco`
+--
+
+CREATE TABLE `tb_endereco` (
+  `id_endereco` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `apelido` varchar(50) DEFAULT NULL,
+  `cep` varchar(10) DEFAULT NULL,
+  `rua` varchar(150) DEFAULT NULL,
+  `numero` varchar(10) DEFAULT NULL,
+  `complemento` varchar(100) DEFAULT NULL,
+  `bairro` varchar(100) DEFAULT NULL,
+  `cidade` varchar(100) DEFAULT NULL,
+  `uf` varchar(2) DEFAULT NULL,
+  `endereco_principal` tinyint(1) DEFAULT 0,
+  `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `tb_funcionario`
+--
+
+CREATE TABLE `tb_funcionario` (
+  `id_funcionario` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `funcao` varchar(100) NOT NULL,
+  `forma_pgto` enum('fixo_mensal','por_dia','por_entrega') DEFAULT 'por_dia',
+  `valor_pgto` decimal(10,2) DEFAULT 0.00,
+  `valor_por_entrega` decimal(10,2) DEFAULT 0.00,
+  `ativo` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `tb_item_adicional`
 --
 
@@ -224,6 +283,9 @@ CREATE TABLE `tb_item_pedido` (
 
 CREATE TABLE `tb_pedido` (
   `id_pedido` int(11) NOT NULL,
+  `id_usuario` int(11) DEFAULT NULL,
+  `id_funcionario` int(11) DEFAULT NULL,
+  `id_entregador` int(11) DEFAULT NULL,
   `nome_cliente` varchar(100) DEFAULT NULL,
   `telefone_cliente` varchar(20) DEFAULT NULL,
   `endereco` text DEFAULT NULL,
@@ -233,7 +295,7 @@ CREATE TABLE `tb_pedido` (
   `valor_total` decimal(10,2) NOT NULL,
   `id_cupom` int(11) DEFAULT NULL,
   `desconto_aplicado` decimal(10,2) DEFAULT 0.00,
-  `status_pedido` enum('pendente','preparando','pronto','finalizado','cancelado') DEFAULT 'pendente',
+  `status_pedido` enum('pendente','aceito','em_preparo','em_entrega','finalizado','cancelado') DEFAULT 'pendente',
   `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -329,6 +391,25 @@ INSERT INTO `tb_produto_tipo_adicional` (`id_produto_tipo_adicional`, `id_produt
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `tb_regras_frete`
+--
+
+CREATE TABLE `tb_regras_frete` (
+  `id_regra` int(11) NOT NULL,
+  `nome_regra` varchar(100) NOT NULL,
+  `tipo_regra` enum('frete_gratis','desconto_valor','desconto_porcentagem') NOT NULL,
+  `valor_minimo` decimal(10,2) DEFAULT NULL,
+  `distancia_maxima` decimal(10,2) DEFAULT NULL,
+  `valor_desconto` decimal(10,2) DEFAULT NULL,
+  `dia_semana` enum('segunda','terça','quarta','quinta','sexta','sábado','domingo') DEFAULT NULL,
+  `ativo` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `tb_subcategoria`
 --
 
@@ -370,6 +451,36 @@ INSERT INTO `tb_subcategoria_categoria` (`id_subcategoria_categoria`, `id_catego
 (3, 1, 3),
 (4, 5, 1),
 (5, 5, 2);
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `tb_subcategoria_produto`
+--
+
+CREATE TABLE `tb_subcategoria_produto` (
+  `id_subcategoria_produto` int(11) NOT NULL,
+  `id_produto` int(11) NOT NULL,
+  `id_subcategoria` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `tb_subcategoria_produto`
+--
+
+INSERT INTO `tb_subcategoria_produto` (`id_subcategoria_produto`, `id_produto`, `id_subcategoria`) VALUES
+(1, 1, 1),
+(2, 1, 3),
+(3, 2, 1),
+(4, 5, 2),
+(5, 5, 3),
+(6, 6, 1),
+(7, 6, 2),
+(8, 9, 1),
+(9, 10, 1),
+(10, 10, 1),
+(11, 11, 1),
+(12, 12, 2);
 
 -- --------------------------------------------------------
 
@@ -416,6 +527,22 @@ CREATE TABLE `tb_tipo_adicional_categoria` (
 INSERT INTO `tb_tipo_adicional_categoria` (`id_tipo_adicional_categoria`, `id_categoria`, `id_tipo_adicional`, `ordem`) VALUES
 (1, 1, 1, 0),
 (2, 1, 2, 0);
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `tb_usuario`
+--
+
+CREATE TABLE `tb_usuario` (
+  `id_usuario` int(11) NOT NULL,
+  `nome_usuario` varchar(100) NOT NULL,
+  `telefone_usuario` varchar(20) NOT NULL,
+  `senha_usuario` varchar(255) NOT NULL,
+  `tipo_usuario` enum('cliente','funcionario','admin') DEFAULT 'cliente',
+  `usuario_ativo` tinyint(1) DEFAULT 1,
+  `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Índices para tabelas despejadas
@@ -468,6 +595,26 @@ ALTER TABLE `tb_cupom`
   ADD UNIQUE KEY `codigo` (`codigo`);
 
 --
+-- Índices de tabela `tb_dados_loja`
+--
+ALTER TABLE `tb_dados_loja`
+  ADD PRIMARY KEY (`id_loja`);
+
+--
+-- Índices de tabela `tb_endereco`
+--
+ALTER TABLE `tb_endereco`
+  ADD PRIMARY KEY (`id_endereco`),
+  ADD KEY `id_usuario` (`id_usuario`);
+
+--
+-- Índices de tabela `tb_funcionario`
+--
+ALTER TABLE `tb_funcionario`
+  ADD PRIMARY KEY (`id_funcionario`),
+  ADD KEY `id_usuario` (`id_usuario`);
+
+--
 -- Índices de tabela `tb_item_adicional`
 --
 ALTER TABLE `tb_item_adicional`
@@ -487,7 +634,10 @@ ALTER TABLE `tb_item_pedido`
 --
 ALTER TABLE `tb_pedido`
   ADD PRIMARY KEY (`id_pedido`),
-  ADD KEY `fk_pedido_cupom` (`id_cupom`);
+  ADD KEY `fk_pedido_cupom` (`id_cupom`),
+  ADD KEY `fk_pedido_usuario` (`id_usuario`),
+  ADD KEY `fk_pedido_funcionario` (`id_funcionario`),
+  ADD KEY `fk_pedido_entregador` (`id_entregador`);
 
 --
 -- Índices de tabela `tb_produto`
@@ -513,6 +663,12 @@ ALTER TABLE `tb_produto_tipo_adicional`
   ADD KEY `fk_prod_tipo_tipo` (`id_tipo_adicional`);
 
 --
+-- Índices de tabela `tb_regras_frete`
+--
+ALTER TABLE `tb_regras_frete`
+  ADD PRIMARY KEY (`id_regra`);
+
+--
 -- Índices de tabela `tb_subcategoria`
 --
 ALTER TABLE `tb_subcategoria`
@@ -523,8 +679,16 @@ ALTER TABLE `tb_subcategoria`
 --
 ALTER TABLE `tb_subcategoria_categoria`
   ADD PRIMARY KEY (`id_subcategoria_categoria`),
-  ADD KEY `fk_subcat_categoria` (`id_categoria`),
-  ADD KEY `fk_subcat_subcategoria` (`id_subcategoria`);
+  ADD KEY `id_categoria` (`id_categoria`),
+  ADD KEY `id_subcategoria` (`id_subcategoria`);
+
+--
+-- Índices de tabela `tb_subcategoria_produto`
+--
+ALTER TABLE `tb_subcategoria_produto`
+  ADD PRIMARY KEY (`id_subcategoria_produto`),
+  ADD KEY `id_produto` (`id_produto`),
+  ADD KEY `id_subcategoria` (`id_subcategoria`);
 
 --
 -- Índices de tabela `tb_tipo_adicional`
@@ -539,6 +703,13 @@ ALTER TABLE `tb_tipo_adicional_categoria`
   ADD PRIMARY KEY (`id_tipo_adicional_categoria`),
   ADD KEY `fk_tipo_cat_categoria` (`id_categoria`),
   ADD KEY `fk_tipo_cat_tipo` (`id_tipo_adicional`);
+
+--
+-- Índices de tabela `tb_usuario`
+--
+ALTER TABLE `tb_usuario`
+  ADD PRIMARY KEY (`id_usuario`),
+  ADD UNIQUE KEY `telefone_usuario` (`telefone_usuario`);
 
 --
 -- AUTO_INCREMENT para tabelas despejadas
@@ -587,6 +758,24 @@ ALTER TABLE `tb_cupom`
   MODIFY `id_cupom` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT de tabela `tb_dados_loja`
+--
+ALTER TABLE `tb_dados_loja`
+  MODIFY `id_loja` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `tb_endereco`
+--
+ALTER TABLE `tb_endereco`
+  MODIFY `id_endereco` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `tb_funcionario`
+--
+ALTER TABLE `tb_funcionario`
+  MODIFY `id_funcionario` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `tb_item_adicional`
 --
 ALTER TABLE `tb_item_adicional`
@@ -623,6 +812,12 @@ ALTER TABLE `tb_produto_tipo_adicional`
   MODIFY `id_produto_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
+-- AUTO_INCREMENT de tabela `tb_regras_frete`
+--
+ALTER TABLE `tb_regras_frete`
+  MODIFY `id_regra` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `tb_subcategoria`
 --
 ALTER TABLE `tb_subcategoria`
@@ -633,6 +828,12 @@ ALTER TABLE `tb_subcategoria`
 --
 ALTER TABLE `tb_subcategoria_categoria`
   MODIFY `id_subcategoria_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT de tabela `tb_subcategoria_produto`
+--
+ALTER TABLE `tb_subcategoria_produto`
+  MODIFY `id_subcategoria_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de tabela `tb_tipo_adicional`
@@ -647,5 +848,50 @@ ALTER TABLE `tb_tipo_adicional_categoria`
   MODIFY `id_tipo_adicional_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
+-- AUTO_INCREMENT de tabela `tb_usuario`
+--
+ALTER TABLE `tb_usuario`
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- Restrições para tabelas despejadas
 --
+
+--
+-- Restrições para tabelas `tb_endereco`
+--
+ALTER TABLE `tb_endereco`
+  ADD CONSTRAINT `tb_endereco_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `tb_usuario` (`id_usuario`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `tb_funcionario`
+--
+ALTER TABLE `tb_funcionario`
+  ADD CONSTRAINT `tb_funcionario_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `tb_usuario` (`id_usuario`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `tb_pedido`
+--
+ALTER TABLE `tb_pedido`
+  ADD CONSTRAINT `fk_pedido_entregador` FOREIGN KEY (`id_entregador`) REFERENCES `tb_funcionario` (`id_funcionario`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_pedido_funcionario` FOREIGN KEY (`id_funcionario`) REFERENCES `tb_funcionario` (`id_funcionario`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_pedido_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `tb_usuario` (`id_usuario`) ON DELETE SET NULL;
+
+--
+-- Restrições para tabelas `tb_subcategoria_categoria`
+--
+ALTER TABLE `tb_subcategoria_categoria`
+  ADD CONSTRAINT `tb_subcategoria_categoria_ibfk_1` FOREIGN KEY (`id_categoria`) REFERENCES `tb_categoria` (`id_categoria`) ON DELETE CASCADE,
+  ADD CONSTRAINT `tb_subcategoria_categoria_ibfk_2` FOREIGN KEY (`id_subcategoria`) REFERENCES `tb_subcategoria` (`id_subcategoria`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `tb_subcategoria_produto`
+--
+ALTER TABLE `tb_subcategoria_produto`
+  ADD CONSTRAINT `tb_subcategoria_produto_ibfk_1` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON DELETE CASCADE,
+  ADD CONSTRAINT `tb_subcategoria_produto_ibfk_2` FOREIGN KEY (`id_subcategoria`) REFERENCES `tb_subcategoria` (`id_subcategoria`) ON DELETE CASCADE;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

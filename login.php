@@ -11,7 +11,8 @@ if (isset($_SESSION['usuario'])) {
     <div class="w-full max-w-md bg-base-100 p-8 rounded-lg shadow">
         <h1 class="text-2xl font-bold text-center mb-6">Entrar na Conta</h1>
 
-        <form id="formLogin" class="space-y-4">
+        <form id="formLogin" action="#" method="post" class="space-y-4">
+
             <div>
                 <label class="block font-medium mb-1">Telefone</label>
                 <input type="tel" name="telefone" id="telefone" required class="input input-bordered w-full" placeholder="(11) 91234-5678">
@@ -32,29 +33,58 @@ if (isset($_SESSION['usuario'])) {
 </div>
 
 <script>
-    $('#formLogin').on('submit', function(e) {
-        e.preventDefault();
+    $(document).ready(function() {
+        $('#formLogin').on('submit', function(e) {
+            e.preventDefault();
 
-        $.post('crud_usuario.php', {
-            acao: 'login',
-            telefone: $('#telefone').val(),
-            senha: $('[name="senha"]').val()
-        }, function(res) {
-            if (res.status === 'ok') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Bem-vindo!',
-                    text: res.mensagem,
-                    timer: 1500,
-                    showConfirmButton: false
-                }).then(() => {
-                    window.location.href = 'index.php';
-                });
-            } else {
-                Swal.fire('Erro', res.mensagem, 'error');
-            }
-        }, 'json');
+            const telefone = $('#telefone').val();
+            const senha = $('[name="senha"]').val();
+
+            $.ajax({
+                url: 'crud_usuario.php',
+                method: 'POST',
+                data: {
+                    acao: 'login',
+                    telefone: telefone,
+                    senha: senha
+                },
+                dataType: 'json',
+                beforeSend: function() {
+                    Swal.fire({
+                        title: 'Aguarde...',
+                        text: 'Validando login...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                },
+                success: function(res) {
+                    Swal.close();
+                    if (res.status === 'ok') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Bem-vindo!',
+                            text: res.mensagem,
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = 'index.php';
+                        });
+                    } else {
+                        Swal.fire('Erro', res.mensagem, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.close();
+                    console.error(error);
+                    Swal.fire('Erro', 'Erro na requisição. Tente novamente.', 'error');
+                }
+            });
+        });
     });
 </script>
+
+
 
 <?php include_once 'footer.php'; ?>

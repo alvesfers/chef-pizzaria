@@ -3,7 +3,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
 session_start();
 require_once 'conexao.php';
 
@@ -27,6 +26,9 @@ switch ($acao) {
         login($pdo);
         break;
 
+    case 'buscar_por_telefone':
+        buscarPorTelefone($pdo);
+        break;
 
     default:
         echo json_encode(['status' => 'erro', 'mensagem' => 'Ação inválida.']);
@@ -100,7 +102,11 @@ function cadastrarELogar($pdo)
         'tipo_usuario' => 'cliente'
     ];
 
-    echo json_encode(['status' => 'ok', 'mensagem' => 'Conta criada e login realizado com sucesso.']);
+    echo json_encode([
+        'status' => 'ok',
+        'mensagem' => 'Conta criada e login realizado com sucesso.',
+        'redirect' => 'finalizar_pedido.php' // Aqui que muda: já passa a URL de redirecionamento!
+    ]);
 }
 
 function login($pdo)
@@ -131,4 +137,30 @@ function login($pdo)
     ];
 
     echo json_encode(['status' => 'ok', 'mensagem' => 'Login realizado com sucesso!']);
+}
+
+function buscarPorTelefone($pdo)
+{
+    $telefone = preg_replace('/\D/', '', $_POST['telefone'] ?? '');
+
+    if (strlen($telefone) < 10 || strlen($telefone) > 11) {
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Telefone inválido']);
+        return;
+    }
+
+    $stmt = $pdo->prepare("SELECT * FROM tb_usuario WHERE telefone_usuario = ?");
+    $stmt->execute([$telefone]);
+    $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($usuario) {
+        $_SESSION['usuario'] = [
+            'id' => $usuario['id_usuario'],
+            'nome' => $usuario['nome_usuario'],
+            'telefone' => $usuario['telefone_usuario'],
+            'tipo_usuario' => $usuario['tipo_usuario']
+        ];
+        echo json_encode(['status' => 'ok', 'usuario' => $usuario]);
+    } else {
+        echo json_encode(['status' => 'nao_encontrado']);
+    }
 }

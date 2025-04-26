@@ -13,6 +13,27 @@
 
 </body>
 <script>
+    $(document).ready(function() {
+        $('#btnLogout').click(function() {
+            $.post('logout.php', {}, function(response) {
+                if (response.status === 'ok') {
+                    Swal.fire({
+                        title: 'Deslogado!',
+                        text: 'Você saiu da sua conta.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.href = 'index.php';
+                    });
+                } else {
+                    Swal.fire('Erro', 'Não foi possível sair.', 'error');
+                }
+            }, 'json').fail(function() {
+                Swal.fire('Erro', 'Erro na comunicação com o servidor.', 'error');
+            });
+        });
+    });
+
     $('#telefone').mask('(00) 00000-0000');
     $('#cep').mask('00000-000');
 </script>

@@ -24,7 +24,7 @@ foreach ($carrinho as $item) {
                     <div class="flex justify-between items-start">
                         <div class="w-full">
                             <h2 class="text-lg font-semibold"><?= htmlspecialchars($item['nome_produto']) ?></h2>
-                            
+
                             <!-- Controles de quantidade -->
                             <div class="flex items-center gap-2 mt-1 mb-2">
                                 <form action="atualizar_quantidade.php" method="post" class="inline">
@@ -70,22 +70,103 @@ foreach ($carrinho as $item) {
         </div>
 
         <?php if (!$usuario): ?>
-            <form action="criar_usuario.php" method="post" class="space-y-4">
-                <div>
-                    <label class="block font-medium mb-1">Seu nome</label>
-                    <input type="text" name="nome" required class="input input-bordered w-full">
-                </div>
+            <form id="formLoginCarrinho" method="post" action="crud_usuario.php" class="space-y-4">
                 <div>
                     <label class="block font-medium mb-1">Telefone</label>
-                    <input type="tel" name="telefone" required class="input input-bordered w-full" placeholder="(11) 91234-5678">
+                    <input type="tel" name="telefone" id="telefone" class="input input-bordered w-full" placeholder="(11) 91234-5678" required>
                 </div>
+                <div id="divNome" class="hidden">
+                    <label class="block font-medium mb-1">Seu nome</label>
+                    <input type="text" name="nome" id="nome" class="input input-bordered w-full">
+                </div>
+                <input type="hidden" name="acao" value="cadastrar_e_logar">
+                <input type="hidden" name="senha" id="senha">
+                <input type="hidden" name="tipo_usuario" value="cliente">
                 <input type="hidden" name="redirect" value="finalizar_pedido.php">
-                <button type="submit" class="btn btn-primary w-full">Finalizar Pedido</button>
+                <button type="submit" id="btnFinalizar" class="btn btn-primary w-full" disabled>Finalizar Pedido</button>
             </form>
+
         <?php else: ?>
             <a href="finalizar_pedido.php" class="btn btn-primary w-full">Finalizar Pedido</a>
         <?php endif; ?>
     <?php endif; ?>
 </div>
+
+<script>
+    $(document).ready(function() {
+        $('#telefone').on('input', function() {
+            let telefone = $(this).val().replace(/\D/g, '');
+
+            if (telefone.length == 11) {
+                $.post('crud_usuario.php', {
+                    acao: 'buscar_por_telefone',
+                    telefone: telefone
+                }, function(response) {
+                    if (response.status === 'ok') {
+                        // Usuário encontrado
+                        $('#divNome').removeClass('hidden');
+                        $('#nome').prop('disabled', true);
+                        $('#nome').val(response.usuario.nome_usuario);
+                        $('#senha').val('123456'); // Só para evitar problema de campo vazio (não será usado)
+                        $('#formLoginCarrinho').attr('action', 'finalizar_pedido.php');
+                        $('#btnFinalizar').prop('disabled', false);
+                    } else if (response.status === 'nao_encontrado') {
+                        // Novo usuário
+                        $('#divNome').removeClass('hidden');
+                        $('#nome').prop('disabled', false).val('');
+                        $('#senha').val(telefone); // Senha será igual ao telefone
+                        $('#formLoginCarrinho').attr('action', 'crud_usuario.php');
+                        $('#btnFinalizar').prop('disabled', false);
+
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Novo usuário!',
+                            text: 'Sua senha será o número do seu telefone (com DDD).',
+                            confirmButtonText: 'OK'
+                        });
+                    } else {
+                        $('#btnFinalizar').prop('disabled', true);
+                        $('#divNome').addClass('hidden');
+                        $('#nome').val('');
+                    }
+                }, 'json');
+            } else {
+                $('#btnFinalizar').prop('disabled', true);
+                $('#divNome').addClass('hidden');
+                $('#nome').val('');
+            }
+        });
+
+        $('#formLoginCarrinho').submit(function(e) {
+            e.preventDefault(); // Sempre previne primeiro
+
+            let form = $(this);
+            let action = form.attr('action');
+            let formData = form.serialize();
+
+            if (action === 'crud_usuario.php') {
+                // Se o destino for crud_usuario.php => Envia via AJAX
+                $.post(action, formData, function(response) {
+                    if (response.status === 'ok') {
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            Swal.fire('Sucesso', response.mensagem, 'success');
+                        }
+                    } else {
+                        Swal.fire('Erro', response.mensagem, 'error');
+                    }
+                }, 'json').fail(function() {
+                    Swal.fire('Erro', 'Erro na comunicação com o servidor.', 'error');
+                });
+            } else {
+                // Se o destino for finalizar_pedido.php => Submit normal
+                this.submit();
+            }
+        });
+    });
+</script>
+
+
 
 <?php include_once 'footer.php'; ?>

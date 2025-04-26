@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 25/04/2025 às 16:43
+-- Tempo de geração: 26/04/2025 às 22:51
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -204,9 +204,17 @@ CREATE TABLE `tb_dados_loja` (
   `google` varchar(255) DEFAULT NULL,
   `preco_base` decimal(10,2) DEFAULT 5.00,
   `preco_km` decimal(10,2) DEFAULT 2.00,
+  `limite_entrega` decimal(10,2) DEFAULT NULL,
   `tempo_entrega` int(11) DEFAULT 45,
   `tempo_retirada` int(11) DEFAULT 20
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `tb_dados_loja`
+--
+
+INSERT INTO `tb_dados_loja` (`id_loja`, `nome_loja`, `cep`, `endereco_completo`, `logo`, `tema`, `instagram`, `whatsapp`, `google`, `preco_base`, `preco_km`, `limite_entrega`, `tempo_entrega`, `tempo_retirada`) VALUES
+(1, 'Bella Massa', '04434150', 'Rua Germano Gottsfritz, 431', NULL, 'light', NULL, '11961723132', 'AIzaSyDg5xiBHnQKhUvwCSjOY2YJ4SN5L0wEj78', 0.00, 2.00, 2.00, 45, 20);
 
 -- --------------------------------------------------------
 
@@ -217,17 +225,53 @@ CREATE TABLE `tb_dados_loja` (
 CREATE TABLE `tb_endereco` (
   `id_endereco` int(11) NOT NULL,
   `id_usuario` int(11) NOT NULL,
-  `apelido` varchar(50) DEFAULT NULL,
-  `cep` varchar(10) DEFAULT NULL,
-  `rua` varchar(150) DEFAULT NULL,
-  `numero` varchar(10) DEFAULT NULL,
-  `complemento` varchar(100) DEFAULT NULL,
-  `bairro` varchar(100) DEFAULT NULL,
-  `cidade` varchar(100) DEFAULT NULL,
-  `uf` varchar(2) DEFAULT NULL,
+  `apelido` varchar(100) NOT NULL,
+  `cep` varchar(9) NOT NULL,
+  `rua` varchar(255) NOT NULL,
+  `numero` varchar(20) NOT NULL,
+  `complemento` varchar(255) DEFAULT NULL,
+  `bairro` varchar(100) NOT NULL,
+  `ponto_de_referencia` varchar(255) DEFAULT NULL,
   `endereco_principal` tinyint(1) DEFAULT 0,
-  `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
+  `criado_em` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `tb_endereco`
+--
+
+INSERT INTO `tb_endereco` (`id_endereco`, `id_usuario`, `apelido`, `cep`, `rua`, `numero`, `complemento`, `bairro`, `ponto_de_referencia`, `endereco_principal`, `criado_em`) VALUES
+(1, 1, 'Casa', '04434150', 'Rua Germano Gottsfritz', '431', NULL, 'Jardim Uberaba', '', 0, '2025-04-25 20:18:40'),
+(2, 1, 'Teste', '04434150', 'Rua Germano Gottsfritz', '431', 'AP 275', 'Jardim Uberaba', '', 0, '2025-04-25 21:16:18'),
+(3, 1, 'Casa', '04434150', 'Rua Germano Gottsfritz', '431', '', 'Jardim Uberaba', '', 0, '2025-04-26 16:05:37'),
+(4, 1, 'Julianne', '04410150', 'Rua Max Alvary', '223', '', 'Americanópolis', '', 1, '2025-04-26 16:06:30');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `tb_forma_pgto`
+--
+
+CREATE TABLE `tb_forma_pgto` (
+  `id_forma` int(11) NOT NULL,
+  `nome_pgto` varchar(100) NOT NULL,
+  `pagamento_ativo` tinyint(1) DEFAULT 1,
+  `is_online` tinyint(1) DEFAULT 0,
+  `chave` char(32) DEFAULT NULL,
+  `chave2` char(32) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Despejando dados para a tabela `tb_forma_pgto`
+--
+
+INSERT INTO `tb_forma_pgto` (`id_forma`, `nome_pgto`, `pagamento_ativo`, `is_online`, `chave`, `chave2`, `created_at`, `updated_at`) VALUES
+(1, 'Pix', 1, 0, NULL, NULL, '2025-04-25 20:08:35', '2025-04-25 20:09:32'),
+(2, 'Cartão de Crédito', 1, 0, NULL, NULL, '2025-04-25 20:08:55', '2025-04-25 20:08:55'),
+(3, 'Cartão de Débito', 1, 0, NULL, NULL, '2025-04-25 20:09:15', '2025-04-25 20:09:15'),
+(4, 'Online', 1, 1, NULL, NULL, '2025-04-25 20:09:45', '2025-04-25 20:10:00');
 
 -- --------------------------------------------------------
 
@@ -407,6 +451,13 @@ CREATE TABLE `tb_regras_frete` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Despejando dados para a tabela `tb_regras_frete`
+--
+
+INSERT INTO `tb_regras_frete` (`id_regra`, `nome_regra`, `tipo_regra`, `valor_minimo`, `distancia_maxima`, `valor_desconto`, `dia_semana`, `ativo`, `created_at`, `updated_at`) VALUES
+(1, 'Frete Grátis Acima de 32 reais', 'frete_gratis', 32.00, 5.00, NULL, 'sábado', 1, '2025-04-26 19:58:19', '2025-04-26 19:58:19');
+
 -- --------------------------------------------------------
 
 --
@@ -545,6 +596,15 @@ CREATE TABLE `tb_usuario` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
+-- Despejando dados para a tabela `tb_usuario`
+--
+
+INSERT INTO `tb_usuario` (`id_usuario`, `nome_usuario`, `telefone_usuario`, `senha_usuario`, `tipo_usuario`, `usuario_ativo`, `criado_em`) VALUES
+(1, 'Alves', '11961723132', '$2y$10$napjD/xTpHYZDrdkWqUTVe8oUP87g.Pf7ZVF4LuRwgxEFl3arUs7K', 'cliente', 1, '2025-04-25 19:39:28'),
+(2, 'testrew', '11111111111', '$2y$10$kLmniRToEnjRHEFGQk2iO.AkYVRiyvi39Mmxu1Oo92.sSU1ZDFlbe', 'cliente', 1, '2025-04-26 15:57:33'),
+(3, 'Zina', '22222222222', '$2y$10$jHa9vmsuKPMK6EKlfSabJO9Jmppi7mgVsAUgWC3GQ8sXUT2FPxhUS', 'cliente', 1, '2025-04-26 16:02:33');
+
+--
 -- Índices para tabelas despejadas
 --
 
@@ -606,6 +666,12 @@ ALTER TABLE `tb_dados_loja`
 ALTER TABLE `tb_endereco`
   ADD PRIMARY KEY (`id_endereco`),
   ADD KEY `id_usuario` (`id_usuario`);
+
+--
+-- Índices de tabela `tb_forma_pgto`
+--
+ALTER TABLE `tb_forma_pgto`
+  ADD PRIMARY KEY (`id_forma`);
 
 --
 -- Índices de tabela `tb_funcionario`
@@ -761,13 +827,19 @@ ALTER TABLE `tb_cupom`
 -- AUTO_INCREMENT de tabela `tb_dados_loja`
 --
 ALTER TABLE `tb_dados_loja`
-  MODIFY `id_loja` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_loja` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de tabela `tb_endereco`
 --
 ALTER TABLE `tb_endereco`
-  MODIFY `id_endereco` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_endereco` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT de tabela `tb_forma_pgto`
+--
+ALTER TABLE `tb_forma_pgto`
+  MODIFY `id_forma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de tabela `tb_funcionario`
@@ -815,7 +887,7 @@ ALTER TABLE `tb_produto_tipo_adicional`
 -- AUTO_INCREMENT de tabela `tb_regras_frete`
 --
 ALTER TABLE `tb_regras_frete`
-  MODIFY `id_regra` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_regra` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de tabela `tb_subcategoria`
@@ -851,7 +923,7 @@ ALTER TABLE `tb_tipo_adicional_categoria`
 -- AUTO_INCREMENT de tabela `tb_usuario`
 --
 ALTER TABLE `tb_usuario`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Restrições para tabelas despejadas

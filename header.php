@@ -32,6 +32,16 @@ $usuarioLogado = $_SESSION['usuario'] ?? null;
             font-weight: 500;
             font-size: 14px;
         }
+
+        .swal2-cancel {
+            background-color:rgb(153, 35, 35) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 4px;
+            padding: 10px 20px;
+            font-weight: 500;
+            font-size: 14px;
+        }
     </style>
 
     <header>
@@ -48,7 +58,7 @@ $usuarioLogado = $_SESSION['usuario'] ?? null;
                         <li><a href="index.php?#contato">Contato</a></li>
                         <?php if ($usuarioLogado): ?>
                             <li><a href="meus_pedidos.php">Meus Pedidos</a></li>
-                            <li><a href="logout.php" class="text-red-400">Sair</a></li>
+                            <li><a id="btnLogout" class="text-red-400">Sair</a></li>
                         <?php else: ?>
                             <li><a href="login.php">Login</a></li>
                         <?php endif; ?>

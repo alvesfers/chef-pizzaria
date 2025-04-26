@@ -1,4 +1,9 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+
 session_start();
 require_once 'conexao.php';
 
@@ -52,7 +57,7 @@ function cadastrar($pdo)
         return;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO tb_usuario (nome, telefone_usuario, senha, tipo_usuario) VALUES (?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO tb_usuario (nome_usuario, telefone_usuario, senha_usuario, tipo_usuario) VALUES (?, ?, ?, ?)");
     $stmt->execute([$nome, $telefone, password_hash($senha, PASSWORD_DEFAULT), $tipo]);
     $idUsuario = $pdo->lastInsertId();
 
@@ -84,7 +89,7 @@ function cadastrarELogar($pdo)
         return;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO tb_usuario (nome, telefone_usuario, senha, tipo_usuario) VALUES (?, ?, ?, 'cliente')");
+    $stmt = $pdo->prepare("INSERT INTO tb_usuario (nome_usuario, telefone_usuario, senha_usuario, tipo_usuario) VALUES (?, ?, ?, 'cliente')");
     $stmt->execute([$nome, $telefone, password_hash($senha, PASSWORD_DEFAULT)]);
     $idUsuario = $pdo->lastInsertId();
 
@@ -112,7 +117,7 @@ function login($pdo)
     $stmt->execute([$telefone]);
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$usuario || !password_verify($senha, $usuario['senha'])) {
+    if (!$usuario || !password_verify($senha, $usuario['senha_usuario'])) {
         echo json_encode(['status' => 'erro', 'mensagem' => 'Telefone ou senha inválidos.']);
         return;
     }
@@ -120,8 +125,8 @@ function login($pdo)
     // Logar
     $_SESSION['usuario'] = [
         'id' => $usuario['id_usuario'],
-        'nome' => $usuario['nome'],
-        'telefone' => $usuario['telefone'],
+        'nome' => $usuario['nome_usuario'],
+        'telefone' => $usuario['telefone_usuario'],
         'tipo_usuario' => $usuario['tipo_usuario']
     ];
 

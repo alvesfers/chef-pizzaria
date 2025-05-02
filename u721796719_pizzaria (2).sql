@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Tempo de geração: 28/04/2025 às 13:02
--- Versão do servidor: 10.4.32-MariaDB
--- Versão do PHP: 8.2.12
+-- Host: 127.0.0.1:3306
+-- Tempo de geração: 02/05/2025 às 18:52
+-- Versão do servidor: 10.11.10-MariaDB
+-- Versão do PHP: 7.2.34
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Banco de dados: `pizza`
+-- Banco de dados: `u721796719_pizzaria`
 --
 
 -- --------------------------------------------------------
@@ -322,6 +322,19 @@ CREATE TABLE `tb_item_pedido` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `tb_item_pedido_sabor`
+--
+
+CREATE TABLE `tb_item_pedido_sabor` (
+  `id_item_pedido_sabor` int(11) NOT NULL,
+  `id_item_pedido` int(11) NOT NULL,
+  `id_produto` int(11) NOT NULL,
+  `proporcao` decimal(5,2) DEFAULT 0.50
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `tb_pedido`
 --
 
@@ -358,26 +371,29 @@ CREATE TABLE `tb_produto` (
   `imagem_produto` varchar(255) DEFAULT NULL,
   `descricao_produto` text DEFAULT NULL,
   `produto_ativo` tinyint(1) DEFAULT 1,
-  `qtd_produto` int(11) DEFAULT NULL
+  `qtd_produto` int(11) DEFAULT NULL,
+  `tipo_calculo_preco` enum('maior','media') DEFAULT 'maior',
+  `qtd_sabores` int(11) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Despejando dados para a tabela `tb_produto`
 --
 
-INSERT INTO `tb_produto` (`id_produto`, `id_categoria`, `nome_produto`, `slug_produto`, `valor_produto`, `imagem_produto`, `descricao_produto`, `produto_ativo`, `qtd_produto`) VALUES
-(1, 1, 'Pizza Mussarela', 'pizza-mussarela', 30.00, NULL, NULL, 1, NULL),
-(2, 1, 'Pizza Calabresa', 'pizza-calabresa', 35.00, NULL, NULL, 1, NULL),
-(3, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 8.00, NULL, NULL, 1, NULL),
-(4, 2, 'Refrigerante Sukita 2L', 'refri-sukita', 8.00, NULL, NULL, 1, NULL),
-(5, 1, 'Pizza Quatro Queijos', 'pizza-quatro-queijos', 38.00, NULL, 'Mussarela, provolone, gorgonzola e parmesão.', 1, NULL),
-(6, 1, 'Pizza Frango com Catupiry', 'pizza-frango-catupiry', 39.00, NULL, 'Frango desfiado com catupiry cremoso.', 1, NULL),
-(7, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 6.00, NULL, 'Dolly Guaraná 2L.', 1, NULL),
-(8, 2, 'Refrigerante Pepsi 2L', 'refri-pepsi', 8.00, NULL, 'Pepsi 2L.', 1, NULL),
-(9, 1, 'Combo Pizza Mussarela + Dolly 2L', 'combo-mussarela-dolly', 32.00, NULL, 'Pizza Mussarela + Dolly 2L com desconto.', 1, NULL),
-(10, 1, 'Combo 2 Pizzas Tradicionais', 'combo-2tradicionais', 60.00, NULL, 'Duas pizzas tradicionais por preço especial.', 1, NULL),
-(11, 5, 'Açaí Simples 300ml', 'acai-simples', 10.00, NULL, 'Açaí natural, puro e saudável.', 1, NULL),
-(12, 5, 'Açaí Especial 500ml', 'acai-especial', 18.00, NULL, 'Açaí com leite condensado, banana e granola.', 1, NULL);
+INSERT INTO `tb_produto` (`id_produto`, `id_categoria`, `nome_produto`, `slug_produto`, `valor_produto`, `imagem_produto`, `descricao_produto`, `produto_ativo`, `qtd_produto`, `tipo_calculo_preco`, `qtd_sabores`) VALUES
+(1, 1, 'Pizza Mussarela', 'pizza-mussarela', 30.00, NULL, NULL, 1, NULL, '', 0),
+(2, 1, 'Pizza Calabresa', 'pizza-calabresa', 35.00, NULL, NULL, 1, NULL, 'maior', 0),
+(3, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 8.00, NULL, NULL, 1, NULL, 'maior', 0),
+(4, 2, 'Refrigerante Sukita 2L', 'refri-sukita', 8.00, NULL, NULL, 1, NULL, 'maior', 0),
+(5, 1, 'Pizza Quatro Queijos', 'pizza-quatro-queijos', 38.00, NULL, 'Mussarela, provolone, gorgonzola e parmesão.', 1, NULL, 'maior', 0),
+(6, 1, 'Pizza Frango com Catupiry', 'pizza-frango-catupiry', 39.00, NULL, 'Frango desfiado com catupiry cremoso.', 1, NULL, 'maior', 0),
+(7, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 6.00, NULL, 'Dolly Guaraná 2L.', 1, NULL, 'maior', 0),
+(8, 2, 'Refrigerante Pepsi 2L', 'refri-pepsi', 8.00, NULL, 'Pepsi 2L.', 1, NULL, 'maior', 0),
+(9, 1, 'Combo Pizza Mussarela + Dolly 2L', 'combo-mussarela-dolly', 32.00, NULL, 'Pizza Mussarela + Dolly 2L com desconto.', 1, NULL, 'maior', 0),
+(10, 1, 'Combo 2 Pizzas Tradicionais', 'combo-2tradicionais', 60.00, NULL, 'Duas pizzas tradicionais por preço especial.', 1, NULL, 'maior', 0),
+(11, 5, 'Açaí Simples 300ml', 'acai-simples', 10.00, NULL, 'Açaí natural, puro e saudável.', 1, NULL, 'maior', 0),
+(12, 5, 'Açaí Especial 500ml', 'acai-especial', 18.00, NULL, 'Açaí com leite condensado, banana e granola.', 1, NULL, 'maior', 0),
+(13, 1, 'Pizza Três Sabores', 'pizza-tres-sabores', 0.00, NULL, 'Escolha 3 sabores.', 1, NULL, 'maior', 2);
 
 -- --------------------------------------------------------
 
@@ -478,7 +494,8 @@ CREATE TABLE `tb_subcategoria` (
 INSERT INTO `tb_subcategoria` (`id_subcategoria`, `nome_subcategoria`, `tipo_subcategoria`, `subcategoria_ativa`) VALUES
 (1, 'Tradicional', 'padrão', 1),
 (2, 'Especial', 'padrão', 1),
-(3, 'Vegana', 'padrão', 1);
+(3, 'Vegana', 'padrão', 1),
+(4, 'Pizza com mais de 1 sabor', 'padrão', 1);
 
 -- --------------------------------------------------------
 
@@ -501,7 +518,8 @@ INSERT INTO `tb_subcategoria_categoria` (`id_subcategoria_categoria`, `id_catego
 (2, 1, 2),
 (3, 1, 3),
 (4, 5, 1),
-(5, 5, 2);
+(5, 5, 2),
+(6, 1, 4);
 
 -- --------------------------------------------------------
 
@@ -531,7 +549,8 @@ INSERT INTO `tb_subcategoria_produto` (`id_subcategoria_produto`, `id_produto`, 
 (9, 10, 1),
 (10, 10, 1),
 (11, 11, 1),
-(12, 12, 2);
+(12, 12, 2),
+(13, 13, 4);
 
 -- --------------------------------------------------------
 
@@ -694,6 +713,14 @@ ALTER TABLE `tb_item_pedido`
   ADD KEY `fk_itempedido_pedido` (`id_pedido`),
   ADD KEY `fk_itempedido_produto` (`id_produto`),
   ADD KEY `fk_itempedido_combo` (`id_combo`);
+
+--
+-- Índices de tabela `tb_item_pedido_sabor`
+--
+ALTER TABLE `tb_item_pedido_sabor`
+  ADD PRIMARY KEY (`id_item_pedido_sabor`),
+  ADD KEY `id_item_pedido` (`id_item_pedido`),
+  ADD KEY `id_produto` (`id_produto`);
 
 --
 -- Índices de tabela `tb_pedido`
@@ -860,6 +887,12 @@ ALTER TABLE `tb_item_pedido`
   MODIFY `id_item_pedido` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `tb_item_pedido_sabor`
+--
+ALTER TABLE `tb_item_pedido_sabor`
+  MODIFY `id_item_pedido_sabor` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `tb_pedido`
 --
 ALTER TABLE `tb_pedido`
@@ -869,7 +902,7 @@ ALTER TABLE `tb_pedido`
 -- AUTO_INCREMENT de tabela `tb_produto`
 --
 ALTER TABLE `tb_produto`
-  MODIFY `id_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto_adicional_incluso`
@@ -893,19 +926,19 @@ ALTER TABLE `tb_regras_frete`
 -- AUTO_INCREMENT de tabela `tb_subcategoria`
 --
 ALTER TABLE `tb_subcategoria`
-  MODIFY `id_subcategoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_subcategoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de tabela `tb_subcategoria_categoria`
 --
 ALTER TABLE `tb_subcategoria_categoria`
-  MODIFY `id_subcategoria_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_subcategoria_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de tabela `tb_subcategoria_produto`
 --
 ALTER TABLE `tb_subcategoria_produto`
-  MODIFY `id_subcategoria_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id_subcategoria_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de tabela `tb_tipo_adicional`
@@ -940,6 +973,13 @@ ALTER TABLE `tb_endereco`
 --
 ALTER TABLE `tb_funcionario`
   ADD CONSTRAINT `tb_funcionario_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `tb_usuario` (`id_usuario`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `tb_item_pedido_sabor`
+--
+ALTER TABLE `tb_item_pedido_sabor`
+  ADD CONSTRAINT `tb_item_pedido_sabor_ibfk_1` FOREIGN KEY (`id_item_pedido`) REFERENCES `tb_item_pedido` (`id_item_pedido`) ON DELETE CASCADE,
+  ADD CONSTRAINT `tb_item_pedido_sabor_ibfk_2` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `tb_pedido`

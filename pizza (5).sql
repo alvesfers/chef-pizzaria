@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1:3306
--- Tempo de geração: 02/05/2025 às 18:52
--- Versão do servidor: 10.11.10-MariaDB
--- Versão do PHP: 7.2.34
+-- Host: 127.0.0.1
+-- Tempo de geração: 05/05/2025 às 16:31
+-- Versão do servidor: 10.4.32-MariaDB
+-- Versão do PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Banco de dados: `u721796719_pizzaria`
+-- Banco de dados: `pizza`
 --
 
 -- --------------------------------------------------------
@@ -373,7 +373,7 @@ CREATE TABLE `tb_produto` (
   `produto_ativo` tinyint(1) DEFAULT 1,
   `qtd_produto` int(11) DEFAULT NULL,
   `tipo_calculo_preco` enum('maior','media') DEFAULT 'maior',
-  `qtd_sabores` int(11) DEFAULT 0
+  `qtd_sabores` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -381,19 +381,19 @@ CREATE TABLE `tb_produto` (
 --
 
 INSERT INTO `tb_produto` (`id_produto`, `id_categoria`, `nome_produto`, `slug_produto`, `valor_produto`, `imagem_produto`, `descricao_produto`, `produto_ativo`, `qtd_produto`, `tipo_calculo_preco`, `qtd_sabores`) VALUES
-(1, 1, 'Pizza Mussarela', 'pizza-mussarela', 30.00, NULL, NULL, 1, NULL, '', 0),
-(2, 1, 'Pizza Calabresa', 'pizza-calabresa', 35.00, NULL, NULL, 1, NULL, 'maior', 0),
-(3, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 8.00, NULL, NULL, 1, NULL, 'maior', 0),
-(4, 2, 'Refrigerante Sukita 2L', 'refri-sukita', 8.00, NULL, NULL, 1, NULL, 'maior', 0),
-(5, 1, 'Pizza Quatro Queijos', 'pizza-quatro-queijos', 38.00, NULL, 'Mussarela, provolone, gorgonzola e parmesão.', 1, NULL, 'maior', 0),
-(6, 1, 'Pizza Frango com Catupiry', 'pizza-frango-catupiry', 39.00, NULL, 'Frango desfiado com catupiry cremoso.', 1, NULL, 'maior', 0),
-(7, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 6.00, NULL, 'Dolly Guaraná 2L.', 1, NULL, 'maior', 0),
-(8, 2, 'Refrigerante Pepsi 2L', 'refri-pepsi', 8.00, NULL, 'Pepsi 2L.', 1, NULL, 'maior', 0),
-(9, 1, 'Combo Pizza Mussarela + Dolly 2L', 'combo-mussarela-dolly', 32.00, NULL, 'Pizza Mussarela + Dolly 2L com desconto.', 1, NULL, 'maior', 0),
-(10, 1, 'Combo 2 Pizzas Tradicionais', 'combo-2tradicionais', 60.00, NULL, 'Duas pizzas tradicionais por preço especial.', 1, NULL, 'maior', 0),
-(11, 5, 'Açaí Simples 300ml', 'acai-simples', 10.00, NULL, 'Açaí natural, puro e saudável.', 1, NULL, 'maior', 0),
-(12, 5, 'Açaí Especial 500ml', 'acai-especial', 18.00, NULL, 'Açaí com leite condensado, banana e granola.', 1, NULL, 'maior', 0),
-(13, 1, 'Pizza Três Sabores', 'pizza-tres-sabores', 0.00, NULL, 'Escolha 3 sabores.', 1, NULL, 'maior', 2);
+(1, 1, 'Pizza Mussarela', 'pizza-mussarela', 30.00, NULL, NULL, 1, NULL, '', 1),
+(2, 1, 'Pizza Calabresa', 'pizza-calabresa', 35.00, NULL, NULL, 1, NULL, 'maior', 1),
+(3, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 8.00, NULL, NULL, 1, NULL, 'maior', 1),
+(4, 2, 'Refrigerante Sukita 2L', 'refri-sukita', 8.00, NULL, NULL, 1, NULL, 'maior', 1),
+(5, 1, 'Pizza Quatro Queijos', 'pizza-quatro-queijos', 38.00, NULL, 'Mussarela, provolone, gorgonzola e parmesão.', 1, NULL, 'maior', 1),
+(6, 1, 'Pizza Frango com Catupiry', 'pizza-frango-catupiry', 39.00, NULL, 'Frango desfiado com catupiry cremoso.', 1, NULL, 'maior', 1),
+(7, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 6.00, NULL, 'Dolly Guaraná 2L.', 1, NULL, 'maior', 1),
+(8, 2, 'Refrigerante Pepsi 2L', 'refri-pepsi', 8.00, NULL, 'Pepsi 2L.', 1, NULL, 'maior', 1),
+(9, 1, 'Combo Pizza Mussarela + Dolly 2L', 'combo-mussarela-dolly', 32.00, NULL, 'Pizza Mussarela + Dolly 2L com desconto.', 1, NULL, 'maior', 1),
+(10, 1, 'Combo 2 Pizzas Tradicionais', 'combo-2tradicionais', 60.00, NULL, 'Duas pizzas tradicionais por preço especial.', 1, NULL, 'maior', 1),
+(11, 5, 'Açaí Simples 300ml', 'acai-simples', 10.00, NULL, 'Açaí natural, puro e saudável.', 1, NULL, 'maior', 1),
+(12, 5, 'Açaí Especial 500ml', 'acai-especial', 18.00, NULL, 'Açaí com leite condensado, banana e granola.', 1, NULL, 'maior', 1),
+(13, 1, 'Pizza Três Sabores', 'pizza-tres-sabores', 0.00, NULL, 'Escolha 3 sabores.', 1, NULL, 'maior', 3);
 
 -- --------------------------------------------------------
 

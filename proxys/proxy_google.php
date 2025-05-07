@@ -1,5 +1,5 @@
 <?php
-// proxy_google.php
+// proxys/proxy_google.php
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);

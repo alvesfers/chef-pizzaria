@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 05/05/2025 às 16:31
+-- Tempo de geração: 07/05/2025 às 19:12
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -214,7 +214,7 @@ CREATE TABLE `tb_dados_loja` (
 --
 
 INSERT INTO `tb_dados_loja` (`id_loja`, `nome_loja`, `cep`, `endereco_completo`, `logo`, `tema`, `instagram`, `whatsapp`, `google`, `preco_base`, `preco_km`, `limite_entrega`, `tempo_entrega`, `tempo_retirada`) VALUES
-(1, 'Bella Massa', '04434150', 'Rua Germano Gottsfritz, 431', NULL, 'light', NULL, '11961723132', 'AIzaSyDg5xiBHnQKhUvwCSjOY2YJ4SN5L0wEj78', 0.00, 2.00, 2.00, 45, 20);
+(1, 'Bella Massa', '04434150', 'Rua Germano Gottsfritz, 431', NULL, 'light', NULL, '11961723132', 'AIzaSyDg5xiBHnQKhUvwCSjOY2YJ4SN5L0wEj78', 0.00, 2.00, 5.00, 45, 20);
 
 -- --------------------------------------------------------
 
@@ -233,6 +233,7 @@ CREATE TABLE `tb_endereco` (
   `bairro` varchar(100) NOT NULL,
   `ponto_de_referencia` varchar(255) DEFAULT NULL,
   `endereco_principal` tinyint(1) DEFAULT 0,
+  `endereco_ativo` int(11) NOT NULL DEFAULT 1,
   `criado_em` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -240,11 +241,12 @@ CREATE TABLE `tb_endereco` (
 -- Despejando dados para a tabela `tb_endereco`
 --
 
-INSERT INTO `tb_endereco` (`id_endereco`, `id_usuario`, `apelido`, `cep`, `rua`, `numero`, `complemento`, `bairro`, `ponto_de_referencia`, `endereco_principal`, `criado_em`) VALUES
-(1, 1, 'Casa', '04434150', 'Rua Germano Gottsfritz', '431', NULL, 'Jardim Uberaba', '', 0, '2025-04-25 20:18:40'),
-(2, 1, 'Teste', '04434150', 'Rua Germano Gottsfritz', '431', 'AP 275', 'Jardim Uberaba', '', 0, '2025-04-25 21:16:18'),
-(3, 1, 'Casa', '04434150', 'Rua Germano Gottsfritz', '431', '', 'Jardim Uberaba', '', 0, '2025-04-26 16:05:37'),
-(4, 1, 'Julianne', '04410150', 'Rua Max Alvary', '223', '', 'Americanópolis', '', 1, '2025-04-26 16:06:30');
+INSERT INTO `tb_endereco` (`id_endereco`, `id_usuario`, `apelido`, `cep`, `rua`, `numero`, `complemento`, `bairro`, `ponto_de_referencia`, `endereco_principal`, `endereco_ativo`, `criado_em`) VALUES
+(1, 1, 'Casa', '04434150', 'Rua Germano Gottsfritz', '431', NULL, 'Jardim Uberaba', '', 0, 1, '2025-04-25 20:18:40'),
+(2, 1, 'Teste', '04434150', 'Rua Germano Gottsfritz', '431', 'AP 275', 'Jardim Uberaba', '', 0, 1, '2025-04-25 21:16:18'),
+(5, 1, 'Cass', '04434100', 'Rua Senador Paulo Guerra', '410', '', 'Jardim Maria Luiza', '', 0, 0, '2025-05-06 16:12:19'),
+(6, 1, 'Casa', '04433150', 'Avenida Vinte e Sete', '20', '', 'Jardim Itapura', '', 0, 1, '2025-05-06 17:58:00'),
+(7, 1, 'Fac', '04696000', 'Avenida Engenheiro Eusébio Stevaux', '823', '', 'Jurubatuba', '', 1, 1, '2025-05-06 17:58:58');
 
 -- --------------------------------------------------------
 
@@ -303,6 +305,19 @@ CREATE TABLE `tb_item_adicional` (
   `valor_adicional` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Despejando dados para a tabela `tb_item_adicional`
+--
+
+INSERT INTO `tb_item_adicional` (`id_item_adicional`, `id_item_pedido`, `id_adicional`, `nome_adicional`, `valor_adicional`) VALUES
+(1, 2, 6, 'Milho', 1.00),
+(2, 3, 6, 'Milho', 1.00),
+(3, 4, 4, 'Bacon', 2.00),
+(4, 5, 4, 'Bacon', 2.00),
+(5, 5, 5, 'Frango', 5.00),
+(6, 5, 6, 'Milho', 1.00),
+(7, 6, 4, 'Bacon', 2.00);
+
 -- --------------------------------------------------------
 
 --
@@ -319,6 +334,19 @@ CREATE TABLE `tb_item_pedido` (
   `valor_unitario` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Despejando dados para a tabela `tb_item_pedido`
+--
+
+INSERT INTO `tb_item_pedido` (`id_item_pedido`, `id_pedido`, `id_produto`, `id_combo`, `nome_exibicao`, `quantidade`, `valor_unitario`) VALUES
+(1, 1, 13, NULL, 'Pizza Três Sabores', 1, 38.00),
+(2, 2, 1, NULL, 'Pizza Mussarela', 1, 31.00),
+(3, 3, 1, NULL, 'Pizza Mussarela', 1, 31.00),
+(4, 4, 1, NULL, 'Pizza Mussarela', 1, 32.00),
+(5, 5, 1, NULL, 'Pizza Mussarela', 1, 38.00),
+(6, 6, 1, NULL, 'Pizza Mussarela', 1, 32.00),
+(7, 7, 1, NULL, 'Pizza Mussarela', 1, 30.00);
+
 -- --------------------------------------------------------
 
 --
@@ -331,6 +359,15 @@ CREATE TABLE `tb_item_pedido_sabor` (
   `id_produto` int(11) NOT NULL,
   `proporcao` decimal(5,2) DEFAULT 0.50
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Despejando dados para a tabela `tb_item_pedido_sabor`
+--
+
+INSERT INTO `tb_item_pedido_sabor` (`id_item_pedido_sabor`, `id_item_pedido`, `id_produto`, `proporcao`) VALUES
+(1, 1, 5, 50.00),
+(2, 1, 2, 50.00),
+(3, 1, 1, 50.00);
 
 -- --------------------------------------------------------
 
@@ -350,11 +387,55 @@ CREATE TABLE `tb_pedido` (
   `forma_pagamento` enum('pix','dinheiro','cartao') NOT NULL,
   `observacoes` text DEFAULT NULL,
   `valor_total` decimal(10,2) NOT NULL,
+  `valor_frete` decimal(10,2) NOT NULL,
   `id_cupom` int(11) DEFAULT NULL,
   `desconto_aplicado` decimal(10,2) DEFAULT 0.00,
   `status_pedido` enum('pendente','aceito','em_preparo','em_entrega','finalizado','cancelado') DEFAULT 'pendente',
-  `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
+  `criado_em` timestamp NOT NULL DEFAULT current_timestamp(),
+  `cancelado_em` datetime DEFAULT NULL,
+  `motivo_cancelamento` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `tb_pedido`
+--
+
+INSERT INTO `tb_pedido` (`id_pedido`, `id_usuario`, `id_funcionario`, `id_entregador`, `nome_cliente`, `telefone_cliente`, `endereco`, `tipo_entrega`, `forma_pagamento`, `observacoes`, `valor_total`, `valor_frete`, `id_cupom`, `desconto_aplicado`, `status_pedido`, `criado_em`, `cancelado_em`, `motivo_cancelamento`) VALUES
+(1, 1, NULL, NULL, NULL, NULL, 'Retirada na loja', 'retirada', '', NULL, 38.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-06 22:53:10', '2025-05-07 10:40:37', ''),
+(2, 1, NULL, NULL, NULL, NULL, 'Retirada na loja', 'retirada', '', NULL, 32.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:18:25', '2025-05-07 10:40:34', ''),
+(3, 1, NULL, NULL, NULL, NULL, 'Retirada na loja', 'retirada', '', NULL, 32.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:24:33', '2025-05-07 10:40:31', ''),
+(4, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 34.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:27:12', '2025-05-07 10:40:29', ''),
+(5, 1, NULL, NULL, 'Alves', '11961723132', 'Rua Senador Paulo Guerra, 410 - Jardim Maria Luiza', 'entrega', '', NULL, 46.50, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:29:44', '2025-05-07 10:40:26', ''),
+(6, 1, NULL, NULL, 'Alves', '11961723132', 'Rua Senador Paulo Guerra, 410 - Jardim Maria Luiza', 'entrega', '', NULL, 34.50, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:34:04', '2025-05-07 10:40:20', ''),
+(7, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 30.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:49:58', '2025-05-07 10:40:17', '');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `tb_pedido_status_log`
+--
+
+CREATE TABLE `tb_pedido_status_log` (
+  `id_log` int(11) NOT NULL,
+  `id_pedido` int(11) NOT NULL,
+  `status_anterior` varchar(50) DEFAULT NULL,
+  `status_novo` varchar(50) DEFAULT NULL,
+  `motivo` text DEFAULT NULL,
+  `alterado_em` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `tb_pedido_status_log`
+--
+
+INSERT INTO `tb_pedido_status_log` (`id_log`, `id_pedido`, `status_anterior`, `status_novo`, `motivo`, `alterado_em`) VALUES
+(1, 7, 'pendente', 'cancelado', '', '2025-05-07 10:40:17'),
+(2, 6, 'pendente', 'cancelado', '', '2025-05-07 10:40:20'),
+(3, 5, 'pendente', 'cancelado', '', '2025-05-07 10:40:26'),
+(4, 4, 'pendente', 'cancelado', '', '2025-05-07 10:40:29'),
+(5, 3, 'pendente', 'cancelado', '', '2025-05-07 10:40:31'),
+(6, 2, 'pendente', 'cancelado', '', '2025-05-07 10:40:34'),
+(7, 1, 'pendente', 'cancelado', '', '2025-05-07 10:40:37');
 
 -- --------------------------------------------------------
 
@@ -381,7 +462,7 @@ CREATE TABLE `tb_produto` (
 --
 
 INSERT INTO `tb_produto` (`id_produto`, `id_categoria`, `nome_produto`, `slug_produto`, `valor_produto`, `imagem_produto`, `descricao_produto`, `produto_ativo`, `qtd_produto`, `tipo_calculo_preco`, `qtd_sabores`) VALUES
-(1, 1, 'Pizza Mussarela', 'pizza-mussarela', 30.00, NULL, NULL, 1, NULL, '', 1),
+(1, 1, 'Pizza Mussarela', 'pizza-mussarela', 30.00, NULL, NULL, 1, NULL, 'maior', 1),
 (2, 1, 'Pizza Calabresa', 'pizza-calabresa', 35.00, NULL, NULL, 1, NULL, 'maior', 1),
 (3, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 8.00, NULL, NULL, 1, NULL, 'maior', 1),
 (4, 2, 'Refrigerante Sukita 2L', 'refri-sukita', 8.00, NULL, NULL, 1, NULL, 'maior', 1),
@@ -472,7 +553,7 @@ CREATE TABLE `tb_regras_frete` (
 --
 
 INSERT INTO `tb_regras_frete` (`id_regra`, `nome_regra`, `tipo_regra`, `valor_minimo`, `distancia_maxima`, `valor_desconto`, `dia_semana`, `ativo`, `created_at`, `updated_at`) VALUES
-(1, 'Frete Grátis Acima de 32 reais', 'frete_gratis', 32.00, 5.00, NULL, 'sábado', 1, '2025-04-26 19:58:19', '2025-04-26 19:58:19');
+(1, 'Frete Grátis Acima de 32 reais', 'frete_gratis', 32.00, 100.00, NULL, 'terça', 1, '2025-04-26 19:58:19', '2025-05-06 17:59:54');
 
 -- --------------------------------------------------------
 
@@ -619,7 +700,7 @@ CREATE TABLE `tb_usuario` (
 --
 
 INSERT INTO `tb_usuario` (`id_usuario`, `nome_usuario`, `telefone_usuario`, `senha_usuario`, `tipo_usuario`, `usuario_ativo`, `criado_em`) VALUES
-(1, 'Alves', '11961723132', '$2y$10$napjD/xTpHYZDrdkWqUTVe8oUP87g.Pf7ZVF4LuRwgxEFl3arUs7K', 'cliente', 1, '2025-04-25 19:39:28'),
+(1, 'Alves', '11961723132', '$2y$10$napjD/xTpHYZDrdkWqUTVe8oUP87g.Pf7ZVF4LuRwgxEFl3arUs7K', 'admin', 1, '2025-04-25 19:39:28'),
 (2, 'testrew', '11111111111', '$2y$10$kLmniRToEnjRHEFGQk2iO.AkYVRiyvi39Mmxu1Oo92.sSU1ZDFlbe', 'cliente', 1, '2025-04-26 15:57:33'),
 (3, 'Zina', '22222222222', '$2y$10$jHa9vmsuKPMK6EKlfSabJO9Jmppi7mgVsAUgWC3GQ8sXUT2FPxhUS', 'cliente', 1, '2025-04-26 16:02:33');
 
@@ -731,6 +812,13 @@ ALTER TABLE `tb_pedido`
   ADD KEY `fk_pedido_usuario` (`id_usuario`),
   ADD KEY `fk_pedido_funcionario` (`id_funcionario`),
   ADD KEY `fk_pedido_entregador` (`id_entregador`);
+
+--
+-- Índices de tabela `tb_pedido_status_log`
+--
+ALTER TABLE `tb_pedido_status_log`
+  ADD PRIMARY KEY (`id_log`),
+  ADD KEY `id_pedido` (`id_pedido`);
 
 --
 -- Índices de tabela `tb_produto`
@@ -860,7 +948,7 @@ ALTER TABLE `tb_dados_loja`
 -- AUTO_INCREMENT de tabela `tb_endereco`
 --
 ALTER TABLE `tb_endereco`
-  MODIFY `id_endereco` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_endereco` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `tb_forma_pgto`
@@ -878,25 +966,31 @@ ALTER TABLE `tb_funcionario`
 -- AUTO_INCREMENT de tabela `tb_item_adicional`
 --
 ALTER TABLE `tb_item_adicional`
-  MODIFY `id_item_adicional` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_item_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `tb_item_pedido`
 --
 ALTER TABLE `tb_item_pedido`
-  MODIFY `id_item_pedido` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_item_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `tb_item_pedido_sabor`
 --
 ALTER TABLE `tb_item_pedido_sabor`
-  MODIFY `id_item_pedido_sabor` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_item_pedido_sabor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de tabela `tb_pedido`
 --
 ALTER TABLE `tb_pedido`
-  MODIFY `id_pedido` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT de tabela `tb_pedido_status_log`
+--
+ALTER TABLE `tb_pedido_status_log`
+  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto`
@@ -988,6 +1082,12 @@ ALTER TABLE `tb_pedido`
   ADD CONSTRAINT `fk_pedido_entregador` FOREIGN KEY (`id_entregador`) REFERENCES `tb_funcionario` (`id_funcionario`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_pedido_funcionario` FOREIGN KEY (`id_funcionario`) REFERENCES `tb_funcionario` (`id_funcionario`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_pedido_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `tb_usuario` (`id_usuario`) ON DELETE SET NULL;
+
+--
+-- Restrições para tabelas `tb_pedido_status_log`
+--
+ALTER TABLE `tb_pedido_status_log`
+  ADD CONSTRAINT `tb_pedido_status_log_ibfk_1` FOREIGN KEY (`id_pedido`) REFERENCES `tb_pedido` (`id_pedido`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `tb_subcategoria_categoria`

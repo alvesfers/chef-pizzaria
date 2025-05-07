@@ -3,7 +3,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-include_once 'header.php';
+include_once 'assets/header.php';
 
 if (!isset($_SESSION['usuario'])) {
     header('Location: login.php');
@@ -19,7 +19,6 @@ if (empty($carrinho)) {
     exit;
 }
 
-// Dados da loja
 $dadosLoja = $pdo->query("SELECT * FROM tb_dados_loja LIMIT 1")->fetch(PDO::FETCH_ASSOC);
 $enderecoLoja = trim($dadosLoja['endereco_completo']);
 $precoBase = floatval($dadosLoja['preco_base']);
@@ -27,22 +26,24 @@ $precoKm = floatval($dadosLoja['preco_km']);
 $googleMapsKey = $dadosLoja['google'];
 $limiteEntrega = isset($dadosLoja['limite_entrega']) ? floatval($dadosLoja['limite_entrega']) : null;
 
-// Endereços do usuário
 $stmt = $pdo->prepare("SELECT * FROM tb_endereco WHERE id_usuario = ?");
 $stmt->execute([$idUsuario]);
 $enderecos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Formas de pagamento
 $formasPgto = $pdo->query("SELECT * FROM tb_forma_pgto WHERE pagamento_ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
-
-// Regras de frete
 $regrasFrete = $pdo->query("SELECT * FROM tb_regras_frete WHERE ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
 
-// Total dos produtos
 $totalProdutos = 0;
 foreach ($carrinho as $item) {
-    $totalProdutos += $item['valor_unitario'] * $item['quantidade'];
+    $valorItem = $item['valor_unitario'];
+    foreach ($item['adicionais'] as $add) {
+        if ($add['extra']) {
+            $valorItem += $add['valor'];
+        }
+    }
+    $totalProdutos += $valorItem * $item['quantidade'];
 }
+
 ?>
 
 <div class="container mx-auto px-4 py-10 max-w-3xl">
@@ -159,7 +160,7 @@ foreach ($carrinho as $item) {
     </div>
 
     <!-- Formulário Finalizar Pedido -->
-    <form action="confirmar_pedido.php" method="post">
+    <form id="formFinalizarPedido">
         <input type="hidden" name="tipo_entrega" id="inputTipoEntrega" value="retirada">
         <input type="hidden" name="id_endereco_selecionado" id="idEnderecoSelecionado" value="">
         <input type="hidden" name="valor_frete" id="valorFreteCalculado" value="0">
@@ -167,7 +168,6 @@ foreach ($carrinho as $item) {
         <button type="submit" class="btn btn-primary w-full" id="btnConfirmarPedido">Confirmar Pedido</button>
     </form>
 </div>
-
 <script>
     $(document).ready(function() {
         const precoBase = <?= $precoBase ?>;
@@ -182,39 +182,29 @@ foreach ($carrinho as $item) {
             const parteInteira = Math.floor(valor);
             const parteDecimal = valor - parteInteira;
 
-            if (parteDecimal <= 0.25) {
-                return parteInteira;
-            } else if (parteDecimal <= 0.75) {
-                return parteInteira + 0.50;
-            } else {
-                return parteInteira + 1.00;
-            }
+            if (parteDecimal <= 0.25) return parteInteira;
+            if (parteDecimal <= 0.75) return parteInteira + 0.5;
+            return parteInteira + 1.0;
         }
 
         function calcularFrete(enderecoCliente) {
             const urlGoogle = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins=${encodeURIComponent(enderecoLoja)}&destinations=${encodeURIComponent(enderecoCliente)}&key=${googleMapsApiKey}`;
 
-            $.getJSON('/proxy_google.php?url=' + encodeURIComponent(urlGoogle), function(response) {
+            $.getJSON('/proxys/proxy_google.php?url=' + encodeURIComponent(urlGoogle), function(response) {
                 if (response.status === "OK") {
                     const element = response.rows[0].elements[0];
                     if (element.status === "OK") {
                         const distanciaKm = element.distance.value / 1000;
 
                         if (limiteEntrega !== null && distanciaKm > limiteEntrega) {
+                            Swal.fire('Atenção', 'Infelizmente você está fora da área de entrega.', 'warning');
                             $('#btnConfirmarPedido').prop('disabled', true);
-                            Swal.fire('Atenção', 'Infelizmente você está fora da área de entrega. Distância máxima permitida: ' + limiteEntrega.toFixed(2) + ' km.', 'warning');
-                            $('#distanciaCalculada').val('');
-                            $('#valorFreteCalculado').val('');
-                            $('#valorFreteVisual').text('0,00');
-                            $('#valorDistanciaVisual').text('0,00');
-                            $('#valorTotal').text(valorProdutos.toFixed(2).replace('.', ','));
                             return;
                         }
 
                         let frete = precoBase + (precoKm * distanciaKm);
-
                         const hoje = new Date();
-                        const diasSemana = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+                        const diasSemana = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
                         const diaHoje = diasSemana[hoje.getDay()];
 
                         regrasFrete.forEach(function(regra) {
@@ -228,73 +218,123 @@ foreach ($carrinho as $item) {
                                 } else if (regra.tipo_regra === 'desconto_valor') {
                                     frete -= parseFloat(regra.valor_desconto);
                                 } else if (regra.tipo_regra === 'desconto_porcentagem') {
-                                    const desconto = frete * (parseFloat(regra.valor_desconto) / 100);
-                                    frete -= desconto;
+                                    frete -= frete * (parseFloat(regra.valor_desconto) / 100);
                                 }
                             }
                         });
 
-                        if (frete < 0) frete = 0;
-                        frete = arredondarFrete(frete);
+                        frete = Math.max(0, arredondarFrete(frete));
 
-                        $('#distanciaCalculada').val(distanciaKm.toFixed(2));
                         $('#valorFreteCalculado').val(frete.toFixed(2));
                         $('#valorFreteVisual').text(frete.toFixed(2).replace('.', ','));
                         $('#valorDistanciaVisual').text(distanciaKm.toFixed(2).replace('.', ','));
 
                         const novoTotal = valorProdutos + frete;
                         $('#valorTotal').text(novoTotal.toFixed(2).replace('.', ','));
-                    } else {
-                        Swal.fire('Erro', 'Erro ao calcular a distância.', 'error');
+                        $('#btnConfirmarPedido').prop('disabled', false);
                     }
                 } else {
-                    Swal.fire('Erro', 'Erro na API do Google Maps.', 'error');
+                    Swal.fire('Erro', 'Erro ao consultar distância no Google.', 'error');
                 }
-            }).fail(function() {
-                Swal.fire('Erro', 'Erro ao conectar com o servidor.', 'error');
             });
         }
 
-        $('#btnRetirada').on('click', function() {
-            $('#inputTipoEntrega').val('retirada');
-            $('#btnRetirada').addClass('btn-primary').removeClass('btn-outline');
-            $('#btnEntrega').addClass('btn-outline').removeClass('btn-primary');
-            $('#enderecoEntrega').addClass('hidden');
-            $('#formNovoEndereco').addClass('hidden');
-            $('#valorFreteCalculado').val(0);
-            $('#valorFreteVisual').text('0,00');
-            $('#valorDistanciaVisual').text('0,00');
-            $('#valorTotal').text(valorProdutos.toFixed(2).replace('.', ','));
-            $('#btnConfirmarPedido').prop('disabled', false);
-        });
-
-        $('#btnEntrega').on('click', function() {
+        $('#btnEntrega').click(function() {
             $('#inputTipoEntrega').val('entrega');
             $('#btnEntrega').addClass('btn-primary').removeClass('btn-outline');
             $('#btnRetirada').addClass('btn-outline').removeClass('btn-primary');
             $('#enderecoEntrega').removeClass('hidden');
-            $('#formNovoEndereco').addClass('hidden');
             $('#btnConfirmarPedido').prop('disabled', true);
         });
 
+        $('#btnRetirada').click(function() {
+            $('#inputTipoEntrega').val('retirada');
+            $('#btnEntrega').removeClass('btn-primary').addClass('btn-outline');
+            $('#btnRetirada').removeClass('btn-outline').addClass('btn-primary');
+            $('#enderecoEntrega').addClass('hidden');
+            $('#valorFreteVisual').text('0,00');
+            $('#valorTotal').text(valorProdutos.toFixed(2).replace('.', ','));
+            $('#btnConfirmarPedido').prop('disabled', false);
+        });
 
-        $('#selectEndereco').on('change', function() {
+        $('#selectEndereco').change(function() {
             const rua = $(this).find(':selected').data('rua');
             const numero = $(this).find(':selected').data('numero');
             const bairro = $(this).find(':selected').data('bairro');
             const cep = $(this).find(':selected').data('cep');
             $('#idEnderecoSelecionado').val($(this).val());
 
-            if (rua && numero && bairro && cep) {
-                const enderecoCliente = `${rua} ${numero}, ${bairro}, ${cep}, Brasil`;
-                calcularFrete(enderecoCliente);
+            const enderecoCliente = `${rua} ${numero}, ${bairro}, ${cep}, Brasil`;
+            calcularFrete(enderecoCliente);
+        });
+
+        $('#btnBuscarCep').click(function() {
+            const cep = $('#cep').val().replace(/\D/g, '');
+            if (cep.length !== 8) {
+                Swal.fire('Erro', 'Digite um CEP válido com 8 dígitos.', 'error');
+                return;
             }
+
+            $.getJSON(`https://viacep.com.br/ws/${cep}/json/`, function(data) {
+                if (!data.erro) {
+                    $('#rua').val(data.logradouro);
+                    $('#bairro').val(data.bairro);
+                } else {
+                    Swal.fire('Erro', 'CEP não encontrado.', 'error');
+                }
+            }).fail(function() {
+                Swal.fire('Erro', 'Erro ao buscar o CEP.', 'error');
+            });
+        });
+
+        $('#btnSalvarEndereco').click(function() {
+            const dados = {
+                acao: 'cadastrar',
+                cep: $('#cep').val(),
+                rua: $('#rua').val(),
+                numero: $('#numero').val(),
+                complemento: $('#complemento').val(),
+                ponto_referencia: $('#ponto_referencia').val(),
+                bairro: $('#bairro').val(),
+                apelido: $('#apelido').val(),
+                endereco_principal: true
+            };
+
+            $.post('crud/crud_endereco.php', dados, function(res) {
+                if (res.status === 'ok') {
+                    Swal.fire('Sucesso', res.mensagem, 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Erro', res.mensagem, 'error');
+                }
+            }, 'json').fail(function() {
+                Swal.fire('Erro', 'Erro ao cadastrar endereço.', 'error');
+            });
         });
 
         $('.btnNovoEndereco').click(function() {
             $('#formNovoEndereco').toggleClass('hidden');
         });
+
+        $('#formFinalizarPedido').submit(function(e) {
+            e.preventDefault();
+
+            const formData = $(this).serialize();
+
+            $.post('crud/crud_pedido.php', formData + '&acao=confirmar', function(res) {
+                if (res.status === 'ok') {
+                    // Salva o link do WhatsApp localmente para usar em meus_pedidos.php
+                    localStorage.setItem('link_whatsapp', res.link_whatsapp);
+                    window.location.href = 'meus_pedidos.php?novo_pedido=1';
+                } else {
+                    Swal.fire('Erro', res.mensagem, 'error');
+                }
+            }, 'json').fail(() => {
+                Swal.fire('Erro', 'Erro ao confirmar o pedido.', 'error');
+            });
+        });
     });
 </script>
 
-<?php include_once 'footer.php'; ?>
+<?php include_once 'assets/footer.php'; ?>

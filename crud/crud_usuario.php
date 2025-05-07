@@ -4,7 +4,9 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 session_start();
-require_once 'conexao.php';
+require_once __DIR__ . '/../assets/conexao.php';
+
+header('Content-Type: application/json');
 
 $acao = $_POST['acao'] ?? null;
 
@@ -28,6 +30,14 @@ switch ($acao) {
 
     case 'buscar_por_telefone':
         buscarPorTelefone($pdo);
+        break;
+
+    case 'atualizar_usuario':
+        atualizarUsuario($pdo);
+        break;
+
+    case 'desativar':
+        desativarConta($pdo);
         break;
 
     default:
@@ -61,17 +71,6 @@ function cadastrar($pdo)
 
     $stmt = $pdo->prepare("INSERT INTO tb_usuario (nome_usuario, telefone_usuario, senha_usuario, tipo_usuario) VALUES (?, ?, ?, ?)");
     $stmt->execute([$nome, $telefone, password_hash($senha, PASSWORD_DEFAULT), $tipo]);
-    $idUsuario = $pdo->lastInsertId();
-
-    if ($tipo === 'funcionario') {
-        $funcao = $_POST['funcao'] ?? '';
-        $forma_pgto = $_POST['forma_pagamento'] ?? '';
-        $valor_pgto = floatval($_POST['valor_pagamento'] ?? 0.00);
-
-        $stmt = $pdo->prepare("INSERT INTO tb_funcionario (id_usuario, funcao, forma_pagamento, valor_pagamento) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$idUsuario, $funcao, $forma_pgto, $valor_pgto]);
-    }
-
     echo json_encode(['status' => 'ok', 'mensagem' => 'Usuário cadastrado com sucesso.']);
 }
 
@@ -105,7 +104,7 @@ function cadastrarELogar($pdo)
     echo json_encode([
         'status' => 'ok',
         'mensagem' => 'Conta criada e login realizado com sucesso.',
-        'redirect' => 'finalizar_pedido.php' // Aqui que muda: já passa a URL de redirecionamento!
+        'redirect' => 'finalizar_pedido.php'
     ]);
 }
 
@@ -128,7 +127,6 @@ function login($pdo)
         return;
     }
 
-    // Logar
     $_SESSION['usuario'] = [
         'id' => $usuario['id_usuario'],
         'nome' => $usuario['nome_usuario'],
@@ -163,4 +161,60 @@ function buscarPorTelefone($pdo)
     } else {
         echo json_encode(['status' => 'nao_encontrado']);
     }
+}
+
+function atualizarUsuario($pdo)
+{
+    if (!isset($_SESSION['usuario'])) {
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Usuário não autenticado.']);
+        return;
+    }
+
+    $idUsuario = $_SESSION['usuario']['id'];
+    $nome = trim($_POST['nome'] ?? '');
+    $telefone = preg_replace('/\D/', '', $_POST['telefone'] ?? '');
+    $senhaAtual = $_POST['senha_atual'] ?? '';
+    $novaSenha = $_POST['nova_senha'] ?? '';
+
+    if (!$nome || !$telefone) {
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Nome e telefone são obrigatórios.']);
+        return;
+    }
+
+    $stmt = $pdo->prepare("UPDATE tb_usuario SET nome_usuario = ?, telefone_usuario = ? WHERE id_usuario = ?");
+    $stmt->execute([$nome, $telefone, $idUsuario]);
+    $_SESSION['usuario']['nome'] = $nome;
+    $_SESSION['usuario']['telefone'] = $telefone;
+
+    if ($senhaAtual && $novaSenha) {
+        $stmt = $pdo->prepare("SELECT senha_usuario FROM tb_usuario WHERE id_usuario = ?");
+        $stmt->execute([$idUsuario]);
+        $senhaHash = $stmt->fetchColumn();
+
+        if (!password_verify($senhaAtual, $senhaHash)) {
+            echo json_encode(['status' => 'erro', 'mensagem' => 'Senha atual incorreta.']);
+            return;
+        }
+
+        $stmt = $pdo->prepare("UPDATE tb_usuario SET senha_usuario = ? WHERE id_usuario = ?");
+        $stmt->execute([password_hash($novaSenha, PASSWORD_DEFAULT), $idUsuario]);
+    }
+
+    echo json_encode(['status' => 'ok', 'mensagem' => 'Dados atualizados com sucesso.']);
+}
+
+function desativarConta($pdo)
+{
+    if (!isset($_SESSION['usuario'])) {
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Usuário não autenticado.']);
+        return;
+    }
+
+    $idUsuario = $_SESSION['usuario']['id'];
+    $stmt = $pdo->prepare("UPDATE tb_usuario SET usuario_ativo = 0 WHERE id_usuario = ?");
+    $stmt->execute([$idUsuario]);
+
+    unset($_SESSION['usuario']);
+
+    echo json_encode(['status' => 'ok', 'mensagem' => 'Conta desativada com sucesso.']);
 }

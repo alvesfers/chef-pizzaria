@@ -1,5 +1,5 @@
 <?php
-include_once 'header.php';
+include_once 'assets/header.php';
 
 if (isset($_SESSION['usuario'])) {
     header('Location: index.php');
@@ -41,7 +41,7 @@ if (isset($_SESSION['usuario'])) {
             const senha = $('[name="senha"]').val();
 
             $.ajax({
-                url: 'crud_usuario.php',
+                url: 'crud/crud_usuario.php',
                 method: 'POST',
                 data: {
                     acao: 'login',
@@ -87,4 +87,4 @@ if (isset($_SESSION['usuario'])) {
 
 
 
-<?php include_once 'footer.php'; ?>
+<?php include_once 'assets/footer.php'; ?>

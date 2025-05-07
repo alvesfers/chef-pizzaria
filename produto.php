@@ -1,9 +1,9 @@
 <?php
-include_once 'header.php';
+include_once 'assets/header.php';
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     echo "<p class='text-center mt-10 text-red-500'>Produto não encontrado.</p>";
-    include_once 'footer.php';
+    include_once 'assets/footer.php';
     exit;
 }
 
@@ -28,7 +28,7 @@ $produto = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$produto) {
     echo "<p class='text-center mt-10 text-red-500'>Produto não encontrado ou inativo.</p>";
-    include_once 'footer.php';
+    include_once 'assets/footer.php';
     exit;
 }
 
@@ -216,7 +216,7 @@ function produtoHandler(valorBase, qtdSabores, tipoCalculo) {
         },
 
         enviarFormulario() {
-            if (qtdSabores > 0 && this.saboresSelecionados.length !== qtdSabores) {
+            if (qtdSabores > 1 && this.saboresSelecionados.length !== qtdSabores) {
                 Swal.fire('Atenção', 'Selecione exatamente ' + qtdSabores + ' sabor(es).', 'warning');
                 return;
             }
@@ -243,4 +243,4 @@ function produtoHandler(valorBase, qtdSabores, tipoCalculo) {
 }
 </script>
 
-<?php include_once 'footer.php'; ?>
+<?php include_once 'assets/footer.php'; ?>

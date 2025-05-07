@@ -1,5 +1,5 @@
 <?php
-include_once 'header.php';
+include_once 'assets/header.php';
 
 date_default_timezone_set('America/Sao_Paulo');
 $hora = date('H:i');
@@ -134,4 +134,4 @@ $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
 
 </section>
 
-<?php include_once 'footer.php'; ?>
+<?php include_once 'assets/footer.php'; ?>

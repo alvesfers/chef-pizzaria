@@ -1,5 +1,5 @@
 <?php
-include_once 'header.php';
+include_once 'assets/header.php';
 
 if (isset($_SESSION['usuario'])) {
     header('Location: index.php');
@@ -43,7 +43,7 @@ if (isset($_SESSION['usuario'])) {
         const telefone = $('#telefone').val();
         const senha = $('[name="senha"]').val();
 
-        $.post('crud_usuario.php', {
+        $.post('crud/crud_usuario.php', {
             acao: 'cadastrar_e_logar',
             nome,
             telefone,
@@ -66,4 +66,4 @@ if (isset($_SESSION['usuario'])) {
     });
 </script>
 
-<?php include_once 'footer.php'; ?>
+<?php include_once 'assets/footer.php'; ?>

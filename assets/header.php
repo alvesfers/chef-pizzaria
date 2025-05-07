@@ -1,17 +1,25 @@
 <?php
-require_once 'conexao.php';
+require_once 'assets/conexao.php';
 session_start();
 
 $usuarioLogado = $_SESSION['usuario'] ?? null;
-?>
 
+// Dados da loja
+$dadosLoja = $pdo->query("SELECT * FROM tb_dados_loja LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+
+$nomeLoja = $dadosLoja['nome_loja'] ?? 'Pizzaria';
+$whatsapp = preg_replace('/\D/', '', $dadosLoja['whatsapp'] ?? '');
+$instagram = $dadosLoja['instagram'] ?? null;
+$enderecoLoja = $dadosLoja['endereco_completo'] ?? '';
+$tema = $dadosLoja['tema'] ?? 'light';
+?>
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR" data-theme="<?= htmlspecialchars($tema) ?>">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pizzaria Bella Massa - Pedido Online</title>
+    <title><?= htmlspecialchars($nomeLoja) ?> - Pedido Online</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/daisyui@2.51.5/dist/full.css" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,11 +27,20 @@ $usuarioLogado = $_SESSION['usuario'] ?? null;
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="icon" href="/assets/favicon.ico" />
 </head>
 
 <body class="flex flex-col min-h-screen bg-base-200">
+    <script>
+        window.LOJA = {
+            nome: <?= json_encode($nomeLoja) ?>,
+            whatsapp: <?= json_encode($whatsapp) ?>,
+            instagram: <?= json_encode($instagram) ?>,
+            endereco: <?= json_encode($enderecoLoja) ?>
+        };
+    </script>
+
     <style>
-        /* Corrige botão SweetAlert2 afetado pelo Tailwind/Daisy */
         .swal2-confirm {
             background-color: #3085d6 !important;
             color: white !important;
@@ -35,7 +52,7 @@ $usuarioLogado = $_SESSION['usuario'] ?? null;
         }
 
         .swal2-cancel {
-            background-color:rgb(153, 35, 35) !important;
+            background-color: rgb(153, 35, 35) !important;
             color: white !important;
             border: none !important;
             border-radius: 4px;
@@ -47,7 +64,6 @@ $usuarioLogado = $_SESSION['usuario'] ?? null;
 
     <header>
         <div class="navbar bg-primary text-primary-content fixed top-0 left-0 w-full z-50 px-4 h-16">
-            <!-- Mobile -->
             <div class="navbar-start lg:hidden">
                 <div class="dropdown">
                     <label tabindex="0" class="btn btn-ghost btn-square">
@@ -67,12 +83,12 @@ $usuarioLogado = $_SESSION['usuario'] ?? null;
                 </div>
             </div>
 
-            <!-- Logo -->
             <div class="flex-1 justify-center lg:justify-start">
-                <a href="index.php" class="btn btn-ghost normal-case text-xl font-bold tracking-wide">Pizzaria Bella Massa</a>
+                <a href="index.php" class="btn btn-ghost normal-case text-xl font-bold tracking-wide">
+                    <?= htmlspecialchars($nomeLoja) ?>
+                </a>
             </div>
 
-            <!-- Desktop menu -->
             <div class="hidden lg:flex absolute left-1/2 transform -translate-x-1/2">
                 <ul class="menu menu-horizontal px-1 gap-4">
                     <li><a href="index.php">Início</a></li>
@@ -81,7 +97,6 @@ $usuarioLogado = $_SESSION['usuario'] ?? null;
                 </ul>
             </div>
 
-            <!-- Carrinho + Login/Profile -->
             <div class="navbar-end gap-2">
                 <a href="carrinho.php" class="btn btn-ghost btn-square relative">
                     <i class="fas fa-shopping-cart text-xl"></i>

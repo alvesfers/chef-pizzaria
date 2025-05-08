@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 07/05/2025 às 19:12
+-- Tempo de geração: 08/05/2025 às 17:45
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -214,7 +214,7 @@ CREATE TABLE `tb_dados_loja` (
 --
 
 INSERT INTO `tb_dados_loja` (`id_loja`, `nome_loja`, `cep`, `endereco_completo`, `logo`, `tema`, `instagram`, `whatsapp`, `google`, `preco_base`, `preco_km`, `limite_entrega`, `tempo_entrega`, `tempo_retirada`) VALUES
-(1, 'Bella Massa', '04434150', 'Rua Germano Gottsfritz, 431', NULL, 'light', NULL, '11961723132', 'AIzaSyDg5xiBHnQKhUvwCSjOY2YJ4SN5L0wEj78', 0.00, 2.00, 5.00, 45, 20);
+(1, 'Bella Massa', '04434150', 'Rua Germano Gottsfritz, 431', NULL, 'light', 'alvesferz', '11961723132', 'AIzaSyDg5xiBHnQKhUvwCSjOY2YJ4SN5L0wEj78', 0.00, 2.00, 5.00, 45, 20);
 
 -- --------------------------------------------------------
 
@@ -345,7 +345,21 @@ INSERT INTO `tb_item_pedido` (`id_item_pedido`, `id_pedido`, `id_produto`, `id_c
 (4, 4, 1, NULL, 'Pizza Mussarela', 1, 32.00),
 (5, 5, 1, NULL, 'Pizza Mussarela', 1, 38.00),
 (6, 6, 1, NULL, 'Pizza Mussarela', 1, 32.00),
-(7, 7, 1, NULL, 'Pizza Mussarela', 1, 30.00);
+(7, 7, 1, NULL, 'Pizza Mussarela', 1, 30.00),
+(8, 8, 1, NULL, 'Pizza Mussarela', 1, 30.00),
+(9, 8, 1, NULL, 'Pizza Mussarela', 1, 30.00),
+(10, 9, 2, NULL, 'Pizza Calabresa', 1, 35.00),
+(11, 10, 1, NULL, 'Pizza Mussarela', 1, 30.00),
+(12, 11, 1, NULL, '', 1, 30.00),
+(13, 12, 1, NULL, '', 1, 30.00),
+(14, 13, 3, NULL, '', 1, 8.00),
+(15, 14, 4, NULL, '', 1, 32.00),
+(16, 15, 6, NULL, '', 1, 39.00),
+(17, 16, 1, NULL, 'teste', 1, 38.00),
+(18, 17, 1, NULL, '', 1, 30.00),
+(19, 18, 1, NULL, 'Pizza Mussarela', 1, 36.00),
+(20, 19, NULL, NULL, 'Combo Pizza Mussarela + Dolly 2L', 1, 34.00),
+(21, 20, 1, NULL, 'Pizza Mussarela', 1, 25.00);
 
 -- --------------------------------------------------------
 
@@ -407,7 +421,20 @@ INSERT INTO `tb_pedido` (`id_pedido`, `id_usuario`, `id_funcionario`, `id_entreg
 (4, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 34.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:27:12', '2025-05-07 10:40:29', ''),
 (5, 1, NULL, NULL, 'Alves', '11961723132', 'Rua Senador Paulo Guerra, 410 - Jardim Maria Luiza', 'entrega', '', NULL, 46.50, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:29:44', '2025-05-07 10:40:26', ''),
 (6, 1, NULL, NULL, 'Alves', '11961723132', 'Rua Senador Paulo Guerra, 410 - Jardim Maria Luiza', 'entrega', '', NULL, 34.50, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:34:04', '2025-05-07 10:40:20', ''),
-(7, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 30.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:49:58', '2025-05-07 10:40:17', '');
+(7, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 30.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 12:49:58', '2025-05-07 10:40:17', ''),
+(8, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 60.00, 0.00, NULL, 0.00, 'em_preparo', '2025-05-07 17:56:03', NULL, NULL),
+(9, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 35.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 17:56:58', NULL, NULL),
+(10, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 30.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 18:06:57', NULL, NULL),
+(11, 1, NULL, NULL, NULL, NULL, 'Retirada na loja', 'retirada', '', NULL, 30.00, 0.00, NULL, 0.00, 'em_entrega', '2025-05-07 18:21:58', NULL, NULL),
+(12, 1, NULL, NULL, NULL, NULL, 'Retirada na loja', 'retirada', '', NULL, 30.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 18:22:31', NULL, NULL),
+(13, 1, NULL, NULL, NULL, NULL, 'Retirada na loja', 'retirada', '', NULL, 8.00, 0.00, NULL, 0.00, 'em_preparo', '2025-05-07 18:23:57', NULL, NULL),
+(14, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 32.00, 0.00, NULL, 0.00, 'em_preparo', '2025-05-07 18:25:24', NULL, NULL),
+(15, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 39.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 18:42:34', NULL, NULL),
+(16, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 38.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 18:48:55', NULL, NULL),
+(17, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 30.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 20:33:32', NULL, NULL),
+(18, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 36.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 20:37:01', NULL, NULL),
+(19, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 34.00, 0.00, NULL, 0.00, 'em_preparo', '2025-05-07 20:38:31', NULL, NULL),
+(20, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 25.00, 0.00, NULL, 0.00, 'pendente', '2025-05-08 13:31:45', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -435,7 +462,37 @@ INSERT INTO `tb_pedido_status_log` (`id_log`, `id_pedido`, `status_anterior`, `s
 (4, 4, 'pendente', 'cancelado', '', '2025-05-07 10:40:29'),
 (5, 3, 'pendente', 'cancelado', '', '2025-05-07 10:40:31'),
 (6, 2, 'pendente', 'cancelado', '', '2025-05-07 10:40:34'),
-(7, 1, 'pendente', 'cancelado', '', '2025-05-07 10:40:37');
+(7, 1, 'pendente', 'cancelado', '', '2025-05-07 10:40:37'),
+(8, 8, NULL, 'pendente', NULL, '2025-05-07 14:56:03'),
+(9, 9, NULL, 'pendente', NULL, '2025-05-07 14:56:58'),
+(10, 10, NULL, 'pendente', NULL, '2025-05-07 15:06:57'),
+(11, 11, NULL, 'pendente', NULL, '2025-05-07 15:21:58'),
+(12, 11, 'pendente', 'aceito', NULL, '2025-05-07 15:22:09'),
+(13, 8, 'pendente', 'aceito', NULL, '2025-05-07 15:22:17'),
+(14, 12, NULL, 'pendente', NULL, '2025-05-07 15:22:31'),
+(15, 13, NULL, 'pendente', NULL, '2025-05-07 15:23:57'),
+(16, 14, NULL, 'pendente', NULL, '2025-05-07 15:25:24'),
+(17, 14, 'pendente', 'aceito', NULL, '2025-05-07 15:41:10'),
+(18, 13, 'pendente', 'aceito', NULL, '2025-05-07 15:41:14'),
+(19, 15, NULL, 'pendente', NULL, '2025-05-07 15:42:34'),
+(20, 8, 'aceito', 'em_preparo', NULL, '2025-05-07 15:42:54'),
+(21, 16, NULL, 'pendente', NULL, '2025-05-07 15:48:55'),
+(22, 17, NULL, 'pendente', NULL, '2025-05-07 17:33:32'),
+(23, 18, NULL, 'pendente', NULL, '2025-05-07 17:37:01'),
+(24, 19, NULL, 'pendente', NULL, '2025-05-07 17:38:31'),
+(25, 19, 'pendente', 'aceito', NULL, '2025-05-07 17:39:18'),
+(26, 18, 'pendente', 'cancelado', NULL, '2025-05-07 20:58:59'),
+(27, 17, 'pendente', 'cancelado', NULL, '2025-05-07 20:59:05'),
+(28, 16, 'pendente', 'cancelado', NULL, '2025-05-07 20:59:09'),
+(29, 15, 'pendente', 'cancelado', NULL, '2025-05-07 20:59:11'),
+(30, 12, 'pendente', 'cancelado', NULL, '2025-05-07 20:59:14'),
+(31, 10, 'pendente', 'cancelado', NULL, '2025-05-07 20:59:16'),
+(32, 9, 'pendente', 'cancelado', NULL, '2025-05-07 20:59:18'),
+(33, 19, 'aceito', 'em_preparo', NULL, '2025-05-07 20:59:24'),
+(34, 14, 'aceito', 'em_preparo', NULL, '2025-05-07 20:59:28'),
+(35, 13, 'aceito', 'em_preparo', NULL, '2025-05-07 20:59:30'),
+(36, 11, 'aceito', 'em_entrega', NULL, '2025-05-07 20:59:34'),
+(37, 20, NULL, 'pendente', NULL, '2025-05-08 10:31:45');
 
 -- --------------------------------------------------------
 
@@ -470,8 +527,6 @@ INSERT INTO `tb_produto` (`id_produto`, `id_categoria`, `nome_produto`, `slug_pr
 (6, 1, 'Pizza Frango com Catupiry', 'pizza-frango-catupiry', 39.00, NULL, 'Frango desfiado com catupiry cremoso.', 1, NULL, 'maior', 1),
 (7, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 6.00, NULL, 'Dolly Guaraná 2L.', 1, NULL, 'maior', 1),
 (8, 2, 'Refrigerante Pepsi 2L', 'refri-pepsi', 8.00, NULL, 'Pepsi 2L.', 1, NULL, 'maior', 1),
-(9, 1, 'Combo Pizza Mussarela + Dolly 2L', 'combo-mussarela-dolly', 32.00, NULL, 'Pizza Mussarela + Dolly 2L com desconto.', 1, NULL, 'maior', 1),
-(10, 1, 'Combo 2 Pizzas Tradicionais', 'combo-2tradicionais', 60.00, NULL, 'Duas pizzas tradicionais por preço especial.', 1, NULL, 'maior', 1),
 (11, 5, 'Açaí Simples 300ml', 'acai-simples', 10.00, NULL, 'Açaí natural, puro e saudável.', 1, NULL, 'maior', 1),
 (12, 5, 'Açaí Especial 500ml', 'acai-especial', 18.00, NULL, 'Açaí com leite condensado, banana e granola.', 1, NULL, 'maior', 1),
 (13, 1, 'Pizza Três Sabores', 'pizza-tres-sabores', 0.00, NULL, 'Escolha 3 sabores.', 1, NULL, 'maior', 3);
@@ -493,7 +548,8 @@ CREATE TABLE `tb_produto_adicional_incluso` (
 --
 
 INSERT INTO `tb_produto_adicional_incluso` (`id_produto_adicional_incluso`, `id_produto`, `id_adicional`) VALUES
-(1, 2, 4);
+(1, 2, 4),
+(2, 12, 7);
 
 -- --------------------------------------------------------
 
@@ -515,19 +571,18 @@ CREATE TABLE `tb_produto_tipo_adicional` (
 
 INSERT INTO `tb_produto_tipo_adicional` (`id_produto_tipo_adicional`, `id_produto`, `id_tipo_adicional`, `obrigatorio`, `max_inclusos`) VALUES
 (1, 1, 2, 0, 2),
-(2, 4, 1, 1, 1),
-(3, 4, 2, 0, 2),
-(4, 5, 1, 1, 1),
-(5, 5, 2, 0, 2),
+(4, 5, 1, 1, 0),
+(5, 5, 2, 0, 0),
 (6, 6, 1, 1, 1),
 (7, 6, 2, 0, 2),
-(8, 9, 1, 1, 1),
-(9, 9, 2, 0, 2),
-(10, 10, 1, 1, 1),
-(11, 10, 2, 0, 2),
-(12, 11, 4, 0, 3),
+(12, 11, 4, 0, 0),
 (13, 12, 3, 1, 1),
-(14, 12, 4, 0, 3);
+(14, 12, 4, 0, 3),
+(15, 1, 1, 1, 1),
+(16, 2, 1, 1, 1),
+(21, 13, 1, 1, 1),
+(23, 2, 2, 0, 3),
+(28, 13, 2, 0, 3);
 
 -- --------------------------------------------------------
 
@@ -626,9 +681,6 @@ INSERT INTO `tb_subcategoria_produto` (`id_subcategoria_produto`, `id_produto`, 
 (5, 5, 3),
 (6, 6, 1),
 (7, 6, 2),
-(8, 9, 1),
-(9, 10, 1),
-(10, 10, 1),
 (11, 11, 1),
 (12, 12, 2),
 (13, 13, 4);
@@ -719,13 +771,15 @@ ALTER TABLE `tb_adicional`
 -- Índices de tabela `tb_campanha_brinde`
 --
 ALTER TABLE `tb_campanha_brinde`
-  ADD PRIMARY KEY (`id_campanha_brinde`);
+  ADD PRIMARY KEY (`id_campanha_brinde`),
+  ADD KEY `fk_campanha_brinde_prod` (`id_produto_brinde`);
 
 --
 -- Índices de tabela `tb_campanha_produto_dia`
 --
 ALTER TABLE `tb_campanha_produto_dia`
-  ADD PRIMARY KEY (`id_campanha`);
+  ADD PRIMARY KEY (`id_campanha`),
+  ADD KEY `fk_camp_pd_prod` (`id_produto`);
 
 --
 -- Índices de tabela `tb_categoria`
@@ -784,7 +838,9 @@ ALTER TABLE `tb_funcionario`
 -- Índices de tabela `tb_item_adicional`
 --
 ALTER TABLE `tb_item_adicional`
-  ADD PRIMARY KEY (`id_item_adicional`);
+  ADD PRIMARY KEY (`id_item_adicional`),
+  ADD KEY `fk_item_adicional_pedido` (`id_item_pedido`),
+  ADD KEY `fk_item_adicional_adicional` (`id_adicional`);
 
 --
 -- Índices de tabela `tb_item_pedido`
@@ -972,7 +1028,7 @@ ALTER TABLE `tb_item_adicional`
 -- AUTO_INCREMENT de tabela `tb_item_pedido`
 --
 ALTER TABLE `tb_item_pedido`
-  MODIFY `id_item_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_item_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT de tabela `tb_item_pedido_sabor`
@@ -984,13 +1040,13 @@ ALTER TABLE `tb_item_pedido_sabor`
 -- AUTO_INCREMENT de tabela `tb_pedido`
 --
 ALTER TABLE `tb_pedido`
-  MODIFY `id_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de tabela `tb_pedido_status_log`
 --
 ALTER TABLE `tb_pedido_status_log`
-  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto`
@@ -1002,13 +1058,13 @@ ALTER TABLE `tb_produto`
 -- AUTO_INCREMENT de tabela `tb_produto_adicional_incluso`
 --
 ALTER TABLE `tb_produto_adicional_incluso`
-  MODIFY `id_produto_adicional_incluso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_produto_adicional_incluso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto_tipo_adicional`
 --
 ALTER TABLE `tb_produto_tipo_adicional`
-  MODIFY `id_produto_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id_produto_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT de tabela `tb_regras_frete`
@@ -1057,21 +1113,65 @@ ALTER TABLE `tb_usuario`
 --
 
 --
+-- Restrições para tabelas `tb_adicional`
+--
+ALTER TABLE `tb_adicional`
+  ADD CONSTRAINT `fk_adicional_tipo` FOREIGN KEY (`id_tipo_adicional`) REFERENCES `tb_tipo_adicional` (`id_tipo_adicional`) ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `tb_campanha_brinde`
+--
+ALTER TABLE `tb_campanha_brinde`
+  ADD CONSTRAINT `fk_campanha_brinde_prod` FOREIGN KEY (`id_produto_brinde`) REFERENCES `tb_produto` (`id_produto`) ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `tb_campanha_produto_dia`
+--
+ALTER TABLE `tb_campanha_produto_dia`
+  ADD CONSTRAINT `fk_camp_pd_prod` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `tb_combo_item`
+--
+ALTER TABLE `tb_combo_item`
+  ADD CONSTRAINT `fk_comboitem_combo` FOREIGN KEY (`id_combo`) REFERENCES `tb_combo_promocional` (`id_combo`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_comboitem_prod` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON UPDATE CASCADE;
+
+--
 -- Restrições para tabelas `tb_endereco`
 --
 ALTER TABLE `tb_endereco`
+  ADD CONSTRAINT `fk_endereco_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `tb_usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `tb_endereco_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `tb_usuario` (`id_usuario`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `tb_funcionario`
 --
 ALTER TABLE `tb_funcionario`
+  ADD CONSTRAINT `fk_funcionario_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `tb_usuario` (`id_usuario`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `tb_funcionario_ibfk_1` FOREIGN KEY (`id_usuario`) REFERENCES `tb_usuario` (`id_usuario`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `tb_item_adicional`
+--
+ALTER TABLE `tb_item_adicional`
+  ADD CONSTRAINT `fk_item_adicional_adicional` FOREIGN KEY (`id_adicional`) REFERENCES `tb_adicional` (`id_adicional`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_item_adicional_pedido` FOREIGN KEY (`id_item_pedido`) REFERENCES `tb_item_pedido` (`id_item_pedido`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `tb_item_pedido`
+--
+ALTER TABLE `tb_item_pedido`
+  ADD CONSTRAINT `fk_itempedido_combo` FOREIGN KEY (`id_combo`) REFERENCES `tb_combo_promocional` (`id_combo`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_itempedido_pedido` FOREIGN KEY (`id_pedido`) REFERENCES `tb_pedido` (`id_pedido`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_itempedido_produto` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `tb_item_pedido_sabor`
 --
 ALTER TABLE `tb_item_pedido_sabor`
+  ADD CONSTRAINT `fk_sabor_itempedido` FOREIGN KEY (`id_item_pedido`) REFERENCES `tb_item_pedido` (`id_item_pedido`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_sabor_produto` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON UPDATE CASCADE,
   ADD CONSTRAINT `tb_item_pedido_sabor_ibfk_1` FOREIGN KEY (`id_item_pedido`) REFERENCES `tb_item_pedido` (`id_item_pedido`) ON DELETE CASCADE,
   ADD CONSTRAINT `tb_item_pedido_sabor_ibfk_2` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON DELETE CASCADE;
 
@@ -1090,9 +1190,31 @@ ALTER TABLE `tb_pedido_status_log`
   ADD CONSTRAINT `tb_pedido_status_log_ibfk_1` FOREIGN KEY (`id_pedido`) REFERENCES `tb_pedido` (`id_pedido`) ON DELETE CASCADE;
 
 --
+-- Restrições para tabelas `tb_produto`
+--
+ALTER TABLE `tb_produto`
+  ADD CONSTRAINT `fk_produto_categoria` FOREIGN KEY (`id_categoria`) REFERENCES `tb_categoria` (`id_categoria`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `tb_produto_adicional_incluso`
+--
+ALTER TABLE `tb_produto_adicional_incluso`
+  ADD CONSTRAINT `fk_prodinc_adicional` FOREIGN KEY (`id_adicional`) REFERENCES `tb_adicional` (`id_adicional`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_prodinc_produto` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `tb_produto_tipo_adicional`
+--
+ALTER TABLE `tb_produto_tipo_adicional`
+  ADD CONSTRAINT `fk_prodtipo_produto` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_prodtipo_tipo` FOREIGN KEY (`id_tipo_adicional`) REFERENCES `tb_tipo_adicional` (`id_tipo_adicional`) ON UPDATE CASCADE;
+
+--
 -- Restrições para tabelas `tb_subcategoria_categoria`
 --
 ALTER TABLE `tb_subcategoria_categoria`
+  ADD CONSTRAINT `fk_subcatcat_categoria` FOREIGN KEY (`id_categoria`) REFERENCES `tb_categoria` (`id_categoria`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_subcatcat_subcategoria` FOREIGN KEY (`id_subcategoria`) REFERENCES `tb_subcategoria` (`id_subcategoria`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `tb_subcategoria_categoria_ibfk_1` FOREIGN KEY (`id_categoria`) REFERENCES `tb_categoria` (`id_categoria`) ON DELETE CASCADE,
   ADD CONSTRAINT `tb_subcategoria_categoria_ibfk_2` FOREIGN KEY (`id_subcategoria`) REFERENCES `tb_subcategoria` (`id_subcategoria`) ON DELETE CASCADE;
 
@@ -1100,8 +1222,17 @@ ALTER TABLE `tb_subcategoria_categoria`
 -- Restrições para tabelas `tb_subcategoria_produto`
 --
 ALTER TABLE `tb_subcategoria_produto`
+  ADD CONSTRAINT `fk_subcatprod_produto` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_subcatprod_subcategoria` FOREIGN KEY (`id_subcategoria`) REFERENCES `tb_subcategoria` (`id_subcategoria`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `tb_subcategoria_produto_ibfk_1` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON DELETE CASCADE,
   ADD CONSTRAINT `tb_subcategoria_produto_ibfk_2` FOREIGN KEY (`id_subcategoria`) REFERENCES `tb_subcategoria` (`id_subcategoria`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `tb_tipo_adicional_categoria`
+--
+ALTER TABLE `tb_tipo_adicional_categoria`
+  ADD CONSTRAINT `fk_tipocat_categoria` FOREIGN KEY (`id_categoria`) REFERENCES `tb_categoria` (`id_categoria`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_tipocat_tipo` FOREIGN KEY (`id_tipo_adicional`) REFERENCES `tb_tipo_adicional` (`id_tipo_adicional`) ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

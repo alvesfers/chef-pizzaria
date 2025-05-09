@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 08/05/2025 às 23:30
+-- Tempo de geração: 10/05/2025 às 00:33
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -40,19 +40,18 @@ CREATE TABLE `tb_adicional` (
 --
 
 INSERT INTO `tb_adicional` (`id_adicional`, `id_tipo_adicional`, `nome_adicional`, `valor_adicional`, `adicional_ativo`) VALUES
-(1, 1, 'Sem borda recheada', 0.00, 1),
-(2, 1, 'Borda Catupiry', 2.00, 1),
-(3, 1, 'Borda Cheddar', 3.00, 1),
-(4, 2, 'Bacon', 2.00, 1),
-(5, 2, 'Frango', 5.00, 1),
-(6, 2, 'Milho', 1.00, 1),
-(7, 3, 'Leite condensado', 2.00, 1),
-(8, 3, 'Mel', 1.50, 1),
-(9, 3, 'Calda de chocolate', 1.50, 1),
-(10, 4, 'Granola', 2.00, 1),
-(11, 4, 'Banana', 2.50, 1),
-(12, 4, 'Leite em pó', 1.50, 1),
-(13, 4, 'Paçoca', 2.00, 1);
+(1, 1, 'Cheddar', 2.00, 1),
+(2, 1, 'Catupiry', 2.00, 1),
+(3, 1, 'Alho Frito', 5.00, 1),
+(4, 2, 'Leite Condensado', 1.00, 1),
+(5, 2, 'Paçoca', 1.00, 1),
+(6, 2, 'Confete', 1.00, 1),
+(7, 3, 'Morango', 2.00, 1),
+(8, 3, 'Banana', 2.00, 1),
+(9, 3, 'Kiwi', 2.00, 0),
+(10, 4, 'Nuttela', 5.00, 1),
+(11, 5, 'Frango', 3.00, 1),
+(12, 5, 'Catupiry', 2.00, 1);
 
 -- --------------------------------------------------------
 
@@ -72,14 +71,6 @@ CREATE TABLE `tb_campanha_brinde` (
   `data_fim` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Despejando dados para a tabela `tb_campanha_brinde`
---
-
-INSERT INTO `tb_campanha_brinde` (`id_campanha_brinde`, `nome_campanha`, `dia_semana`, `quantidade_min_produtos`, `id_produto_brinde`, `descricao_brinde`, `ativo`, `data_inicio`, `data_fim`) VALUES
-(1, 'Quinta da Pizza', 'quinta', 2, 3, 'Ganhe 1 refrigerante Dolly 2L', 1, '2025-04-24', NULL),
-(2, 'Sábado em Dobro', 'sábado', 2, 7, 'Ganhe uma Dolly 2L nas compras de 2 pizzas.', 1, '2025-04-24', NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -95,17 +86,6 @@ CREATE TABLE `tb_campanha_produto_dia` (
   `data_inicio` date DEFAULT curdate(),
   `data_fim` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `tb_campanha_produto_dia`
---
-
-INSERT INTO `tb_campanha_produto_dia` (`id_campanha`, `id_produto`, `dia_semana`, `valor_promocional`, `ativo`, `data_inicio`, `data_fim`) VALUES
-(1, 1, 'segunda', 25.00, 1, '2025-04-24', NULL),
-(2, 1, 'terça', 25.00, 1, '2025-04-24', NULL),
-(3, 1, 'quinta', 25.00, 1, '2025-04-24', NULL),
-(4, 4, 'quarta', 32.00, 1, '2025-04-24', NULL),
-(5, 5, 'sexta', 34.00, 1, '2025-04-24', NULL);
 
 -- --------------------------------------------------------
 
@@ -127,8 +107,8 @@ CREATE TABLE `tb_categoria` (
 
 INSERT INTO `tb_categoria` (`id_categoria`, `nome_categoria`, `tem_qtd`, `categoria_ativa`, `ordem_exibicao`) VALUES
 (1, 'Pizzas', 0, 1, 0),
-(2, 'Bebidas', 0, 1, 0),
-(5, 'Açaís', 0, 1, 4);
+(2, 'Açais', 0, 1, 0),
+(3, 'Bebidas', 0, 1, 0);
 
 -- --------------------------------------------------------
 
@@ -294,6 +274,33 @@ CREATE TABLE `tb_funcionario` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `tb_horario_atendimento`
+--
+
+CREATE TABLE `tb_horario_atendimento` (
+  `id_horario` int(11) NOT NULL,
+  `dia_semana` enum('segunda','terça','quarta','quinta','sexta','sábado','domingo') NOT NULL,
+  `hora_abertura` time NOT NULL,
+  `hora_fechamento` time NOT NULL,
+  `ativo` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `tb_horario_atendimento`
+--
+
+INSERT INTO `tb_horario_atendimento` (`id_horario`, `dia_semana`, `hora_abertura`, `hora_fechamento`, `ativo`) VALUES
+(1, 'segunda', '18:00:00', '23:59:59', 1),
+(2, 'terça', '18:00:00', '23:59:59', 1),
+(3, 'quarta', '18:00:00', '23:59:59', 1),
+(4, 'quinta', '18:00:00', '23:59:59', 1),
+(5, 'sexta', '18:00:00', '23:59:59', 1),
+(6, 'sábado', '18:00:00', '23:59:59', 1),
+(7, 'domingo', '00:00:00', '00:00:00', 0);
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `tb_item_adicional`
 --
 
@@ -352,7 +359,7 @@ INSERT INTO `tb_item_pedido` (`id_item_pedido`, `id_pedido`, `id_produto`, `id_c
 (11, 10, 1, NULL, 'Pizza Mussarela', 1, 30.00),
 (12, 11, 1, NULL, '', 1, 30.00),
 (13, 12, 1, NULL, '', 1, 30.00),
-(14, 13, 3, NULL, '', 1, 8.00),
+(14, 13, NULL, NULL, '', 1, 8.00),
 (15, 14, 4, NULL, '', 1, 32.00),
 (16, 15, 6, NULL, '', 1, 39.00),
 (17, 16, 1, NULL, 'teste', 1, 38.00),
@@ -509,7 +516,7 @@ CREATE TABLE `tb_produto` (
   `imagem_produto` varchar(255) DEFAULT NULL,
   `descricao_produto` text DEFAULT NULL,
   `produto_ativo` tinyint(1) DEFAULT 1,
-  `qtd_produto` int(11) DEFAULT NULL,
+  `qtd_produto` int(11) DEFAULT -1,
   `tipo_calculo_preco` enum('maior','media') DEFAULT 'maior',
   `qtd_sabores` int(11) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -519,17 +526,13 @@ CREATE TABLE `tb_produto` (
 --
 
 INSERT INTO `tb_produto` (`id_produto`, `id_categoria`, `nome_produto`, `slug_produto`, `valor_produto`, `imagem_produto`, `descricao_produto`, `produto_ativo`, `qtd_produto`, `tipo_calculo_preco`, `qtd_sabores`) VALUES
-(1, 1, 'Pizza Mussarela', 'pizza-mussarela', 30.00, NULL, NULL, 1, NULL, 'maior', 1),
-(2, 1, 'Pizza Calabresa', 'pizza-calabresa', 35.00, NULL, NULL, 1, NULL, 'maior', 1),
-(3, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 8.00, NULL, NULL, 1, NULL, 'maior', 1),
-(4, 2, 'Refrigerante Sukita 2L', 'refri-sukita', 8.00, NULL, NULL, 1, NULL, 'maior', 1),
-(5, 1, 'Pizza Quatro Queijos', 'pizza-quatro-queijos', 38.00, NULL, 'Mussarela, provolone, gorgonzola e parmesão.', 1, NULL, 'maior', 1),
-(6, 1, 'Pizza Frango com Catupiry', 'pizza-frango-catupiry', 39.00, NULL, 'Frango desfiado com catupiry cremoso.', 1, NULL, 'maior', 1),
-(7, 2, 'Refrigerante Dolly 2L', 'refri-dolly', 6.00, NULL, 'Dolly Guaraná 2L.', 1, NULL, 'maior', 1),
-(8, 2, 'Refrigerante Pepsi 2L', 'refri-pepsi', 8.00, NULL, 'Pepsi 2L.', 1, NULL, 'maior', 1),
-(11, 5, 'Açaí Simples 300ml', 'acai-simples', 10.00, NULL, 'Açaí natural, puro e saudável.', 1, NULL, 'maior', 1),
-(12, 5, 'Açaí Especial 500ml', 'acai-especial', 18.00, NULL, 'Açaí com leite condensado, banana e granola.', 1, NULL, 'maior', 1),
-(13, 1, 'Pizza Três Sabores', 'pizza-tres-sabores', 0.00, NULL, 'Escolha 3 sabores.', 1, NULL, 'maior', 3);
+(1, 1, 'Muçarela', NULL, 30.00, NULL, 'Muçarela', 1, -1, 'maior', 1),
+(2, 1, 'Calabresa', NULL, 30.00, NULL, '', 1, -1, 'maior', 1),
+(4, 3, 'Coca-cola 2 litros', NULL, 15.00, NULL, '', 1, 20, 'maior', 1),
+(5, 3, 'Keep Coller - laranja', NULL, 6.00, NULL, '', 1, 5, 'maior', 1),
+(6, 2, 'Açai - 350 ml', NULL, 20.00, NULL, 'Açai simples, com a opção de escolher até 2 complementos e 1 fruta.', 1, -1, 'maior', 1),
+(7, 2, 'Açai Trufado Nutella - 500 ml', NULL, 30.00, NULL, '', 1, -1, 'maior', 1),
+(8, 1, 'Pizza Dois Sabores', NULL, 10.00, NULL, '', 1, -1, 'media', 2);
 
 -- --------------------------------------------------------
 
@@ -548,8 +551,10 @@ CREATE TABLE `tb_produto_adicional_incluso` (
 --
 
 INSERT INTO `tb_produto_adicional_incluso` (`id_produto_adicional_incluso`, `id_produto`, `id_adicional`) VALUES
-(1, 2, 4),
-(2, 12, 7);
+(1, 7, 6),
+(2, 7, 5),
+(3, 7, 7),
+(4, 7, 10);
 
 -- --------------------------------------------------------
 
@@ -570,19 +575,12 @@ CREATE TABLE `tb_produto_tipo_adicional` (
 --
 
 INSERT INTO `tb_produto_tipo_adicional` (`id_produto_tipo_adicional`, `id_produto`, `id_tipo_adicional`, `obrigatorio`, `max_inclusos`) VALUES
-(1, 1, 2, 0, 2),
-(4, 5, 1, 1, 0),
-(5, 5, 2, 0, 0),
-(6, 6, 1, 1, 1),
-(7, 6, 2, 0, 2),
-(12, 11, 4, 0, 0),
-(13, 12, 3, 1, 1),
-(14, 12, 4, 0, 3),
-(15, 1, 1, 1, 1),
-(16, 2, 1, 1, 1),
-(21, 13, 1, 1, 1),
-(23, 2, 2, 0, 3),
-(28, 13, 2, 0, 3);
+(1, 6, 2, 0, 2),
+(2, 6, 3, 0, 1),
+(3, 6, 4, 0, 0),
+(4, 7, 2, 0, 2),
+(5, 7, 3, 0, 1),
+(6, 7, 4, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -628,10 +626,16 @@ CREATE TABLE `tb_subcategoria` (
 --
 
 INSERT INTO `tb_subcategoria` (`id_subcategoria`, `nome_subcategoria`, `tipo_subcategoria`, `subcategoria_ativa`) VALUES
-(1, 'Tradicional', 'padrão', 1),
-(2, 'Especial', 'padrão', 1),
-(3, 'Vegana', 'padrão', 1),
-(4, 'Pizza com mais de 1 sabor', 'padrão', 1);
+(1, 'Salgada', '', 1),
+(2, 'Doce', '', 1),
+(3, 'Especial', '', 1),
+(4, 'Vegana', '', 1),
+(5, 'Vegetariana', '', 1),
+(6, 'Simples', '', 1),
+(7, 'Alcóolicas', '', 1),
+(8, 'Não Alcóolicas', '', 1),
+(9, 'Trufados', '', 1),
+(10, 'Mais sabores', '', 1);
 
 -- --------------------------------------------------------
 
@@ -650,12 +654,19 @@ CREATE TABLE `tb_subcategoria_categoria` (
 --
 
 INSERT INTO `tb_subcategoria_categoria` (`id_subcategoria_categoria`, `id_categoria`, `id_subcategoria`) VALUES
-(1, 1, 1),
-(2, 1, 2),
-(3, 1, 3),
-(4, 5, 1),
-(5, 5, 2),
-(6, 1, 4);
+(9, 3, 7),
+(10, 3, 8),
+(11, 2, 3),
+(12, 2, 6),
+(13, 2, 9),
+(14, 2, 2),
+(15, 1, 2),
+(16, 1, 3),
+(17, 1, 1),
+(18, 1, 6),
+(19, 1, 4),
+(20, 1, 5),
+(21, 1, 10);
 
 -- --------------------------------------------------------
 
@@ -674,16 +685,16 @@ CREATE TABLE `tb_subcategoria_produto` (
 --
 
 INSERT INTO `tb_subcategoria_produto` (`id_subcategoria_produto`, `id_produto`, `id_subcategoria`) VALUES
-(1, 1, 1),
-(2, 1, 3),
-(3, 2, 1),
-(4, 5, 2),
-(5, 5, 3),
-(6, 6, 1),
-(7, 6, 2),
-(11, 11, 1),
-(12, 12, 2),
-(13, 13, 4);
+(3, 1, 1),
+(4, 1, 6),
+(5, 1, 5),
+(6, 2, 1),
+(7, 2, 6),
+(9, 4, 8),
+(10, 5, 7),
+(11, 7, 2),
+(12, 7, 9),
+(13, 8, 10);
 
 -- --------------------------------------------------------
 
@@ -705,10 +716,11 @@ CREATE TABLE `tb_tipo_adicional` (
 --
 
 INSERT INTO `tb_tipo_adicional` (`id_tipo_adicional`, `nome_tipo_adicional`, `obrigatorio`, `multipla_escolha`, `max_escolha`, `tipo_ativo`) VALUES
-(1, 'Borda', 1, 0, 1, 1),
-(2, 'Recheio extra', 0, 1, 3, 1),
-(3, 'Cobertura', 1, 0, 1, 1),
-(4, 'Complementos', 0, 1, 5, 1);
+(1, 'Bordas', 0, 0, 0, 1),
+(2, 'Complemento', 0, 1, 0, 1),
+(3, 'Fruta', 0, 0, 0, 1),
+(4, 'Creme', 0, 0, 0, 1),
+(5, 'Recheio Extra', 0, 0, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -728,8 +740,11 @@ CREATE TABLE `tb_tipo_adicional_categoria` (
 --
 
 INSERT INTO `tb_tipo_adicional_categoria` (`id_tipo_adicional_categoria`, `id_categoria`, `id_tipo_adicional`, `ordem`) VALUES
-(1, 1, 1, 0),
-(2, 1, 2, 0);
+(6, 2, 2, 0),
+(7, 2, 4, 0),
+(8, 2, 3, 0),
+(9, 1, 1, 0),
+(10, 1, 5, 0);
 
 -- --------------------------------------------------------
 
@@ -833,6 +848,12 @@ ALTER TABLE `tb_forma_pgto`
 ALTER TABLE `tb_funcionario`
   ADD PRIMARY KEY (`id_funcionario`),
   ADD KEY `id_usuario` (`id_usuario`);
+
+--
+-- Índices de tabela `tb_horario_atendimento`
+--
+ALTER TABLE `tb_horario_atendimento`
+  ADD PRIMARY KEY (`id_horario`);
 
 --
 -- Índices de tabela `tb_item_adicional`
@@ -956,25 +977,25 @@ ALTER TABLE `tb_usuario`
 -- AUTO_INCREMENT de tabela `tb_adicional`
 --
 ALTER TABLE `tb_adicional`
-  MODIFY `id_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de tabela `tb_campanha_brinde`
 --
 ALTER TABLE `tb_campanha_brinde`
-  MODIFY `id_campanha_brinde` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_campanha_brinde` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `tb_campanha_produto_dia`
 --
 ALTER TABLE `tb_campanha_produto_dia`
-  MODIFY `id_campanha` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_campanha` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `tb_categoria`
 --
 ALTER TABLE `tb_categoria`
-  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de tabela `tb_combo_item`
@@ -1019,6 +1040,12 @@ ALTER TABLE `tb_funcionario`
   MODIFY `id_funcionario` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `tb_horario_atendimento`
+--
+ALTER TABLE `tb_horario_atendimento`
+  MODIFY `id_horario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
 -- AUTO_INCREMENT de tabela `tb_item_adicional`
 --
 ALTER TABLE `tb_item_adicional`
@@ -1052,19 +1079,19 @@ ALTER TABLE `tb_pedido_status_log`
 -- AUTO_INCREMENT de tabela `tb_produto`
 --
 ALTER TABLE `tb_produto`
-  MODIFY `id_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto_adicional_incluso`
 --
 ALTER TABLE `tb_produto_adicional_incluso`
-  MODIFY `id_produto_adicional_incluso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_produto_adicional_incluso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto_tipo_adicional`
 --
 ALTER TABLE `tb_produto_tipo_adicional`
-  MODIFY `id_produto_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id_produto_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de tabela `tb_regras_frete`
@@ -1076,13 +1103,13 @@ ALTER TABLE `tb_regras_frete`
 -- AUTO_INCREMENT de tabela `tb_subcategoria`
 --
 ALTER TABLE `tb_subcategoria`
-  MODIFY `id_subcategoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_subcategoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de tabela `tb_subcategoria_categoria`
 --
 ALTER TABLE `tb_subcategoria_categoria`
-  MODIFY `id_subcategoria_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_subcategoria_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT de tabela `tb_subcategoria_produto`
@@ -1094,13 +1121,13 @@ ALTER TABLE `tb_subcategoria_produto`
 -- AUTO_INCREMENT de tabela `tb_tipo_adicional`
 --
 ALTER TABLE `tb_tipo_adicional`
-  MODIFY `id_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de tabela `tb_tipo_adicional_categoria`
 --
 ALTER TABLE `tb_tipo_adicional_categoria`
-  MODIFY `id_tipo_adicional_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_tipo_adicional_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de tabela `tb_usuario`

@@ -64,11 +64,11 @@ foreach ($carrinho as $item) {
     <!-- Endereço de Entrega -->
     <div id="enderecoEntrega" class="mb-6 hidden">
         <?php if ($enderecos): ?>
-            <div class="flex gap-2">
+            <div class="flex gap-2 items-end">
                 <div class="flex-1">
                     <label class="font-semibold block mb-2">Endereço de Entrega</label>
                     <select name="id_endereco" id="selectEndereco"
-                        class="select select-bordered w-full mb-2">
+                        class="select select-bordered w-full">
                         <?php foreach ($enderecos as $end): ?>
                             <option value="<?= $end['id_endereco'] ?>"
                                 data-rua="<?= htmlspecialchars($end['rua']) ?>"
@@ -81,10 +81,11 @@ foreach ($carrinho as $item) {
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <button type="button" class="btnNovoEndereco btn btn-success btn-square">
+                <button type="button" class="btnNovoEndereco btn btn-success btn-square mt-auto">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
+
         <?php else: ?>
             <p class="text-sm text-red-500 mb-2">Nenhum endereço cadastrado.</p>
             <button type="button" class="btnNovoEndereco btn btn-sm btn-outline w-full">

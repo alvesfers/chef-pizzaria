@@ -1,5 +1,8 @@
 <?php
 // crud/crud_pedido.php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 session_start();
 require_once __DIR__ . '/../assets/conexao.php';
@@ -15,55 +18,59 @@ $raw  = file_get_contents('php://input');
 $json = json_decode($raw, true);
 $data = is_array($json) ? $json : $_POST;
 
-// ação principal
+// Ação principal
 $action = $data['action'] ?? $data['acao'] ?? '';
 
-// usuário
+// Usuário
 $u      = $_SESSION['usuario'];
-$idUser = $u['id_usuario'] ?? $u['id'];
+$idUser = $u['id'] ?? $u['id_usuario'] ?? null;
 
-// --- Helper: log de status ---
+// --- Helper: registra log de alterações de status ---
 function registrarLogStatus($pdo, $idPedido, $antigo, $novo, $motivo = null)
 {
     $pdo->prepare("
       INSERT INTO tb_pedido_status_log
-        (id_pedido,status_anterior,status_novo,motivo)
-      VALUES (?,?,?,?)
+        (id_pedido, status_anterior, status_novo, motivo)
+      VALUES (?, ?, ?, ?)
     ")->execute([$idPedido, $antigo, $novo, $motivo]);
 }
 
 // 1) GET_PENDENTES (painel atendimento)
 if ($action === 'get_pendentes') {
     $orders = $pdo->query("
-      SELECT p.*,
-             COALESCE(u.nome_usuario,p.nome_cliente) AS cliente
+      SELECT p.*, COALESCE(u.nome_usuario, p.nome_cliente) AS cliente
         FROM tb_pedido p
         LEFT JOIN tb_usuario u USING(id_usuario)
        ORDER BY p.criado_em DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
-    echo json_encode($orders);
+
+    echo json_encode(['status' => 'ok', 'pedidos' => $orders]);
     exit;
 }
 
 // 2) ATUALIZAR_STATUS (painel atendimento)
 if ($action === 'atualizar_status') {
-    $id    = $data['id_pedido']     ?? null;
-    $novo  = $data['status_pedido'] ?? null;
+    $id   = $data['id_pedido']     ?? null;
+    $novo = $data['status_pedido'] ?? null;
     if (!$id || !$novo) {
         echo json_encode(['status' => 'erro', 'mensagem' => 'Parâmetros inválidos.']);
         exit;
     }
 
-    // lê status antigo em uma única query
+    // captura status antigo
+    $antigo = $pdo
+        ->prepare("SELECT status_pedido FROM tb_pedido WHERE id_pedido = ?")
+        ->execute([$id])
+        ? $pdo->lastInsertId() /* dummy */
+        : null;
     $stmt = $pdo->prepare("SELECT status_pedido FROM tb_pedido WHERE id_pedido = ?");
     $stmt->execute([$id]);
     $antigo = $stmt->fetchColumn();
 
-    // atualiza o novo status
+    // atualiza
     $pdo->prepare("UPDATE tb_pedido SET status_pedido = ? WHERE id_pedido = ?")
         ->execute([$novo, $id]);
 
-    // registra no log
     registrarLogStatus($pdo, $id, $antigo, $novo);
 
     echo json_encode(['status' => 'ok']);
@@ -72,8 +79,8 @@ if ($action === 'atualizar_status') {
 
 // 3) ATRIBUIR_ENTREGADOR (painel atendimento)
 if ($action === 'atribuir_entregador') {
-    $id  = $data['id_pedido']     ?? null;
-    $ent = $data['id_entregador'] ?? null;
+    $id  = $data['id_pedido']      ?? null;
+    $ent = $data['id_entregador']  ?? null;
     if (!$id) {
         echo json_encode(['status' => 'erro', 'mensagem' => 'ID do pedido não informado.']);
         exit;
@@ -92,8 +99,10 @@ if ($action === 'cancelar') {
         echo json_encode(['status' => 'erro', 'mensagem' => 'ID do pedido não informado.']);
         exit;
     }
+
     $q = $pdo->prepare("
-      SELECT status_pedido FROM tb_pedido
+      SELECT status_pedido
+        FROM tb_pedido
        WHERE id_pedido = ? AND id_usuario = ?
     ");
     $q->execute([$id, $idUser]);
@@ -106,25 +115,27 @@ if ($action === 'cancelar') {
         echo json_encode(['status' => 'erro', 'mensagem' => 'Não é possível cancelar.']);
         exit;
     }
+
     registrarLogStatus($pdo, $id, $row['status_pedido'], 'cancelado', $mot);
     $pdo->prepare("
       UPDATE tb_pedido
          SET status_pedido = 'cancelado',
-             cancelado_em   = NOW(),
+             cancelado_em = NOW(),
              motivo_cancelamento = ?
        WHERE id_pedido = ?
     ")->execute([$mot, $id]);
+
     echo json_encode(['status' => 'ok', 'mensagem' => 'Pedido cancelado com sucesso.']);
     exit;
 }
 
-// 5) CRIAR_PEDIDO_BALCAO (JSON do atendimento)
+// 5) CRIAR_PEDIDO_BALCAO (fluxo admin via JSON)
 if ($action === 'criar_pedido_balcao') {
-    $items       = $data['items']             ?? [];
-    $nomeCliente = $data['nome_cliente']      ?? $u['nome_usuario'];
-    $telCliente  = $data['telefone_cliente']  ?? $u['telefone_usuario'];
-    $tipoEntrega = $data['tipo_entrega']      ?? 'retirada';
-    $formaPgto   = $data['forma_pagamento']   ?? '';
+    $items       = $data['items']            ?? [];
+    $nomeCliente = $data['nome_cliente']     ?? $u['nome_usuario'];
+    $telCliente  = $data['telefone_cliente'] ?? $u['telefone_usuario'];
+    $tipoEntrega = $data['tipo_entrega']     ?? 'retirada';
+    $formaPgto   = $data['forma_pagamento']  ?? '';
     $valorFrete  = floatval($data['valor_frete'] ?? 0);
 
     if (empty($items)) {
@@ -132,12 +143,12 @@ if ($action === 'criar_pedido_balcao') {
         exit;
     }
 
-    // monta endereço (retirada ou usando id_endereco)
+    // monta endereço
     $endereco = 'Retirada na loja';
     if ($tipoEntrega === 'entrega' && !empty($data['id_endereco'])) {
         $r = $pdo->prepare("
-          SELECT rua, numero, bairro 
-            FROM tb_endereco 
+          SELECT rua, numero, bairro
+            FROM tb_endereco
            WHERE id_endereco = ? AND id_usuario = ?
         ");
         $r->execute([$data['id_endereco'], $idUser]);
@@ -146,7 +157,7 @@ if ($action === 'criar_pedido_balcao') {
         }
     }
 
-    // soma valor dos produtos
+    // soma produtos
     $valorProd = 0;
     foreach ($items as $it) {
         $valorProd += ($it['price'] ?? 0) * ($it['qty'] ?? 1);
@@ -175,7 +186,7 @@ if ($action === 'criar_pedido_balcao') {
         ]);
         $idPedido = $pdo->lastInsertId();
 
-        // prepara statements para itens, sabores e adicionais
+        // statements para iteração
         $insItem  = $pdo->prepare("
           INSERT INTO tb_item_pedido
             (id_pedido, id_produto, nome_exibicao, quantidade, valor_unitario)
@@ -203,16 +214,16 @@ if ($action === 'criar_pedido_balcao') {
             ]);
             $idItem = $pdo->lastInsertId();
 
-            // insere sabor, se houver
+            // sabores
             if (!empty($it['flavorId'])) {
                 $insSabor->execute([$idItem, $it['flavorId'], 100]);
             }
 
-            // insere adicionais
+            // adicionais
             foreach ($it['addonsIds'] ?? [] as $aid) {
                 $r = $pdo->prepare("
-                  SELECT nome_adicional, valor_adicional 
-                    FROM tb_adicional 
+                  SELECT nome_adicional, valor_adicional
+                    FROM tb_adicional
                    WHERE id_adicional = ?
                 ");
                 $r->execute([$aid]);
@@ -227,17 +238,15 @@ if ($action === 'criar_pedido_balcao') {
             }
         }
 
-        // log inicial
         registrarLogStatus($pdo, $idPedido, null, 'pendente');
-
         $pdo->commit();
         unset($_SESSION['carrinho']);
 
-        // prepara link WhatsApp
-        $wl = $pdo->query("SELECT whatsapp FROM tb_dados_loja LIMIT 1")->fetchColumn();
+        // link WhatsApp
+        $wl      = $pdo->query("SELECT whatsapp FROM tb_dados_loja LIMIT 1")->fetchColumn();
         $telLoja = preg_replace('/\D/', '', $wl);
         $totalG  = $valorProd + $valorFrete;
-        $msg = "Olá! Novo pedido #{$idPedido}\n\n"
+        $msg     = "Olá! Novo pedido #{$idPedido}\n\n"
             . "Cliente: {$nomeCliente}\n"
             . "Telefone: {$telCliente}\n"
             . "Entrega: {$tipoEntrega}\n"
@@ -269,20 +278,20 @@ if ($action === 'confirmar') {
         exit;
     }
 
-    // dados do form
+    // dados
     $tipoEntrega = $data['tipo_entrega']            ?? 'retirada';
     $idEnd       = $data['id_endereco_selecionado'] ?? null;
     $valorFrete  = floatval($data['valor_frete']    ?? 0);
     $formaPgto   = $data['forma_pagamento']         ?? '';
-    $nomeCli     = $u['nome_usuario']              ?? ($u['nome'] ?? '');
-    $telCli      = $u['telefone_usuario']          ?? ($u['telefone'] ?? '');
+    $nomeCli     = $u['nome_usuario']  ?? ($u['nome'] ?? '');
+    $telCli      = $u['telefone_usuario'] ?? ($u['telefone'] ?? '');
 
     // monta endereço
     $endereco = 'Retirada na loja';
     if ($tipoEntrega === 'entrega' && $idEnd) {
         $r = $pdo->prepare("
-          SELECT rua, numero, bairro 
-            FROM tb_endereco 
+          SELECT rua, numero, bairro
+            FROM tb_endereco
            WHERE id_endereco = ? AND id_usuario = ?
         ");
         $r->execute([$idEnd, $idUser]);
@@ -291,7 +300,7 @@ if ($action === 'confirmar') {
         }
     }
 
-    // soma valor dos produtos
+    // soma produtos
     $valorProd = 0;
     foreach ($carrinho as $it) {
         $valorProd += ($it['valor_unitario'] * $it['quantidade']);
@@ -303,9 +312,9 @@ if ($action === 'confirmar') {
         // insere pedido
         $ins = $pdo->prepare("
           INSERT INTO tb_pedido (
-            id_usuario,nome_cliente,telefone_cliente,endereco,
-            tipo_entrega,forma_pagamento,valor_total,valor_frete,
-            status_pedido,criado_em
+            id_usuario, nome_cliente, telefone_cliente, endereco,
+            tipo_entrega, forma_pagamento, valor_total, valor_frete,
+            status_pedido, criado_em
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pendente', NOW())
         ");
         $ins->execute([
@@ -320,35 +329,60 @@ if ($action === 'confirmar') {
         ]);
         $idPedido = $pdo->lastInsertId();
 
-        // insere itens
-        $insItem = $pdo->prepare("
+        // prepara inserções
+        $insItem  = $pdo->prepare("
           INSERT INTO tb_item_pedido
-            (id_pedido,id_produto,nome_exibicao,quantidade,valor_unitario)
-          VALUES (?,?,?,?,?)
+            (id_pedido, id_produto, nome_exibicao, quantidade, valor_unitario)
+          VALUES (?, ?, ?, ?, ?)
         ");
+        $insSabor = $pdo->prepare("
+          INSERT INTO tb_item_pedido_sabor
+            (id_item_pedido, id_produto, proporcao)
+          VALUES (?, ?, ?)
+        ");
+        $insAdd   = $pdo->prepare("
+          INSERT INTO tb_item_adicional
+            (id_item_pedido, id_adicional, nome_adicional, valor_adicional)
+          VALUES (?, ?, ?, ?)
+        ");
+
         foreach ($carrinho as $it) {
-            $nomeExib = $it['nome_exibicao']
-                ?? $it['nome_produto']   // pega o nome_produto do carrinho
-                ?? '';
+            // insere item
             $insItem->execute([
                 $idPedido,
                 $it['id_produto'],
-                $nomeExib,
+                $it['nome_produto'],
                 $it['quantidade'],
                 $it['valor_unitario']
             ]);
+            $idItem = $pdo->lastInsertId();
+
+            // sabores
+            if (!empty($it['sabores'])) {
+                foreach ($it['sabores'] as $sab) {
+                    $insSabor->execute([$idItem, $sab['id'], 100]);
+                }
+            }
+            // adicionais
+            foreach ($it['adicionais'] as $add) {
+                $insAdd->execute([
+                    $idItem,
+                    $add['id'],
+                    $add['nome'],
+                    $add['valor']
+                ]);
+            }
         }
 
-        // log inicial
         registrarLogStatus($pdo, $idPedido, null, 'pendente');
         $pdo->commit();
         unset($_SESSION['carrinho']);
 
-        // monta link WhatsApp
-        $wl = $pdo->query("SELECT whatsapp FROM tb_dados_loja LIMIT 1")->fetchColumn();
+        // link WhatsApp
+        $wl      = $pdo->query("SELECT whatsapp FROM tb_dados_loja LIMIT 1")->fetchColumn();
         $telLoja = preg_replace('/\D/', '', $wl);
         $totalG  = $valorProd + $valorFrete;
-        $msg = "Olá! Novo pedido #{$idPedido}\n\n"
+        $msg     = "Olá! Novo pedido #{$idPedido}\n\n"
             . "Cliente: {$nomeCli}\n"
             . "Telefone: {$telCli}\n"
             . "Entrega: {$tipoEntrega}\n"
@@ -379,10 +413,8 @@ if ($action === 'get_pedido') {
         echo json_encode(['status' => 'erro', 'mensagem' => 'ID não informado.']);
         exit;
     }
-
-    // busca dados do pedido
     $stmt = $pdo->prepare("
-      SELECT p.*, COALESCE(u.nome_usuario,p.nome_cliente) AS cliente
+      SELECT p.*, COALESCE(u.nome_usuario, p.nome_cliente) AS cliente
         FROM tb_pedido p
         LEFT JOIN tb_usuario u USING(id_usuario)
        WHERE p.id_pedido = ?
@@ -397,15 +429,15 @@ if ($action === 'get_pedido') {
     // busca itens, sabores e adicionais
     $itens = [];
     $q1 = $pdo->prepare("
-      SELECT ip.id_item_pedido, ip.nome_exibicao, ip.quantidade, ip.valor_unitario
-        FROM tb_item_pedido ip
-       WHERE ip.id_pedido = ?
+      SELECT id_item_pedido, nome_exibicao, quantidade, valor_unitario
+        FROM tb_item_pedido
+       WHERE id_pedido = ?
     ");
     $q1->execute([$id]);
     foreach ($q1->fetchAll(PDO::FETCH_ASSOC) as $it) {
         // sabores
         $q2 = $pdo->prepare("
-          SELECT ips.proporcao, p.nome_produto AS sabor
+          SELECT p.nome_produto AS sabor
             FROM tb_item_pedido_sabor ips
             JOIN tb_produto p USING(id_produto)
            WHERE ips.id_item_pedido = ?
@@ -415,7 +447,7 @@ if ($action === 'get_pedido') {
 
         // adicionais
         $q3 = $pdo->prepare("
-          SELECT nome_adicional,valor_adicional
+          SELECT nome_adicional, valor_adicional
             FROM tb_item_adicional
            WHERE id_item_pedido = ?
         ");
@@ -424,7 +456,7 @@ if ($action === 'get_pedido') {
 
         $it['sabores']    = $sabores;
         $it['adicionais'] = $adicionais;
-        $itens[] = $it;
+        $itens[]          = $it;
     }
 
     echo json_encode([
@@ -435,6 +467,6 @@ if ($action === 'get_pedido') {
     exit;
 }
 
-// AÇÃO DESCONHECIDA
+// Ação desconhecida
 echo json_encode(['status' => 'erro', 'mensagem' => 'Ação inválida.']);
 exit;

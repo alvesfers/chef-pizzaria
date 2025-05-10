@@ -10,7 +10,6 @@ if (
     exit;
 }
 
-
 // 1) Categorias
 $categorias = $pdo
     ->query("
@@ -20,6 +19,17 @@ $categorias = $pdo
       ORDER BY ordem_exibicao
     ")
     ->fetchAll(PDO::FETCH_ASSOC);
+
+// encontra o ID da categoria “Pizza” (case‐insensitive)
+$pizzaCatId = null;
+foreach ($categorias as $c) {
+    if (mb_strtolower($c['nome_categoria'], 'UTF-8') === 'pizza') {
+        $pizzaCatId = (int)$c['id_categoria'];
+        break;
+    }
+}
+// ID da categoria “Fogazza” (se for fixa no seu BD, senão você pode buscar dinamicamente também)
+$fogazzaCatId = 4;
 
 // 2) Subcategorias (mapeamento categoria → subcategoria)
 $subcats = $pdo
@@ -186,7 +196,8 @@ $adicionais = $pdo
             <div class="mb-4">
                 <label class="block font-medium mb-1">Subcategorias</label>
                 <div id="pf-subcategorias"
-                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-2 max-h-32 overflow-auto border p-2 rounded">
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-2
+                           max-h-32 overflow-auto border p-2 rounded">
                     <!-- preenchido via JS -->
                 </div>
             </div>
@@ -200,7 +211,6 @@ $adicionais = $pdo
                     <input type="number" id="pf-qtd-sabores" name="qtd_sabores"
                         class="input input-bordered w-full" min="1" />
                 </div>
-
                 <div id="pf-tipo-calculo-group" class="hidden">
                     <label class="block font-medium mb-1">Tipo de Cálculo</label>
                     <select id="pf-tipo-calculo" name="tipo_calculo_preco"
@@ -209,7 +219,6 @@ $adicionais = $pdo
                         <option value="media">Média</option>
                     </select>
                 </div>
-
                 <div>
                     <label class="block font-medium mb-1">Controle de Estoque</label>
                     <select id="pf-ctrl-estoque" name="controle_estoque"
@@ -218,13 +227,26 @@ $adicionais = $pdo
                         <option value="0">Não</option>
                     </select>
                 </div>
-
                 <div id="pf-estoque-group" class="hidden">
                     <label class="block font-medium mb-1">Qtd Estoque</label>
                     <input type="number" id="pf-estoque" name="qtd_produto"
                         class="input input-bordered w-full" min="0" />
                 </div>
             </div>
+
+            <!-- Fogazza (só quando pizza) -->
+            <div id="pf-fogazza-section" class="hidden mb-4 p-2 border rounded">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="pf-include-fogazza" />
+                    <span>Incluir opção Fogazza</span>
+                </label>
+                <div id="pf-fogazza-value-section" class="hidden mt-2">
+                    <label class="block font-medium mb-1">Valor Fogazza</label>
+                    <input type="text" id="pf-valor-fogazza" name="valor_fogazza"
+                        class="input input-bordered w-full currency" />
+                </div>
+            </div>
+
 
             <!-- Inclusos -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -236,17 +258,12 @@ $adicionais = $pdo
                         <option value="1">Sim</option>
                     </select>
                 </div>
-                <div>
-                    <label class="block font-medium mb-1">Modo de Inclusos</label>
-                    <select id="pf-incluso_mode" name="incluso_mode"
-                        class="select select-bordered w-full">
-                        <option value="0">Quantidade</option>
-                        <option value="1">Itens</option>
-                    </select>
-                </div>
             </div>
             <div id="pf-inclusos-section" class="hidden space-y-4 p-4 border rounded mb-4">
                 <div id="pf-inclusos-quantidade" class="space-y-2"></div>
+                <a href="#" id="link-definir-itens" class="text-sm text-blue-600 hover:underline">
+                    Deseja definir os itens inclusos?
+                </a>
                 <div id="pf-inclusos-itens" class="space-y-2 hidden"></div>
             </div>
 
@@ -267,6 +284,10 @@ $adicionais = $pdo
 </div>
 
 <script>
+    // disponibiliza no JS os IDs
+    window.__pizzaCatId__ = <?= json_encode($pizzaCatId, JSON_UNESCAPED_UNICODE) ?>;
+    window.__fogazzaCatId__ = <?= json_encode($fogazzaCatId, JSON_UNESCAPED_UNICODE) ?>;
+
     window.__categorias__ = <?= json_encode($categorias, JSON_UNESCAPED_UNICODE) ?>;
     window.__subcategorias__ = <?= json_encode($subcats,     JSON_UNESCAPED_UNICODE) ?>;
     window.__produtos__ = <?= json_encode($produtos,    JSON_UNESCAPED_UNICODE) ?>;

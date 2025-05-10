@@ -4,21 +4,34 @@ include_once 'assets/header.php';
 // 1) categorias ativas
 $categorias = $pdo
     ->query("
-        SELECT *
-          FROM tb_categoria
-         WHERE categoria_ativa = 1
-      ORDER BY ordem_exibicao
-    ")
+    SELECT
+      c.*
+    FROM tb_categoria c
+    JOIN tb_produto   p ON p.id_categoria       = c.id_categoria
+    WHERE
+      c.categoria_ativa = 1
+      AND p.produto_ativo = 1
+      AND p.qtd_produto   <> 0
+    GROUP BY c.id_categoria
+    ORDER BY c.ordem_exibicao
+  ")
     ->fetchAll(PDO::FETCH_ASSOC);
 
 // 2) subcategorias ativas
 $subcategorias = $pdo
     ->query("
-        SELECT *
-          FROM tb_subcategoria
-         WHERE subcategoria_ativa = 1
-      ORDER BY nome_subcategoria
-    ")
+    SELECT
+      s.*
+    FROM tb_subcategoria s
+    JOIN tb_subcategoria_produto sp ON sp.id_subcategoria = s.id_subcategoria
+    JOIN tb_produto             p  ON p.id_produto      = sp.id_produto
+    WHERE
+      s.subcategoria_ativa = 1
+      AND p.produto_ativo   = 1
+      AND p.qtd_produto     <> 0
+    GROUP BY s.id_subcategoria
+    ORDER BY s.nome_subcategoria
+  ")
     ->fetchAll(PDO::FETCH_ASSOC);
 
 // 3) produtos ativos e com estoque disponível (qtd_produto <> 0)
@@ -178,7 +191,7 @@ if (!$aberta): ?>
         </div>
 
         <!-- Filtro de Subcategorias -->
-        <div class="mb-8 overflow-x-auto">
+        <div class="mb-3 overflow-x-auto">
             <div class="flex space-x-2 w-max min-w-full px-2">
                 <button
                     @click="subcategoriaAtiva = 'todas'"
@@ -194,7 +207,11 @@ if (!$aberta): ?>
                 <?php endforeach; ?>
             </div>
         </div>
-
+        <div class="flex justify-center mb-6">
+            <span class="text-sm text-secondary">
+                ( Deslize para o lado para ver as categorias e subcategorias )
+            </span>
+        </div>
         <!-- Lista de produtos -->
         <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             <?php foreach ($produtos as $produto): ?>
@@ -212,41 +229,45 @@ if (!$aberta): ?>
                 $nomeProdMin = strtolower($produto['nome_produto']);
                 ?>
                 <div
-                    class="card bg-base-100 shadow-xl"
+                    class="card bg-base-100 shadow-md rounded-lg overflow-hidden p-2"
                     x-show="
-                      (categoriaAtiva === 'todas' || categoriaAtiva == '<?= $categoriaId ?>')
-                      && (subcategoriaAtiva === 'todas' || '<?= $subList ?>'.split(',').includes(subcategoriaAtiva.toString()))
-                      && '<?= $nomeProdMin ?>'.includes(termoBusca.toLowerCase())
+                        (categoriaAtiva === 'todas' || categoriaAtiva == '<?= $categoriaId ?>')
+                        && (subcategoriaAtiva === 'todas' || '<?= $subList ?>'.split(',').includes(subcategoriaAtiva.toString()))
+                        && '<?= $nomeProdMin ?>'.includes(termoBusca.toLowerCase())
                     ">
-                    <div class="card-body flex flex-col justify-between">
-                        <div>
-                            <h3 class="card-title"><?= htmlspecialchars($produto['nome_produto']) ?></h3>
+                    <div class="card-body flex flex-col p-4 space-y-3">
+                        <!-- Linha com título à esquerda e preço à direita, ambos verticalmente centrados -->
+                        <div class="flex justify-between items-center w-full">
+                            <h3 class="card-title mb-0 leading-tight">
+                                <?= htmlspecialchars($produto['nome_produto']) ?>
+                            </h3>
+                            <span class="text-sm text-gray-600 mb-0 leading-tight">
+                                <?php if ($produto['qtd_sabores'] > 1): ?>
+                                    <b>(valor <?= $produto['tipo_calculo_preco'] ?>)</b>
+                                <?php else: ?>
+                                    R$ <?= number_format($produto['valor_produto'], 2, ',', '.') ?>
+                                <?php endif; ?>
 
-                            <?php if ($produto['qtd_sabores'] > 1): ?>
-                                <p class="text-sm text-gray-500 italic">
-                                    Obs.: O preço será calculado pela
-                                    <strong>
-                                        <?= $produto['tipo_calculo_preco'] === 'media' ? 'média' : 'maior valor' ?>
-                                    </strong>
-                                    .
-                                </p>
-                            <?php else: ?>
-                                <p class="text-sm text-gray-600">
-                                    R$<?= number_format($produto['valor_produto'], 2, ',', '.') ?>
-                                </p>
-                            <?php endif ?>
+                            </span>
                         </div>
-                        <div class="card-actions mt-4">
-                            <a
-                                href="produto.php?id=<?= $produto['id_produto'] ?>"
-                                class="btn btn-primary w-full"
-                                <?= $aberta ? '' : 'disabled' ?>>
-                                Fazer Pedido
-                            </a>
 
-                        </div>
+                        <!-- Descrição com truncamento após 3 linhas (requer plugin line-clamp) -->
+                        <?php if (!empty($produto['descricao_produto'])): ?>
+                            <p class="text-sm text-gray-600 overflow-hidden line-clamp-3">
+                                <?= htmlspecialchars($produto['descricao_produto']) ?>
+                            </p>
+                        <?php endif; ?>
+
+                        <!-- Botão sempre “grudado” na base do card -->
+                        <a
+                            href="produto.php?id=<?= $produto['id_produto'] ?>"
+                            class="btn btn-primary w-full mt-auto"
+                            <?= $aberta ? '' : 'disabled' ?>>
+                            Fazer Pedido
+                        </a>
                     </div>
                 </div>
+
             <?php endforeach; ?>
         </div>
     </div>

@@ -23,6 +23,20 @@
       </div>
     </footer>
 
+    <div
+      id="cookie-banner"
+      class="fixed bottom-0 inset-x-0 bg-base-100 border-t shadow-lg p-4 flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0 z-50 hidden">
+      <p class="text-sm text-gray-700">
+        Usamos cookies para melhorar sua experiência. Ao continuar navegando, você concorda com nossa
+        <a href="/politica-de-privacidade.php" class="underline text-primary">Política de Privacidade</a>.
+      </p>
+      <button
+        id="accept-cookies"
+        class="btn btn-primary btn-sm">
+        Aceitar
+      </button>
+    </div>
+
     <!-- Scripts JS no fim do body -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
@@ -60,6 +74,34 @@
           reverse: true
         });
       });
+
+      (function() {
+        const banner = document.getElementById('cookie-banner');
+        const btn = document.getElementById('accept-cookies');
+
+        // Função para ler um cookie
+        function getCookie(name) {
+          const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+          return v ? v.pop() : null;
+        }
+
+        // Função para criar um cookie
+        function setCookie(name, value, days) {
+          const expires = new Date(Date.now() + days * 864e5).toUTCString();
+          document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+        }
+
+        // Se não aceitou ainda, mostra banner
+        if (!getCookie('cookiesAccepted')) {
+          banner.classList.remove('hidden');
+        }
+
+        // Ao clicar em “Aceitar”
+        btn.addEventListener('click', function() {
+          setCookie('cookiesAccepted', 'true', 365);
+          banner.classList.add('hidden');
+        });
+      })();
     </script>
     </body>
 

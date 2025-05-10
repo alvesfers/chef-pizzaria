@@ -1,6 +1,4 @@
 <?php
-session_start();
-require_once 'assets/conexao.php';
 include_once 'assets/header.php';
 
 // Se não estiver logado, redireciona para o login

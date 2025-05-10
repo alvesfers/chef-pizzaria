@@ -341,7 +341,12 @@
             });
             $('.pf-incluso-itens:checked').each(function () {
                 const tipo = $(this).data('tipo');
-                data.tipo_adicional[tipo] = data.tipo_adicional[tipo] || { adicionais: [] };
+                if (!data.tipo_adicional[tipo]) {
+                    data.tipo_adicional[tipo] = {};
+                }
+                if (!Array.isArray(data.tipo_adicional[tipo].adicionais)) {
+                    data.tipo_adicional[tipo].adicionais = [];
+                }
                 data.tipo_adicional[tipo].adicionais.push(+$(this).val());
             });
 

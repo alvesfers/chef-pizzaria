@@ -236,7 +236,7 @@ foreach ($tiposAdicionais as $tipo) {
                 Total: <span x-text="formatarPreco(total)"></span>
             </div>
 
-            <button type="submit" class="btn btn-primary w-full mt-4">
+            <button type="submit" class="btn btn-primary w-full mt-4" <?= $aberta ? '' : 'disabled' ?>>
                 Adicionar ao Carrinho
             </button>
         </div>

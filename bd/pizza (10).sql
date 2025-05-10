@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Tempo de geração: 10/05/2025 às 00:33
--- Versão do servidor: 10.4.32-MariaDB
--- Versão do PHP: 8.2.12
+-- Host: 127.0.0.1:3306
+-- Tempo de geração: 10/05/2025 às 04:56
+-- Versão do servidor: 10.11.10-MariaDB
+-- Versão do PHP: 7.2.34
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Banco de dados: `pizza`
+-- Banco de dados: `u721796719_pizzaria`
 --
 
 -- --------------------------------------------------------
@@ -108,7 +108,8 @@ CREATE TABLE `tb_categoria` (
 INSERT INTO `tb_categoria` (`id_categoria`, `nome_categoria`, `tem_qtd`, `categoria_ativa`, `ordem_exibicao`) VALUES
 (1, 'Pizzas', 0, 1, 0),
 (2, 'Açais', 0, 1, 0),
-(3, 'Bebidas', 0, 1, 0);
+(3, 'Bebidas', 0, 1, 0),
+(4, 'Fogazzas', 0, 1, 0);
 
 -- --------------------------------------------------------
 
@@ -323,7 +324,12 @@ INSERT INTO `tb_item_adicional` (`id_item_adicional`, `id_item_pedido`, `id_adic
 (4, 5, 4, 'Bacon', 2.00),
 (5, 5, 5, 'Frango', 5.00),
 (6, 5, 6, 'Milho', 1.00),
-(7, 6, 4, 'Bacon', 2.00);
+(7, 6, 4, 'Bacon', 2.00),
+(8, 23, 4, 'Leite Condensado', 1.00),
+(9, 23, 5, 'Paçoca', 1.00),
+(10, 23, 6, 'Confete', 1.00),
+(11, 23, 7, 'Morango', 2.00),
+(12, 23, 10, 'Nuttela', 5.00);
 
 -- --------------------------------------------------------
 
@@ -366,7 +372,9 @@ INSERT INTO `tb_item_pedido` (`id_item_pedido`, `id_pedido`, `id_produto`, `id_c
 (18, 17, 1, NULL, '', 1, 30.00),
 (19, 18, 1, NULL, 'Pizza Mussarela', 1, 36.00),
 (20, 19, NULL, NULL, 'Combo Pizza Mussarela + Dolly 2L', 1, 34.00),
-(21, 20, 1, NULL, 'Pizza Mussarela', 1, 25.00);
+(21, 20, 1, NULL, 'Pizza Mussarela', 1, 25.00),
+(22, 21, 6, NULL, 'Açai - 350 ml', 1, 27.00),
+(23, 22, 6, NULL, 'Açai - 350 ml', 1, 26.00);
 
 -- --------------------------------------------------------
 
@@ -441,7 +449,9 @@ INSERT INTO `tb_pedido` (`id_pedido`, `id_usuario`, `id_funcionario`, `id_entreg
 (17, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 30.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 20:33:32', NULL, NULL),
 (18, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 36.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-07 20:37:01', NULL, NULL),
 (19, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 34.00, 0.00, NULL, 0.00, 'em_preparo', '2025-05-07 20:38:31', NULL, NULL),
-(20, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 25.00, 0.00, NULL, 0.00, 'pendente', '2025-05-08 13:31:45', NULL, NULL);
+(20, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 25.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-08 13:31:45', '2025-05-10 01:43:04', ''),
+(21, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 27.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-10 01:31:31', '2025-05-10 01:42:57', ''),
+(22, 1, NULL, NULL, 'Alves', '11961723132', 'Retirada na loja', 'retirada', '', NULL, 26.00, 0.00, NULL, 0.00, 'cancelado', '2025-05-10 01:41:38', '2025-05-10 01:42:51', '');
 
 -- --------------------------------------------------------
 
@@ -499,7 +509,12 @@ INSERT INTO `tb_pedido_status_log` (`id_log`, `id_pedido`, `status_anterior`, `s
 (34, 14, 'aceito', 'em_preparo', NULL, '2025-05-07 20:59:28'),
 (35, 13, 'aceito', 'em_preparo', NULL, '2025-05-07 20:59:30'),
 (36, 11, 'aceito', 'em_entrega', NULL, '2025-05-07 20:59:34'),
-(37, 20, NULL, 'pendente', NULL, '2025-05-08 10:31:45');
+(37, 20, NULL, 'pendente', NULL, '2025-05-08 10:31:45'),
+(38, 21, NULL, 'pendente', NULL, '2025-05-10 01:31:31'),
+(39, 22, NULL, 'pendente', NULL, '2025-05-10 01:41:38'),
+(40, 22, 'pendente', 'cancelado', '', '2025-05-10 01:42:51'),
+(41, 21, 'pendente', 'cancelado', '', '2025-05-10 01:42:57'),
+(42, 20, 'pendente', 'cancelado', '', '2025-05-10 01:43:04');
 
 -- --------------------------------------------------------
 
@@ -529,10 +544,9 @@ INSERT INTO `tb_produto` (`id_produto`, `id_categoria`, `nome_produto`, `slug_pr
 (1, 1, 'Muçarela', NULL, 30.00, NULL, 'Muçarela', 1, -1, 'maior', 1),
 (2, 1, 'Calabresa', NULL, 30.00, NULL, '', 1, -1, 'maior', 1),
 (4, 3, 'Coca-cola 2 litros', NULL, 15.00, NULL, '', 1, 20, 'maior', 1),
-(5, 3, 'Keep Coller - laranja', NULL, 6.00, NULL, '', 1, 5, 'maior', 1),
-(6, 2, 'Açai - 350 ml', NULL, 20.00, NULL, 'Açai simples, com a opção de escolher até 2 complementos e 1 fruta.', 1, -1, 'maior', 1),
-(7, 2, 'Açai Trufado Nutella - 500 ml', NULL, 30.00, NULL, '', 1, -1, 'maior', 1),
-(8, 1, 'Pizza Dois Sabores', NULL, 10.00, NULL, '', 1, -1, 'media', 2);
+(5, 3, 'Keep Coller - laranja', NULL, 6.00, NULL, '', 0, 5, 'maior', 1),
+(6, 2, 'Açai - 350 ml', NULL, 20.00, NULL, 'Açai simples, com a opção de escolher até 2 complementos e 1 fruta.', 0, -1, 'maior', 1),
+(7, 2, 'Açai Trufado Nutella - 500 ml', NULL, 30.00, NULL, '', 0, -1, 'maior', 1);
 
 -- --------------------------------------------------------
 
@@ -551,10 +565,10 @@ CREATE TABLE `tb_produto_adicional_incluso` (
 --
 
 INSERT INTO `tb_produto_adicional_incluso` (`id_produto_adicional_incluso`, `id_produto`, `id_adicional`) VALUES
-(1, 7, 6),
-(2, 7, 5),
-(3, 7, 7),
-(4, 7, 10);
+(5, 7, 6),
+(6, 7, 5),
+(7, 7, 8),
+(8, 7, 10);
 
 -- --------------------------------------------------------
 
@@ -575,12 +589,16 @@ CREATE TABLE `tb_produto_tipo_adicional` (
 --
 
 INSERT INTO `tb_produto_tipo_adicional` (`id_produto_tipo_adicional`, `id_produto`, `id_tipo_adicional`, `obrigatorio`, `max_inclusos`) VALUES
-(1, 6, 2, 0, 2),
-(2, 6, 3, 0, 1),
-(3, 6, 4, 0, 0),
-(4, 7, 2, 0, 2),
-(5, 7, 3, 0, 1),
-(6, 7, 4, 0, 1);
+(7, 6, 2, 0, 2),
+(8, 6, 3, 0, 1),
+(9, 6, 4, 0, 0),
+(10, 7, 2, 0, 2),
+(11, 7, 3, 0, 1),
+(12, 7, 4, 0, 1),
+(13, 2, 1, 0, 0),
+(14, 2, 5, 0, 0),
+(15, 1, 1, 0, 0),
+(16, 1, 5, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -660,13 +678,19 @@ INSERT INTO `tb_subcategoria_categoria` (`id_subcategoria_categoria`, `id_catego
 (12, 2, 6),
 (13, 2, 9),
 (14, 2, 2),
-(15, 1, 2),
-(16, 1, 3),
-(17, 1, 1),
-(18, 1, 6),
-(19, 1, 4),
-(20, 1, 5),
-(21, 1, 10);
+(22, 1, 2),
+(23, 1, 3),
+(24, 1, 10),
+(25, 1, 1),
+(26, 1, 6),
+(27, 1, 4),
+(28, 1, 5),
+(39, 4, 2),
+(40, 4, 3),
+(41, 4, 10),
+(42, 4, 1),
+(43, 4, 4),
+(44, 4, 5);
 
 -- --------------------------------------------------------
 
@@ -685,16 +709,18 @@ CREATE TABLE `tb_subcategoria_produto` (
 --
 
 INSERT INTO `tb_subcategoria_produto` (`id_subcategoria_produto`, `id_produto`, `id_subcategoria`) VALUES
-(3, 1, 1),
-(4, 1, 6),
-(5, 1, 5),
-(6, 2, 1),
-(7, 2, 6),
 (9, 4, 8),
-(10, 5, 7),
-(11, 7, 2),
-(12, 7, 9),
-(13, 8, 10);
+(23, 6, 2),
+(24, 6, 6),
+(25, 7, 2),
+(26, 7, 3),
+(27, 7, 9),
+(28, 2, 1),
+(29, 2, 6),
+(30, 1, 1),
+(31, 1, 6),
+(32, 1, 5),
+(35, 5, 7);
 
 -- --------------------------------------------------------
 
@@ -743,8 +769,10 @@ INSERT INTO `tb_tipo_adicional_categoria` (`id_tipo_adicional_categoria`, `id_ca
 (6, 2, 2, 0),
 (7, 2, 4, 0),
 (8, 2, 3, 0),
-(9, 1, 1, 0),
-(10, 1, 5, 0);
+(11, 1, 1, 0),
+(12, 1, 5, 0),
+(17, 4, 1, 0),
+(18, 4, 5, 0);
 
 -- --------------------------------------------------------
 
@@ -995,7 +1023,7 @@ ALTER TABLE `tb_campanha_produto_dia`
 -- AUTO_INCREMENT de tabela `tb_categoria`
 --
 ALTER TABLE `tb_categoria`
-  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de tabela `tb_combo_item`
@@ -1049,13 +1077,13 @@ ALTER TABLE `tb_horario_atendimento`
 -- AUTO_INCREMENT de tabela `tb_item_adicional`
 --
 ALTER TABLE `tb_item_adicional`
-  MODIFY `id_item_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_item_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de tabela `tb_item_pedido`
 --
 ALTER TABLE `tb_item_pedido`
-  MODIFY `id_item_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id_item_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT de tabela `tb_item_pedido_sabor`
@@ -1067,31 +1095,31 @@ ALTER TABLE `tb_item_pedido_sabor`
 -- AUTO_INCREMENT de tabela `tb_pedido`
 --
 ALTER TABLE `tb_pedido`
-  MODIFY `id_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT de tabela `tb_pedido_status_log`
 --
 ALTER TABLE `tb_pedido_status_log`
-  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto`
 --
 ALTER TABLE `tb_produto`
-  MODIFY `id_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto_adicional_incluso`
 --
 ALTER TABLE `tb_produto_adicional_incluso`
-  MODIFY `id_produto_adicional_incluso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_produto_adicional_incluso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto_tipo_adicional`
 --
 ALTER TABLE `tb_produto_tipo_adicional`
-  MODIFY `id_produto_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_produto_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT de tabela `tb_regras_frete`
@@ -1109,13 +1137,13 @@ ALTER TABLE `tb_subcategoria`
 -- AUTO_INCREMENT de tabela `tb_subcategoria_categoria`
 --
 ALTER TABLE `tb_subcategoria_categoria`
-  MODIFY `id_subcategoria_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id_subcategoria_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT de tabela `tb_subcategoria_produto`
 --
 ALTER TABLE `tb_subcategoria_produto`
-  MODIFY `id_subcategoria_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id_subcategoria_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT de tabela `tb_tipo_adicional`
@@ -1127,7 +1155,7 @@ ALTER TABLE `tb_tipo_adicional`
 -- AUTO_INCREMENT de tabela `tb_tipo_adicional_categoria`
 --
 ALTER TABLE `tb_tipo_adicional_categoria`
-  MODIFY `id_tipo_adicional_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id_tipo_adicional_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de tabela `tb_usuario`

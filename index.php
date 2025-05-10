@@ -1,28 +1,6 @@
 <?php
 include_once 'assets/header.php';
 
-date_default_timezone_set('America/Sao_Paulo');
-$hora = date('H:i');
-
-// determina se a loja está aberta com base no horário
-$aberta = ($hora >= '18:00' && $hora <= '23:59');
-$statusLoja = $aberta
-    ? 'Estamos aceitando pedidos!'
-    : 'Estamos fechados no momento.';
-
-// mapeia o dia da semana para português
-$diaIngles = strtolower(date('l'));
-$mapaDias = [
-    'monday'    => 'segunda',
-    'tuesday'   => 'terça',
-    'wednesday' => 'quarta',
-    'thursday'  => 'quinta',
-    'friday'    => 'sexta',
-    'saturday'  => 'sábado',
-    'sunday'    => 'domingo',
-];
-$diaSemana = $mapaDias[$diaIngles];
-
 // 1) categorias ativas
 $categorias = $pdo
     ->query("
@@ -77,11 +55,50 @@ $stmtBrinde = $pdo->prepare("
 ");
 $stmtBrinde->execute([$diaSemana]);
 $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
-?>
 
-<section class="py-3 bg-accent text-white text-center mt-4">
+// 6) Carrega todos os horários de atendimento ativos
+$stmtAll = $pdo->query("
+    SELECT dia_semana, hora_abertura, hora_fechamento
+      FROM tb_horario_atendimento
+     WHERE ativo = 1
+     ORDER BY
+       CASE dia_semana
+         WHEN 'segunda' THEN 1
+         WHEN 'terça'   THEN 2
+         WHEN 'quarta'  THEN 3
+         WHEN 'quinta'  THEN 4
+         WHEN 'sexta'   THEN 5
+         WHEN 'sábado'  THEN 6
+         WHEN 'domingo' THEN 7
+       END
+");
+$horarios = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
+
+if (!$aberta): ?>
+    <!-- Modal Loja Fechada -->
+    <div id="modal-loja-fechada"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="bg-white p-6 rounded-lg max-w-sm text-center">
+            <h2 class="text-xl font-bold mb-4">Loja Fechada</h2>
+            <p class="mb-4">No momento estamos fechados. Por favor, volte no horário de atendimento.</p>
+            <button id="btn-modal-close" class="btn">OK</button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('btn-modal-close')
+            .addEventListener('click', () => {
+                document.getElementById('modal-loja-fechada').remove();
+            });
+    </script>
+<?php endif; ?>
+
+<section class="py-3 bg-accent text-white text-center">
     <p class="font-bold text-lg"><?= $statusLoja ?></p>
-    <a class="text-sm underline hover:text-white/90" href="#">Ver horário de atendimento</a>
+    <button
+        id="btn-ver-horario"
+        class="text-sm underline hover:text-white/90 bg-transparent border-none p-0">
+        Ver horário de atendimento
+    </button>
 </section>
 
 <section class="px-4 mt-2" x-data="{ mostrarPromocoes: false }">
@@ -222,7 +239,11 @@ $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
                         <div class="card-actions mt-4">
                             <a
                                 href="produto.php?id=<?= $produto['id_produto'] ?>"
-                                class="btn btn-primary w-full">Fazer Pedido</a>
+                                class="btn btn-primary w-full"
+                                <?= $aberta ? '' : 'disabled' ?>>
+                                Fazer Pedido
+                            </a>
+
                         </div>
                     </div>
                 </div>
@@ -230,5 +251,49 @@ $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 </section>
+
+<!-- Modal Horário -->
+<div
+    id="modal-horario"
+    style="display:none"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white p-6 rounded-lg max-w-md w-full">
+        <h2 class="text-2xl font-bold mb-4">Horário de Atendimento</h2>
+        <table class="table table-zebra w-full mb-4">
+            <thead>
+                <tr>
+                    <th>Dia</th>
+                    <th>Abertura</th>
+                    <th>Fechamento</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($horarios as $h): ?>
+                    <?php $isRegra = ($h['dia_semana'] === $diaRegra); ?>
+                    <tr class="<?= $isRegra ? 'font-bold' : '' ?>">
+                        <td><?= ucfirst($h['dia_semana']) ?></td>
+                        <td><?= date('H:i', strtotime($h['hora_abertura'])) ?></td>
+                        <td><?= date('H:i', strtotime($h['hora_fechamento'])) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+        <button class="btn btn-primary btn-close w-full">Fechar</button>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        $('#btn-ver-horario').on('click', function(e) {
+            e.preventDefault();
+            $('#modal-horario').fadeIn(200);
+        });
+        $('#modal-horario .btn-close, #modal-horario').on('click', function(e) {
+            if (e.target.id === 'modal-horario' || $(this).hasClass('btn-close')) {
+                $('#modal-horario').fadeOut(200);
+            }
+        });
+    });
+</script>
 
 <?php include_once 'assets/footer.php'; ?>

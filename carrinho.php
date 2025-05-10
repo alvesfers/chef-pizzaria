@@ -136,7 +136,7 @@ foreach ($carrinho as $item) {
                 </button>
             </form>
         <?php else: ?>
-            <a href="finalizar_pedido.php" class="btn btn-primary w-full">Finalizar Pedido</a>
+            <a href="finalizar_pedido.php" class="btn btn-primary w-full" <?= $aberta ? '' : 'disabled' ?>>Finalizar Pedido</a>
         <?php endif; ?>
     <?php endif; ?>
 </div>

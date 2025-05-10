@@ -2,12 +2,10 @@
 require_once 'assets/conexao.php';
 session_start();
 
-// usuário logado e permissões
 $usuarioLogado = $_SESSION['usuario'] ?? null;
 $tipoUsuario   = $usuarioLogado['tipo_usuario'] ?? 'cliente';
 $isAdmin       = in_array($tipoUsuario, ['admin', 'funcionario']);
 
-// dados da loja
 $dadosLoja    = $pdo->query("SELECT * FROM tb_dados_loja LIMIT 1")
     ->fetch(PDO::FETCH_ASSOC);
 $nomeLoja     = $dadosLoja['nome_loja'] ?? 'Pizzaria';
@@ -15,6 +13,82 @@ $whatsapp     = preg_replace('/\D/', '', $dadosLoja['whatsapp'] ?? '');
 $instagram    = $dadosLoja['instagram'] ?? null;
 $enderecoLoja = $dadosLoja['endereco_completo'] ?? '';
 $tema         = $dadosLoja['tema'] ?? 'light';
+
+date_default_timezone_set('America/Sao_Paulo');
+
+$mapaDias = [
+    'Monday'    => 'segunda',
+    'Tuesday'   => 'terça',
+    'Wednesday' => 'quarta',
+    'Thursday'  => 'quinta',
+    'Friday'    => 'sexta',
+    'Saturday'  => 'sábado',
+    'Sunday'    => 'domingo',
+];
+
+$diaIngles      = date('l');
+$diaSemana      = $mapaDias[$diaIngles] ?? '';
+
+$stmtHorario = $pdo->prepare("
+    SELECT hora_abertura, hora_fechamento
+      FROM tb_horario_atendimento
+     WHERE dia_semana = ?
+       AND ativo      = 1
+     LIMIT 1
+");
+$stmtHorario->execute([$diaSemana]);
+$horario = $stmtHorario->fetch(PDO::FETCH_ASSOC);
+
+$diaInglesOntem = date('l', strtotime('-1 day'));
+$diaSemanaOntem = $mapaDias[$diaInglesOntem] ?? '';
+$stmtOntem = $pdo->prepare("
+    SELECT hora_abertura, hora_fechamento
+      FROM tb_horario_atendimento
+     WHERE dia_semana = ?
+       AND ativo      = 1
+     LIMIT 1
+");
+$stmtOntem->execute([$diaSemanaOntem]);
+$horarioOntem = $stmtOntem->fetch(PDO::FETCH_ASSOC);
+
+$horaAtual = date('H:i:s');
+
+function estaAberta($abertura, $fechamento, $horaAtual)
+{
+    if ($abertura <= $fechamento) {
+        return $horaAtual >= $abertura && $horaAtual <= $fechamento;
+    } else {
+        return $horaAtual >= $abertura || $horaAtual <= $fechamento;
+    }
+}
+
+$aberturaHoje = $horario
+    ? estaAberta($horario['hora_abertura'], $horario['hora_fechamento'], $horaAtual)
+    : false;
+
+$aberturaOntemOvernight = false;
+if (
+    $horarioOntem
+    && $horarioOntem['hora_abertura'] > $horarioOntem['hora_fechamento']
+    && $horaAtual <= $horarioOntem['hora_fechamento']
+) {
+    $aberturaOntemOvernight = true;
+}
+
+$aberta = $aberturaHoje || $aberturaOntemOvernight;
+
+// Corrigido: atribuição de $diaRegra em todas as situações
+if ($aberturaHoje) {
+    $diaRegra = $diaSemana;        // abriu pelo horário de hoje
+} elseif ($aberturaOntemOvernight) {
+    $diaRegra = $diaSemanaOntem;   // abriu pelo overnight de ontem
+} else {
+    $diaRegra = null;              // está fechada
+}
+
+$statusLoja = $aberta
+    ? "Estamos aceitando pedidos!"
+    : 'Estamos fechados no momento.';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="<?= htmlspecialchars($tema) ?>">

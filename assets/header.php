@@ -12,6 +12,7 @@ $nomeLoja     = $dadosLoja['nome_loja'] ?? 'Pizzaria';
 $whatsapp     = preg_replace('/\D/', '', $dadosLoja['whatsapp'] ?? '');
 $instagram    = $dadosLoja['instagram'] ?? null;
 $enderecoLoja = $dadosLoja['endereco_completo'] ?? '';
+$emailLoja = $dadosLoja['email'] ?? '';
 $tema         = $dadosLoja['tema'] ?? 'light';
 
 date_default_timezone_set('America/Sao_Paulo');

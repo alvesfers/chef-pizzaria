@@ -1,12 +1,10 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// arquivo: crud_carrinho.php
 session_start();
 header('Content-Type: application/json');
 require_once __DIR__ . '/../assets/conexao.php';
 
-// 1) Garante o array de carrinho na sessão
+// Garante o array de carrinho na sessão
 if (!isset($_SESSION['carrinho'])) {
     $_SESSION['carrinho'] = [];
 }
@@ -16,8 +14,7 @@ $action = $input['action'] ?? '';
 
 switch ($action) {
     case 'add':
-        // 2) Recebe e valida dados de entrada
-        $idProduto  = intval($input['id_produto']  ?? 0);
+        $idProduto  = intval($input['id_produto'] ?? 0);
         $quantidade = max(1, intval($input['quantidade'] ?? 1));
 
         $saboresInput    = $input['sabores']    ?? [];
@@ -31,7 +28,6 @@ switch ($action) {
             exit;
         }
 
-        // 3) Busca dados do produto e do horário
         date_default_timezone_set('America/Sao_Paulo');
         $mapaDias = [
             'monday'    => 'segunda',
@@ -42,7 +38,7 @@ switch ($action) {
             'saturday'  => 'sábado',
             'sunday'    => 'domingo',
         ];
-        $diaSemana = $mapaDias[strtolower(date('l'))];
+        $diaSemana = $mapaDias[strtolower(date('l'))] ?? '';
 
         $stmt = $pdo->prepare("
             SELECT nome_produto, valor_produto, tipo_calculo_preco, qtd_sabores
@@ -63,7 +59,7 @@ switch ($action) {
         $qtdSaboresProd = intval($prod['qtd_sabores']);
         $valorBase      = floatval($prod['valor_produto']);
 
-        // 4) Aplica promoção se houver
+        // Aplica promoção se houver
         $stmt = $pdo->prepare("
             SELECT valor_promocional
               FROM tb_campanha_produto_dia
@@ -77,7 +73,7 @@ switch ($action) {
             $valorBase = floatval($promo);
         }
 
-        // 5) Processa sabores (se houver)
+        // Processa sabores
         $saboresFormatados = [];
         if ($qtdSaboresProd > 1) {
             if (count($sabores) !== $qtdSaboresProd) {
@@ -114,16 +110,16 @@ switch ($action) {
             }
         }
 
-        // 6) Limites de inclusos por tipo
+        // Limites de inclusos
         $stmt = $pdo->prepare("
             SELECT id_tipo_adicional, max_inclusos
               FROM tb_produto_tipo_adicional
              WHERE id_produto = ?
         ");
         $stmt->execute([$idProduto]);
-        $tipoLimits = $stmt->fetchAll(PDO::FETCH_KEY_PAIR); // [ tipo_id => max_inclusos ]
+        $tipoLimits = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
-        // 7) Adicionais já inclusos por padrão
+        // Inclusos padrão
         $stmt = $pdo->prepare("
             SELECT id_adicional
               FROM tb_produto_adicional_incluso
@@ -132,7 +128,7 @@ switch ($action) {
         $stmt->execute([$idProduto]);
         $defaultInclusos = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
 
-        // 8) Formata adicionais do pedido e marca extras
+        // Formata adicionais
         $adicionaisFormatados = [];
         $stmtA = $pdo->prepare("
             SELECT nome_adicional, valor_adicional
@@ -143,14 +139,11 @@ switch ($action) {
         foreach ($adicionais as $tipoId => $ids) {
             $tipoId = intval($tipoId);
             $maxInc = intval($tipoLimits[$tipoId] ?? 0);
-
             $ids = array_map('intval', $ids);
-            // clássica: padrões vêm primeiro
             usort($ids, function ($a, $b) use ($defaultInclusos) {
                 return (in_array($b, $defaultInclusos) ? 1 : 0)
                     - (in_array($a, $defaultInclusos) ? 1 : 0);
             });
-
             foreach ($ids as $idx => $aid) {
                 $stmtA->execute([$aid]);
                 $row = $stmtA->fetch(PDO::FETCH_ASSOC);
@@ -165,7 +158,7 @@ switch ($action) {
             }
         }
 
-        // 9) Calcula valor unitário somando só extras
+        // Calcula valor unitário
         $valorUnitario = $valorBase;
         foreach ($adicionaisFormatados as $a) {
             if ($a['extra']) {
@@ -173,14 +166,13 @@ switch ($action) {
             }
         }
 
-        // 10) Gera chave única para agrupar igual no carrinho
+        // Chave única
         $key = md5(
             $idProduto . '-' .
                 implode(',', array_column($saboresFormatados,   'id')) . '-' .
                 implode(',', array_column($adicionaisFormatados, 'id'))
         );
 
-        // 11) Insere ou acumula no carrinho da sessão
         $item = [
             'id_produto'     => $idProduto,
             'nome_produto'   => $nomeProduto,

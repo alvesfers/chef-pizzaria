@@ -1,4 +1,5 @@
 <?php
+// arquivo: carrinho.php
 include_once 'assets/header.php';
 
 $carrinho = $_SESSION['carrinho'] ?? [];
@@ -10,7 +11,7 @@ foreach ($carrinho as $item) {
     $totalGeral += $item['valor_unitario'] * $item['quantidade'];
 }
 ?>
-<div class="container mx-auto px-4 py-10 max-w-3xl" id="cart-container">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10" id="cart-container">
     <h1 class="text-2xl font-bold mb-6">Carrinho de Compras</h1>
 
     <?php if (empty($carrinho)): ?>
@@ -21,15 +22,15 @@ foreach ($carrinho as $item) {
             <?php foreach ($carrinho as $key => $item): ?>
                 <div class="card bg-base-100 shadow p-4 item-card" data-key="<?= htmlspecialchars($key) ?>">
                     <!-- 1) Cabeçalho: Nome + Controles de quantidade -->
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-lg font-semibold"><?= htmlspecialchars($item['nome_produto']) ?></h2>
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                        <h2 class="text-base sm:text-lg font-semibold mb-2 sm:mb-0"><?= htmlspecialchars($item['nome_produto']) ?></h2>
                         <div class="flex items-center space-x-2">
-                            <button class="btn-minus btn btn-xs btn-outline" data-key="<?= htmlspecialchars($key) ?>">−</button>
+                            <button aria-label="Diminuir quantidade" class="btn-minus btn btn-sm btn-outline h-10 w-10 flex items-center justify-center" data-key="<?= htmlspecialchars($key) ?>">−</button>
                             <input type="text"
                                 class="qty-input input input-bordered w-12 text-center"
                                 value="<?= $item['quantidade'] ?>"
                                 readonly>
-                            <button class="btn-plus btn btn-xs btn-outline" data-key="<?= htmlspecialchars($key) ?>">+</button>
+                            <button aria-label="Aumentar quantidade" class="btn-plus btn btn-sm btn-outline h-10 w-10 flex items-center justify-center" data-key="<?= htmlspecialchars($key) ?>">+</button>
                         </div>
                     </div>
 
@@ -37,7 +38,7 @@ foreach ($carrinho as $item) {
                     <?php if (!empty($item['sabores'])): ?>
                         <div class="mt-3">
                             <button type="button"
-                                class="flex justify-between items-center w-full btn btn-ghost p-0 text-left"
+                                class="flex justify-between items-center w-full btn btn-ghost py-2 px-3 text-left"
                                 data-toggle="sabores-<?= htmlspecialchars($key) ?>">
                                 <span>Sabores</span>
                                 <i class="fas fa-chevron-down"></i>
@@ -59,7 +60,7 @@ foreach ($carrinho as $item) {
                     <?php if (!empty($item['adicionais'])): ?>
                         <div class="mt-3">
                             <button type="button"
-                                class="flex justify-between items-center w-full btn btn-ghost p-0 text-left"
+                                class="flex justify-between items-center w-full btn btn-ghost py-2 px-3 text-left"
                                 data-toggle="adicionais-<?= htmlspecialchars($key) ?>">
                                 <span>Adicionais</span>
                                 <i class="fas fa-chevron-down"></i>
@@ -101,7 +102,7 @@ foreach ($carrinho as $item) {
 
                     <!-- 5) Remover (só se qty === 1) -->
                     <div class="mt-2 text-right remove-wrapper" style="display: none;">
-                        <button class="btn-remove btn btn-sm btn-error text-white" data-key="<?= htmlspecialchars($key) ?>">
+                        <button aria-label="Remover item" class="btn-remove btn btn-sm btn-error text-white" data-key="<?= htmlspecialchars($key) ?>">
                             Remover
                         </button>
                     </div>
@@ -119,29 +120,42 @@ foreach ($carrinho as $item) {
                 <div>
                     <label class="block font-medium mb-1">Telefone</label>
                     <input type="tel" name="telefone" id="telefone"
-                        class="input input-bordered w-full"
+                        class="input input-bordered w-full mb-2"
                         placeholder="(11) 91234-5678" required>
                 </div>
                 <div id="divNome" class="hidden">
                     <label class="block font-medium mb-1">Seu nome</label>
                     <input type="text" name="nome" id="nome"
-                        class="input input-bordered w-full">
+                        class="input input-bordered w-full mb-2">
                 </div>
                 <input type="hidden" name="acao" value="cadastrar_e_logar">
                 <input type="hidden" name="senha" id="senha">
                 <input type="hidden" name="tipo_usuario" value="cliente">
                 <input type="hidden" name="redirect" value="finalizar_pedido.php">
-                <button type="submit" id="btnFinalizar" class="btn btn-primary w-full" disabled>
+                <button type="submit" id="btnFinalizar" class="btn btn-primary w-full sm:w-auto" disabled>
                     Finalizar Pedido
                 </button>
             </form>
         <?php else: ?>
-            <a href="finalizar_pedido.php" class="btn btn-primary w-full" <?= $aberta ? '' : 'disabled' ?>>Finalizar Pedido</a>
+            <a href="finalizar_pedido.php" class="btn btn-primary w-full sm:w-auto" <?= $aberta ? '' : 'disabled' ?>>Finalizar Pedido</a>
         <?php endif; ?>
+
+        <!-- Sumário fixo para mobile -->
+        <div class="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+            <div class="flex justify-between mb-2">
+                <span>Total:</span>
+                <span class="font-bold">R$<?= number_format($totalGeral, 2, ',', '.') ?></span>
+            </div>
+            <?php if ($usuario): ?>
+                <a href="finalizar_pedido.php" class="btn btn-primary w-full">Finalizar</a>
+            <?php else: ?>
+                <button class="btn btn-primary w-full" disabled>Finalizar</button>
+            <?php endif; ?>
+        </div>
     <?php endif; ?>
 </div>
 
-<script>
+<script defer>
     $(function() {
         // Recarrega o carrinho inteiro
         function reloadCart() {
@@ -210,10 +224,8 @@ foreach ($carrinho as $item) {
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Sim, remover'
-            }).then(({
-                isConfirmed
-            }) => {
-                if (!isConfirmed) return;
+            }).then(function(result) {
+                if (!result.isConfirmed) return;
                 $.ajax({
                         url: 'crud/crud_carrinho.php',
                         method: 'POST',
@@ -232,27 +244,32 @@ foreach ($carrinho as $item) {
             const tel = $(this).val().replace(/\D/g, '');
             if (tel.length === 11) {
                 $.post('crud/crud_usuario.php', {
-                    acao: 'buscar_por_telefone',
-                    telefone: tel
-                }, res => {
-                    if (res.status === 'ok') {
-                        $('#divNome').removeClass('hidden');
-                        $('#nome').prop('disabled', true).val(res.usuario.nome_usuario);
-                        $('#senha').val('123456');
-                        $('#formLoginCarrinho').attr('action', 'finalizar_pedido.php');
-                        $('#btnFinalizar').prop('disabled', false);
-                    } else if (res.status === 'nao_encontrado') {
-                        $('#divNome').removeClass('hidden');
-                        $('#nome').prop('disabled', false).val('');
-                        $('#senha').val(tel);
-                        $('#formLoginCarrinho').attr('action', 'crud/crud_usuario.php');
-                        $('#btnFinalizar').prop('disabled', false);
-                        Swal.fire('Novo usuário!', 'Sua senha será seu telefone (com DDD).', 'info');
-                    } else {
+                        acao: 'buscar_por_telefone',
+                        telefone: tel
+                    }, 'json')
+                    .done(res => {
+                        if (res.status === 'ok') {
+                            $('#divNome').removeClass('hidden');
+                            $('#nome').prop('disabled', true).val(res.usuario.nome_usuario);
+                            $('#senha').val('123456');
+                            $('#formLoginCarrinho').attr('action', 'finalizar_pedido.php');
+                            $('#btnFinalizar').prop('disabled', false);
+                        } else if (res.status === 'nao_encontrado') {
+                            $('#divNome').removeClass('hidden');
+                            $('#nome').prop('disabled', false).val('');
+                            $('#senha').val(tel);
+                            $('#formLoginCarrinho').attr('action', 'crud/crud_usuario.php');
+                            $('#btnFinalizar').prop('disabled', false);
+                            Swal.fire('Novo usuário!', 'Sua senha será seu telefone (com DDD).', 'info');
+                        } else {
+                            $('#btnFinalizar').prop('disabled', true);
+                            $('#divNome').addClass('hidden');
+                        }
+                    })
+                    .fail(() => {
                         $('#btnFinalizar').prop('disabled', true);
                         $('#divNome').addClass('hidden');
-                    }
-                }, 'json');
+                    });
             } else {
                 $('#btnFinalizar').prop('disabled', true);
                 $('#divNome').addClass('hidden');
@@ -266,13 +283,15 @@ foreach ($carrinho as $item) {
                 action = form.attr('action'),
                 data = form.serialize();
             if (action === 'crud/crud_usuario.php') {
-                $.post(action, data, res => {
-                    if (res.status === 'ok') {
-                        window.location = res.redirect || 'finalizar_pedido.php';
-                    } else {
-                        Swal.fire('Erro', res.mensagem, 'error');
-                    }
-                }, 'json').fail(() => Swal.fire('Erro', 'Erro na comunicação.', 'error'));
+                $.post(action, data, 'json')
+                    .done(res => {
+                        if (res.status === 'ok') {
+                            window.location = res.redirect || 'finalizar_pedido.php';
+                        } else {
+                            Swal.fire('Erro', res.mensagem, 'error');
+                        }
+                    })
+                    .fail(() => Swal.fire('Erro', 'Erro na comunicação.', 'error'));
             } else {
                 this.submit();
             }

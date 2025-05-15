@@ -1,4 +1,4 @@
-// carrinho.js
+// arquivo: carrinho.js
 (function ($) {
     const products = window.__produtos__;
     const flavorsById = window.__flavorsAssoc__;
@@ -18,7 +18,7 @@
         });
 
         const html = lista.map(p => `
-        <div class="card product-card border border-gray-200 hover:shadow-lg transition-all cursor-pointer" data-id="${p.id_produto}">
+        <div class="card product-card border border-gray-200 hover:shadow-lg transition-all cursor-pointer p-4 rounded" data-id="${p.id_produto}">
           <div class="card-body">
             <h4>${p.nome}</h4>
             <p>R$ ${parseFloat(p.valor_produto).toFixed(2)}</p>
@@ -29,26 +29,31 @@
         $('#product-list').html(html);
     }
 
+    // Debounce para busca
+    let debounceTimeout;
+    $('#filter-search').on('input', function () {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(filterProducts, 200);
+    });
+
     function renderCart() {
         let total = 0;
         const html = cart.map((item, idx) => {
             total += item.qty * item.price;
-            // sabor
             const saborHtml = item.flavorId
                 ? `<div class="ml-4 text-sm">Sabor: ${(flavorsById[item.prod.id_produto] || [])
                     .find(s => s.id_produto == item.flavorId).nome}</div>`
                 : '';
-            // adicionais
             const addsHtml = item.addonsIds.length
                 ? `<ul class="ml-4 list-disc list-inside text-sm">${item.addonsIds.map(aid => {
                     const ad = (addonsById[item.prod.id_produto] || []).find(x => x.id_adicional == aid);
                     return `<li>+ ${ad.nome} — R$${parseFloat(ad.preco).toFixed(2)}</li>`;
-                }).join('')
-                }</ul>`
+                }).join('')}</ul>`
                 : '';
+
             return `
           <div class="relative border p-2 mb-2 rounded" data-index="${idx}">
-            <button type="button" class="remove-cart-item btn btn-xs btn-error absolute top-1 right-1" title="Remover item">×</button>
+            <button type="button" aria-label="Remover item" class="remove-cart-item btn btn-xs btn-error absolute top-1 right-1">×</button>
             <div>${item.qty}× ${item.prod.nome} — R$${item.price.toFixed(2)}</div>
             ${saborHtml}
             ${addsHtml}
@@ -81,10 +86,9 @@
             $(document).trigger('produto:abrirDetalhe', prod);
         });
 
-    $('#filter-category,#filter-subcategory').change(filterProducts);
-    $('#filter-search').on('input', filterProducts);
+    $('#filter-category, #filter-subcategory').change(filterProducts);
 
     // inicial
-    $(filterProducts);
+    filterProducts();
 
 })(jQuery);

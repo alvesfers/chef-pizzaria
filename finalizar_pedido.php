@@ -20,18 +20,19 @@ if (empty($carrinho)) {
 }
 
 $dadosLoja     = $pdo->query("SELECT * FROM tb_dados_loja LIMIT 1")->fetch(PDO::FETCH_ASSOC);
-$enderecoLoja  = trim($dadosLoja['endereco_completo']);
 $precoBase     = floatval($dadosLoja['preco_base']);
 $precoKm       = floatval($dadosLoja['preco_km']);
+$enderecoLoja  = trim($dadosLoja['endereco_completo']);
 $googleMapsKey = $dadosLoja['google'];
 $limiteEntrega = isset($dadosLoja['limite_entrega']) ? floatval($dadosLoja['limite_entrega']) : null;
+$regrasFrete = $pdo->query("SELECT * FROM tb_regras_frete WHERE ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
 
 $stmt = $pdo->prepare("SELECT * FROM tb_endereco WHERE id_usuario = ?");
 $stmt->execute([$idUsuario]);
 $enderecos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $formasPgto  = $pdo->query("SELECT * FROM tb_forma_pgto WHERE pagamento_ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
-$regrasFrete = $pdo->query("SELECT * FROM tb_regras_frete WHERE ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
+
 
 $totalProdutos = 0;
 foreach ($carrinho as $item) {
@@ -84,6 +85,7 @@ foreach ($carrinho as $item) {
                 Cadastrar endereço
             </button>
         <?php endif; ?>
+
 
         <!-- Formulário para novo endereço -->
         <div id="formNovoEndereco" class="hidden mt-6 space-y-4">
@@ -250,8 +252,16 @@ foreach ($carrinho as $item) {
         $('.btnNovoEndereco').click(function() {
             $('#formNovoEndereco').toggleClass('hidden');
             const aberto = !$('#formNovoEndereco').hasClass('hidden');
-            $(this).text(aberto ? 'Cancelar' : 'Cadastrar endereço');
+
+            // Se for botão com ícone
+            if ($(this).hasClass('btn-square')) {
+                $(this).find('i').removeClass().addClass(aberto ? 'fa-regular fa-circle-up' : 'fas fa-plus');
+            } else {
+                // Se for botão com texto
+                $(this).text(aberto ? 'Fechar' : 'Cadastrar endereço');
+            }
         });
+
 
         $('#btnSalvarEndereco').click(() => {
             const dados = {

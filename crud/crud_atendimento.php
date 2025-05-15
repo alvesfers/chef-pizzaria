@@ -128,7 +128,7 @@ function listarPedidos($pdo)
         SELECT p.id_pedido, p.nome_cliente AS cliente, p.telefone_cliente, p.status_pedido,
                p.valor_total, p.criado_em, p.id_entregador
         FROM tb_pedido p
-        WHERE p.origem = 'balcao'
+        WHERE p.origem != 'balcao'
         ORDER BY p.criado_em DESC
     ");
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -137,11 +137,16 @@ function listarPedidos($pdo)
 
 function criarPedidoBalcao($pdo, $input)
 {
-    $nome   = trim($input['nome_cliente'] ?? '');
-    $fone   = preg_replace('/\D/', '', $input['telefone_cliente'] ?? '');
-    $itens  = $input['items'] ?? [];
-    $entrega = $input['tipo_entrega'] ?? 'retirada';
-    $pgto    = $input['forma_pagamento'] ?? null;
+    $nome           = trim($input['nome_cliente'] ?? '');
+    $fone           = preg_replace('/\D/', '', $input['telefone_cliente'] ?? '');
+    $id_funcionario = $_SESSION['usuario']['id'] ?? null;
+    $id_usuario     = $input['id_usuario'] ?? null;
+    $itens          = $input['items'] ?? [];
+    $entrega        = $input['tipo_entrega'] ?? 'retirada';
+    $pgto           = $input['forma_pagamento'] ?? null;
+    $enderecoTexto  = $entrega === 'entrega' ? trim($input['endereco'] ?? '') : null;
+    $frete          = floatval($input['valor_frete'] ?? 0);
+    $desconto       = floatval($input['desconto'] ?? 0);
 
     if (!$nome || !$fone || !is_array($itens) || empty($itens)) {
         echo json_encode(['status' => 'erro', 'mensagem' => 'Dados incompletos']);
@@ -151,23 +156,38 @@ function criarPedidoBalcao($pdo, $input)
     try {
         $pdo->beginTransaction();
 
-        // valor total
-        $valorTotal = 0;
+        // Calcular subtotal
+        $subtotal = 0;
         foreach ($itens as $item) {
-            $valorTotal += $item['qty'] * $item['price'];
+            $subtotal += $item['qty'] * $item['price'];
         }
 
-        // inserir pedido
+        $valorTotal = max(0, $subtotal + $frete - $desconto);
+
+        // Inserir pedido
         $stmt = $pdo->prepare("
             INSERT INTO tb_pedido
-                (nome_cliente, telefone_cliente, valor_total, tipo_entrega, forma_pagamento, status_pedido, origem, criado_em)
+                (id_usuario, id_funcionario, endereco, nome_cliente, telefone_cliente,
+                 valor_total, tipo_entrega, forma_pagamento, status_pedido, origem,
+                 valor_frete, desconto_aplicado, criado_em)
             VALUES
-                (?, ?, ?, ?, ?, 'aceito', 'balcao', NOW())
+                (?, ?, ?, ?, ?, ?, ?, 'aceito', 'balcao', ?, ?, ?, NOW())
         ");
-        $stmt->execute([$nome, $fone, $valorTotal, $entrega, $pgto]);
+        $stmt->execute([
+            $id_usuario ?: null,
+            $id_funcionario ?: null,
+            $enderecoTexto ?: null,
+            $nome,
+            $fone,
+            $valorTotal,
+            $entrega,
+            $pgto,
+            $frete,
+            $desconto
+        ]);
         $idPedido = $pdo->lastInsertId();
 
-        // inserir itens
+        // Itens do pedido
         $stmtItem = $pdo->prepare("
             INSERT INTO tb_item_pedido (id_pedido, id_produto, nome_exibicao, quantidade, valor_unitario)
             VALUES (?, ?, ?, ?, ?)
@@ -191,14 +211,12 @@ function criarPedidoBalcao($pdo, $input)
             ]);
             $idItem = $pdo->lastInsertId();
 
-            // sabores
             if (!empty($item['flavors'])) {
                 foreach ($item['flavors'] as $sabor) {
                     $stmtSabor->execute([$idItem, $sabor['id']]);
                 }
             }
 
-            // adicionais
             if (!empty($item['addons'])) {
                 foreach ($item['addons'] as $add) {
                     $stmtAdd->execute([$idItem, $add['nome'], $add['valor']]);
@@ -235,7 +253,7 @@ switch ($action) {
     case 'get_pedidos':
         listarPedidos($pdo);
         break;
-        
+
     case 'criar_pedido_balcao':
         criarPedidoBalcao($pdo, $input);
         break;

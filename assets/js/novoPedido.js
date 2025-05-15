@@ -95,12 +95,51 @@
         }
 
         function abrirCheckout() {
-            $('#checkout-phone').val($('#telefone').val());
-            $('#checkout-name').val(name || '');
-            $('#checkoout-id-cliente').val(deskUserId);
+            const phone = $('#telefone').val();
+            const name = $('#desk-name').val().trim();
+
+            $('#checkout-phone').val(phone);
+            $('#checkout-name').val(name);
+            $('#checkout-id-cliente').val(deskUserId);
+
+            // Subtotal do carrinho
+            const subtotal = window.__cartModule__.getItems()
+                .reduce((acc, item) => acc + item.qty * item.price, 0);
+
+            $('#checkout-total').text(`R$ ${subtotal.toFixed(2).replace('.', ',')}`);
+
+            // Limpa lista de endereços e oculta formulário novo
+            $('#selectEnderecoCheckout').html('<option>Carregando...</option>');
+            $('#formNovoEnderecoCheckout').addClass('hidden');
+
+            // Busca endereços do cliente
+            $.post('crud/crud_endereco.php', {
+                acao: 'listar',
+                id_usuario: deskUserId
+            }, function (res) {
+                if (res.status === 'ok' && Array.isArray(res.enderecos)) {
+                    if (res.enderecos.length) {
+                        const options = res.enderecos.map(e => `
+                    <option value="${e.id_endereco}"
+                            data-rua="${e.rua}"
+                            data-numero="${e.numero}"
+                            data-bairro="${e.bairro}"
+                            data-cep="${e.cep}">
+                        ${e.rua}, ${e.numero} — ${e.bairro}
+                    </option>
+                `).join('');
+                        $('#selectEnderecoCheckout').html('<option value="">Selecione um endereço</option>' + options);
+                    } else {
+                        $('#selectEnderecoCheckout').html('<option value="">Nenhum endereço encontrado</option>');
+                    }
+                } else {
+                    $('#selectEnderecoCheckout').html('<option value="">Erro ao carregar endereços</option>');
+                }
+            }, 'json');
+
             $('#modal-checkout').prop('checked', true);
         }
-
+        
         if (!deskUserId) {
             if (!name) return Swal.fire('Erro', 'Informe o nome do cliente', 'warning');
             $.post('crud/teste.php', JSON.stringify({ action: 'create_user', phone, name }), res => {

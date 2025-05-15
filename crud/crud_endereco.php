@@ -13,7 +13,7 @@ if (!isset($_SESSION['usuario'])) {
     exit;
 }
 
-$idUsuario = $_SESSION['usuario']['id'];
+$idUsuario = $_POST['id_usuario'] ?? $_SESSION['usuario']['id'];
 
 // Verificar ação
 $acao = $_POST['acao'] ?? null;
@@ -31,12 +31,17 @@ switch ($acao) {
         excluir($pdo, $idUsuario);
         break;
 
+    case 'listar':
+        listar($pdo);
+        break;
+
     default:
         echo json_encode(['status' => 'erro', 'mensagem' => 'Ação inválida.']);
         break;
 }
 
-function cadastrar($pdo, $idUsuario) {
+function cadastrar($pdo, $idUsuario)
+{
     $cep                = preg_replace('/\D/', '', $_POST['cep'] ?? '');
     $rua                = trim($_POST['rua'] ?? '');
     $numero             = trim($_POST['numero'] ?? '');
@@ -83,7 +88,8 @@ function cadastrar($pdo, $idUsuario) {
     exit;
 }
 
-function editar($pdo, $idUsuario) {
+function editar($pdo, $idUsuario)
+{
     $idEndereco         = $_POST['id_endereco'] ?? null;
     $cep                = preg_replace('/\D/', '', $_POST['cep'] ?? '');
     $rua                = trim($_POST['rua'] ?? '');
@@ -117,7 +123,8 @@ function editar($pdo, $idUsuario) {
     exit;
 }
 
-function excluir($pdo, $idUsuario) {
+function excluir($pdo, $idUsuario)
+{
     $idEndereco = $_POST['id_endereco'] ?? null;
 
     if (!$idEndereco) {
@@ -129,5 +136,27 @@ function excluir($pdo, $idUsuario) {
     $stmt->execute([$idEndereco, $idUsuario]);
 
     echo json_encode(['status' => 'ok', 'mensagem' => 'Endereço desativado com sucesso.']);
+    exit;
+}
+
+function listar($pdo)
+{
+    $idUsuario = $_POST['id_usuario'];
+
+    if (!$idUsuario) {
+        echo json_encode(['status' => 'erro', 'mensagem' => 'ID do usuário não informado.']);
+        exit;
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT id_endereco, rua, numero, bairro, cep, apelido
+        FROM tb_endereco
+        WHERE id_usuario = ? AND endereco_ativo = 1
+        ORDER BY endereco_principal DESC, criado_em DESC
+    ");
+    $stmt->execute([$idUsuario]);
+    $enderecos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode(['status' => 'ok', 'enderecos' => $enderecos]);
     exit;
 }

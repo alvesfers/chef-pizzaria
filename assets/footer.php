@@ -70,7 +70,7 @@
 
         $('#telefone').mask('(00) 00000-0000');
         $('#cep').mask('00000-000');
-        $('#pf-valor.currency').mask('#.##0,00', {
+        $('#pf-valor, .currency').mask('#.##0,00', {
           reverse: true
         });
       });

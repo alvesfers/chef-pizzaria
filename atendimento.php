@@ -11,6 +11,7 @@ $precoKm       = floatval($dadosLoja['preco_km']);
 $enderecoLoja  = trim($dadosLoja['endereco_completo']);
 $googleMapsKey = $dadosLoja['google'];
 $limiteEntrega = isset($dadosLoja['limite_entrega']) ? floatval($dadosLoja['limite_entrega']) : null;
+$regrasFrete = $pdo->query("SELECT * FROM tb_regras_frete WHERE ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
 
 $entregadores = $pdo->query("
     SELECT f.id_funcionario,u.nome_usuario AS nome
@@ -193,9 +194,10 @@ $tiposEntrega = ['retirada' => 'Retirada na loja', 'entrega' => 'Entrega'];
     <!-- Modal Checkout -->
     <input type="checkbox" id="modal-checkout" class="modal-toggle" />
     <div class="modal modal-bottom sm:modal-middle">
-        <div class="modal-box w-full max-w-md">
-            <h3 class="font-bold text-lg mb-4">Finalizar Pedido</h3>
-            <form id="checkout-form">
+        <form id="checkout-form">
+            <div class="modal-box w-full max-w-md">
+                <h3 class="font-bold text-lg mb-4">Finalizar Pedido</h3>
+
                 <div class="form-control mb-2">
                     <label class="label"><span class="label-text">Nome do Cliente</span></label>
                     <input type="text" id="checkout-name" placeholder="Nome" class="input input-bordered" required />
@@ -213,18 +215,54 @@ $tiposEntrega = ['retirada' => 'Retirada na loja', 'entrega' => 'Entrega'];
                     </div>
                 </div>
                 <div id="blocoEnderecoCheckout" class="hidden space-y-4 mt-3">
-                    <select id="selectEnderecoCheckout" class="select select-bordered w-full"></select>
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="block font-medium mb-1">Selecione o endereço</label>
+                            <select id="selectEnderecoCheckout" class="select select-bordered w-full"></select>
+                        </div>
+                        <button type="button" id="btnNovoEnderecoCheckout" class="btn btn-primary btn-square mt-auto">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
 
-                    <button type="button" class="btn btn-sm btn-success w-full" id="btnNovoEnderecoCheckout">
-                        Cadastrar Novo Endereço
-                    </button>
-
-                    <div id="formNovoEnderecoCheckout" class="hidden space-y-2">
-                        <!-- CEP, Rua, Número, Bairro etc. -->
-                        <!-- Mesmo padrão do finalizar_pedido -->
+                    <div id="formNovoEnderecoCheckout" class="hidden mt-6 space-y-4">
+                        <div class="flex gap-2">
+                            <div class="flex-1">
+                                <label class="block font-medium mb-1">CEP</label>
+                                <input type="text" id="cep" class="input input-bordered w-full" placeholder="00000-000">
+                            </div>
+                            <button type="button" id="btnBuscarCep" class="btn btn-primary btn-square mt-auto">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="w-2/3">
+                                <label class="block font-medium mb-1">Rua</label>
+                                <input type="text" id="rua" class="input input-bordered w-full">
+                            </div>
+                            <div class="w-1/3">
+                                <label class="block font-medium mb-1">Número</label>
+                                <input type="text" id="numero" class="input input-bordered w-full">
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="w-1/2">
+                                <label class="block font-medium mb-1">Bairro</label>
+                                <input type="text" id="bairro" class="input input-bordered w-full">
+                            </div>
+                            <div class="w-1/2">
+                                <label class="block font-medium mb-1">Apelido</label>
+                                <input type="text" id="apelido" class="input input-bordered w-full" placeholder="Casa, Trabalho…">
+                            </div>
+                        </div>
+                        <button type="button" id="btnSalvarEndereco" class="btn btn-success w-full">Salvar Endereço</button>
                     </div>
                 </div>
 
+                <div class="form-control mb-4">
+                    <label class="block font-medium mb-1">Desconto (R$)</label>
+                    <input type="text" id="desconto" class="input input-bordered w-full currency" placeholder="R$ 00,00">
+                </div>
                 <div class="form-control mb-4">
                     <label class="label"><span class="label-text">Forma de Pagamento</span></label>
                     <select id="checkout-payment" class="select select-bordered" required>
@@ -233,13 +271,21 @@ $tiposEntrega = ['retirada' => 'Retirada na loja', 'entrega' => 'Entrega'];
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <input type="hidden" id="checkoout-id-cliente" name="checkoout-id-cliente">
-                <button type="submit" class="btn btn-success w-full">Confirmar</button>
-            </form>
-            <div class="modal-action">
-                <label for="modal-checkout" class="btn">Cancelar</label>
+                <input type="hidden" id="checkout-id-cliente">
+                <input type="hidden" id="checkout-id-endereco">
+                <input type="hidden" id="checkout-valor-frete">
+                <input type="hidden" id="checkout-distancia">
+                <input type="hidden" id="checkout-tipo-entrega" value="retirada">
+
+
+                <div class="modal-action">
+                    <div class="text-lg font-bold text-left md:text-left flex-1">
+                        Total: <span id="checkout-total" class="mr-2">R$ 0,00</span></div>
+                    <label for="modal-checkout" class="btn">Cancelar</label>
+                    <button type="submit" class="btn btn-success">Confirmar</button>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 
     <!-- Modal Detalhe do Pedido -->
@@ -269,6 +315,7 @@ $tiposEntrega = ['retirada' => 'Retirada na loja', 'entrega' => 'Entrega'];
     window.__enderecoLoja__ = <?= json_encode($enderecoLoja, JSON_UNESCAPED_UNICODE) ?>;
     window.__googleMapsKey__ = <?= json_encode($googleMapsKey, JSON_UNESCAPED_UNICODE) ?>;
     window.__limiteEntrega__ = <?= $limiteEntrega !== null ? $limiteEntrega : 'null' ?>;
+    window.__regrasFrete__ = <?= json_encode($regrasFrete) ?>;
 </script>
 
 

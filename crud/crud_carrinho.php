@@ -196,13 +196,24 @@ switch ($action) {
 
     case 'update':
         $key = $input['key'] ?? '';
-        $qty = max(1, intval($input['quantidade'] ?? 1));
-        if (isset($_SESSION['carrinho'][$key])) {
-            $_SESSION['carrinho'][$key]['quantidade'] = $qty;
-            echo json_encode(['status' => 'ok', 'carrinho' => $_SESSION['carrinho']]);
-        } else {
+        $delta = intval($input['quantidade'] ?? 0);
+
+        if (!isset($_SESSION['carrinho'][$key])) {
             echo json_encode(['status' => 'erro', 'mensagem' => 'Item não encontrado.']);
+            exit;
         }
+
+        $atual = $_SESSION['carrinho'][$key]['quantidade'];
+
+        if ($delta === 999) {
+            $_SESSION['carrinho'][$key]['quantidade']++;
+        } elseif ($delta === -1) {
+            $_SESSION['carrinho'][$key]['quantidade'] = max(1, $atual - 1);
+        } elseif ($delta >= 1) {
+            $_SESSION['carrinho'][$key]['quantidade'] = $delta;
+        }
+
+        echo json_encode(['status' => 'ok', 'carrinho' => $_SESSION['carrinho']]);
         exit;
 
     case 'remove':

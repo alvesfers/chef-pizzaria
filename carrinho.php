@@ -1,232 +1,229 @@
 <?php
-// arquivo: carrinho.php
 include_once 'assets/header.php';
 
 $carrinho = $_SESSION['carrinho'] ?? [];
-$usuario  = $_SESSION['usuario']  ?? null;
+$usuario  = $_SESSION['usuario'] ?? null;
 
-// Calcula total geral
+// Calcula total
 $totalGeral = 0;
 foreach ($carrinho as $item) {
     $totalGeral += $item['valor_unitario'] * $item['quantidade'];
 }
 ?>
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10" id="cart-container">
-    <h1 class="text-2xl font-bold mb-6">Carrinho de Compras</h1>
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-center w-full sm:text-left sm:w-auto">Carrinho de Compras</h1>
+        <?php if (!empty($carrinho)): ?>
+            <button id="btnLimparCarrinho" class="btn btn-sm btn-warning ml-4">
+                <i class="fas fa-trash-alt mr-1"></i> Limpar
+            </button>
+        <?php endif; ?>
+    </div>
 
     <?php if (empty($carrinho)): ?>
         <p class="text-gray-500">Seu carrinho está vazio.</p>
         <a href="index.php" class="btn btn-accent mt-4">Voltar ao cardápio</a>
     <?php else: ?>
-        <div id="cart-items" class="space-y-6 mb-8">
+        <div class="space-y-6 mb-8">
             <?php foreach ($carrinho as $key => $item): ?>
-                <div class="card bg-base-100 shadow p-4 item-card" data-key="<?= htmlspecialchars($key) ?>">
-                    <!-- 1) Cabeçalho: Nome + Controles de quantidade -->
-                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-                        <h2 class="text-base sm:text-lg font-semibold mb-2 sm:mb-0"><?= htmlspecialchars($item['nome_produto']) ?></h2>
+                <div class="card bg-base-100 shadow p-4 relative" data-key="<?= $key ?>">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-semibold"><?= htmlspecialchars($item['nome_produto']) ?></h2>
+                        </div>
                         <div class="flex items-center space-x-2">
-                            <button aria-label="Diminuir quantidade" class="btn-minus btn btn-sm btn-outline h-10 w-10 flex items-center justify-center" data-key="<?= htmlspecialchars($key) ?>">−</button>
-                            <input type="text"
-                                class="qty-input input input-bordered w-12 text-center"
-                                value="<?= $item['quantidade'] ?>"
-                                readonly>
-                            <button aria-label="Aumentar quantidade" class="btn-plus btn btn-sm btn-outline h-10 w-10 flex items-center justify-center" data-key="<?= htmlspecialchars($key) ?>">+</button>
+                            <?php if ($item['quantidade'] == 1): ?>
+                                <button class="btn-remove btn btn-sm btn-outline" data-key="<?= $key ?>"><i class="fas fa-trash"></i></button>
+                            <?php else: ?>
+                                <button class="btn-minus btn btn-sm btn-outline" data-key="<?= $key ?>"><i class="fas fa-minus"></i></button>
+                            <?php endif; ?>
+                            <input type="text" value="<?= $item['quantidade'] ?>" readonly class="input input-bordered w-12 text-center">
+                            <button class="btn-plus btn btn-sm btn-outline" data-key="<?= $key ?>"><i class="fas fa-plus"></i></button>
                         </div>
                     </div>
 
-                    <!-- 2) Dropdown de Sabores -->
+                    <!-- Sabores -->
                     <?php if (!empty($item['sabores'])): ?>
-                        <div class="mt-3">
-                            <button type="button"
-                                class="flex justify-between items-center w-full btn btn-ghost py-2 px-3 text-left"
-                                data-toggle="sabores-<?= htmlspecialchars($key) ?>">
-                                <span>Sabores</span>
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div id="sabores-<?= htmlspecialchars($key) ?>" class="hidden mt-2 border rounded p-2 bg-base-200">
-                                <ul class="list-disc list-inside text-sm">
-                                    <?php foreach ($item['sabores'] as $sabor): ?>
-                                        <li>
-                                            <?= htmlspecialchars($sabor['nome']) ?>
-                                            (R$<?= number_format($sabor['valor'], 2, ',', '.') ?>)
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <!-- 3) Dropdown de Adicionais -->
-                    <?php if (!empty($item['adicionais'])): ?>
-                        <div class="mt-3">
-                            <button type="button"
-                                class="flex justify-between items-center w-full btn btn-ghost py-2 px-3 text-left"
-                                data-toggle="adicionais-<?= htmlspecialchars($key) ?>">
-                                <span>Adicionais</span>
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div id="adicionais-<?= htmlspecialchars($key) ?>" class="hidden mt-2 border rounded p-2 bg-base-200 space-y-4">
-                                <?php
-                                // agrupa por tipo_nome
-                                $porTipo = [];
-                                foreach ($item['adicionais'] as $add) {
-                                    $tipoNome = $add['tipo_nome'] ?? 'Outros';
-                                    $porTipo[$tipoNome][] = $add;
-                                }
-                                ?>
-                                <?php foreach ($porTipo as $tipoNome => $lista): ?>
-                                    <div>
-                                        <h4 class="font-semibold"><?= htmlspecialchars($tipoNome) ?></h4>
-                                        <ul class="list-disc list-inside text-sm ml-4">
-                                            <?php foreach ($lista as $add): ?>
-                                                <li>
-                                                    <?= htmlspecialchars($add['nome']) ?>
-                                                    <?php if (!empty($add['extra'])): ?>
-                                                        <span class="text-red-500">
-                                                            (R$<?= number_format($add['valor'], 2, ',', '.') ?>)
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </li>
-                                            <?php endforeach; ?>
-                                        </ul>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <!-- 4) Total por item -->
-                    <div class="mt-4 text-right text-lg font-bold">
-                        Total: R$<?= number_format($item['valor_unitario'] * $item['quantidade'], 2, ',', '.') ?>
-                    </div>
-
-                    <!-- 5) Remover (só se qty === 1) -->
-                    <div class="mt-2 text-right remove-wrapper" style="display: none;">
-                        <button aria-label="Remover item" class="btn-remove btn btn-sm btn-error text-white" data-key="<?= htmlspecialchars($key) ?>">
-                            Remover
+                        <button class="btn btn-link p-0 mt-2 text-sm text-left text-primary" data-toggle="sabores-<?= $key ?>">
+                            Ver sabores <i class="fas fa-chevron-down ml-1"></i>
                         </button>
+                        <div id="sabores-<?= $key ?>" class="hidden mt-2 ml-4 text-sm">
+                            <ul class="list-disc list-inside">
+                                <?php foreach ($item['sabores'] as $sabor): ?>
+                                    <li><?= htmlspecialchars($sabor['nome']) ?> (R$<?= number_format($sabor['valor'], 2, ',', '.') ?>)</li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Adicionais -->
+                    <?php if (!empty($item['adicionais'])): ?>
+                        <button class="btn btn-link p-0 mt-2 text-sm text-left text-primary w-100" data-toggle="adicionais-<?= $key ?>">
+                            Ver adicionais <i class="fas fa-chevron-down ml-1"></i>
+                        </button>
+                        <div id="adicionais-<?= $key ?>" class="hidden mt-2 ml-4 text-sm">
+                            <ul class="list-disc list-inside">
+                                <?php foreach ($item['adicionais'] as $add): ?>
+                                    <li><?= htmlspecialchars($add['nome']) ?><?php if (!empty($add['extra'])): ?> (R$<?= number_format($add['valor'], 2, ',', '.') ?>)<?php endif; ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="text-right mt-4 text-lg font-bold">
+                        Total: R$<?= number_format($item['valor_unitario'] * $item['quantidade'], 2, ',', '.') ?>
                     </div>
                 </div>
             <?php endforeach; ?>
         </div>
 
-        <div id="cart-total" class="text-right text-xl font-bold mb-6">
+        <div class="text-right text-xl font-bold mb-6">
             Total geral: R$<?= number_format($totalGeral, 2, ',', '.') ?>
         </div>
 
-        <!-- Login ou Finalização -->
-        <?php if (!$usuario): ?>
-            <form id="formLoginCarrinho" method="post" class="space-y-4">
-                <div>
-                    <label class="block font-medium mb-1">Telefone</label>
-                    <input type="tel" name="telefone" id="telefone"
-                        class="input input-bordered w-full mb-2"
-                        placeholder="(11) 91234-5678" required>
-                </div>
-                <div id="divNome" class="hidden">
-                    <label class="block font-medium mb-1">Seu nome</label>
-                    <input type="text" name="nome" id="nome"
-                        class="input input-bordered w-full mb-2">
-                </div>
-                <input type="hidden" name="acao" value="cadastrar_e_logar">
-                <input type="hidden" name="senha" id="senha">
-                <input type="hidden" name="tipo_usuario" value="cliente">
-                <input type="hidden" name="redirect" value="finalizar_pedido.php">
-                <button type="submit" id="btnFinalizar" class="btn btn-primary w-full sm:w-auto" disabled>
-                    Finalizar Pedido
-                </button>
-            </form>
-        <?php else: ?>
-            <a href="finalizar_pedido.php" class="btn btn-primary w-full sm:w-auto" <?= $aberta ? '' : 'disabled' ?>>Finalizar Pedido</a>
-        <?php endif; ?>
-
-        <!-- Sumário fixo para mobile -->
-        <div class="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4">
-            <div class="flex justify-between mb-2">
-                <span>Total:</span>
-                <span class="font-bold">R$<?= number_format($totalGeral, 2, ',', '.') ?></span>
-            </div>
-            <?php if ($usuario): ?>
-                <a href="finalizar_pedido.php" class="btn btn-primary w-full">Finalizar</a>
-            <?php else: ?>
-                <button class="btn btn-primary w-full" disabled>Finalizar</button>
-            <?php endif; ?>
-        </div>
+        <a href="finalizar_pedido.php" class="btn btn-primary w-full sm:w-auto" <?= $usuario ? '' : 'disabled' ?>>
+            Finalizar Pedido
+        </a>
     <?php endif; ?>
 </div>
 
-<script defer>
-    $(function() {
-        // Recarrega o carrinho inteiro
-        function reloadCart() {
-            location.reload();
-        }
 
-        // Toggle de dropdowns (sabores / adicionais)
-        $(document).on('click', '[data-toggle]', function() {
-            const tgt = '#' + $(this).data('toggle');
-            $(tgt).toggleClass('hidden');
+<!-- Modal de login automático -->
+<input type="checkbox" id="modalLoginCarrinho" class="modal-toggle" <?= !$usuario ? 'checked' : '' ?>>
+<div class="modal">
+    <div class="modal-box relative">
+        <label for="modalLoginCarrinho" class="btn btn-sm btn-circle absolute right-2 top-2">✕</label>
+        <h3 class="text-lg font-bold mb-4">Identifique-se para continuar</h3>
+        <form id="formLoginAuto" class="space-y-4">
+            <div>
+                <label class="block font-medium mb-1">Telefone</label>
+                <input type="tel" name="telefone" id="telefone" class="input input-bordered w-full" required placeholder="(11) 91234-5678">
+            </div>
+
+            <div id="divNome" class="hidden">
+                <label class="block font-medium mb-1">Nome</label>
+                <input type="text" name="nome" id="nome" class="input input-bordered w-full">
+                <p class="text-sm text-gray-500 mt-1">Sua senha será o telefone com DDD.</p>
+            </div>
+
+            <input type="hidden" name="acao" id="acao" value="buscar_por_telefone">
+            <input type="hidden" name="senha" id="senha" value="">
+            <input type="hidden" name="tipo_usuario" value="cliente">
+            <input type="hidden" name="redirect" value="carrinho.php">
+
+            <button type="submit" id="btnLoginAuto" class="btn btn-primary w-full">Continuar</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        $('#telefone').mask('(00) 00000-0000');
+
+        $('#formLoginAuto').on('submit', function(e) {
+            e.preventDefault();
+            const tel = $('#telefone').val().replace(/\D/g, '');
+            const nome = $('#nome').val();
+            const acao = $('#acao').val();
+            const form = $(this);
+
+            if (tel.length !== 11) {
+                Swal.fire('Telefone inválido', 'Digite um telefone válido com DDD.', 'warning');
+                return;
+            }
+
+            if (acao === 'buscar_por_telefone') {
+                $.post('crud/crud_usuario.php', {
+                        acao: 'buscar_por_telefone',
+                        telefone: tel
+                    }, 'json')
+                    .done(res => {
+                        if (res.status === 'ok') {
+                            Swal.fire('Sucesso', 'Login feito com sucesso!', 'success');
+                            location.reload();
+                        } else {
+                            $('#divNome').removeClass('hidden');
+                            $('#acao').val('cadastrar_e_logar');
+                            $('#senha').val(tel);
+                            $('#btnLoginAuto').text('Criar Conta');
+                        }
+                    });
+            } else if (acao === 'cadastrar_e_logar') {
+                if (!nome.trim()) {
+                    Swal.fire('Informe seu nome', 'Preencha o nome para criar a conta.', 'warning');
+                    return;
+                }
+
+                const data = {
+                    acao: 'cadastrar_e_logar',
+                    nome: nome.trim(),
+                    telefone: tel,
+                    senha: tel,
+                    tipo_usuario: 'cliente',
+                    redirect: 'carrinho.php'
+                };
+
+                $.post('crud/crud_usuario.php', data, 'json')
+                    .done(res => {
+                        if (res.status === 'ok') {
+                            Swal.fire('Sucesso', 'Conta criada com sucesso!', 'success');
+                            location.reload();
+                        } else {
+                            Swal.fire('Erro', res.mensagem || 'Erro ao cadastrar.', 'error');
+                        }
+                    });
+            }
+        });
+
+        // Alternar visibilidade de sabores/adicionais
+        $('[data-toggle]').on('click', function() {
+            const tgt = $(this).data('toggle');
+            $('#' + tgt).toggleClass('hidden');
             $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
         });
 
-        // Atualiza visibilidade do botão Remover por item
-        function refreshRemoveButtons() {
-            $('.item-card').each(function() {
-                const qty = parseInt($(this).find('.qty-input').val(), 10) || 1;
-                $(this).find('.remove-wrapper').toggle(qty === 1);
-            });
-        }
-
-        // Diminuir quantidade
-        $(document).on('click', '.btn-minus', function() {
+        // Aumentar quantidade
+        $('.btn-plus').click(function() {
             const key = $(this).data('key');
-            let $card = $(this).closest('.item-card'),
-                qty = parseInt($card.find('.qty-input').val(), 10) || 1;
-            if (qty <= 1) return;
-            qty--;
             $.ajax({
-                    url: 'crud/crud_carrinho.php',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        action: 'update',
-                        key,
-                        quantidade: qty
-                    })
-                }).done(reloadCart)
-                .fail(() => Swal.fire('Erro', 'Não foi possível atualizar a quantidade.', 'error'));
+                url: 'crud/crud_carrinho.php',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    action: 'update',
+                    key,
+                    quantidade: 999
+                }) // será incrementado no back
+            }).done(() => location.reload());
         });
 
-        // Aumentar quantidade
-        $(document).on('click', '.btn-plus', function() {
+        // Diminuir quantidade
+        $('.btn-minus').click(function() {
             const key = $(this).data('key');
-            let $card = $(this).closest('.item-card'),
-                qty = parseInt($card.find('.qty-input').val(), 10) || 0;
-            qty++;
             $.ajax({
-                    url: 'crud/crud_carrinho.php',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        action: 'update',
-                        key,
-                        quantidade: qty
-                    })
-                }).done(reloadCart)
-                .fail(() => Swal.fire('Erro', 'Não foi possível atualizar a quantidade.', 'error'));
+                url: 'crud/crud_carrinho.php',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    action: 'update',
+                    key,
+                    quantidade: -1
+                }) // será decrementado no back
+            }).done(() => location.reload());
         });
 
         // Remover item
-        $(document).on('click', '.btn-remove', function() {
+        $('.btn-remove').click(function() {
             const key = $(this).data('key');
             Swal.fire({
-                title: 'Remover este item?',
+                title: 'Remover item?',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Sim, remover'
-            }).then(function(result) {
-                if (!result.isConfirmed) return;
-                $.ajax({
+                confirmButtonText: 'Sim',
+                cancelButtonText: 'Cancelar'
+            }).then(res => {
+                if (res.isConfirmed) {
+                    $.ajax({
                         url: 'crud/crud_carrinho.php',
                         method: 'POST',
                         contentType: 'application/json',
@@ -234,71 +231,33 @@ foreach ($carrinho as $item) {
                             action: 'remove',
                             key
                         })
-                    }).done(reloadCart)
-                    .fail(() => Swal.fire('Erro', 'Não foi possível remover o item.', 'error'));
+                    }).done(() => location.reload());
+                }
             });
         });
 
-        // Checkout: verificar/cadastrar usuário por telefone
-        $('#telefone').on('input', function() {
-            const tel = $(this).val().replace(/\D/g, '');
-            if (tel.length === 11) {
-                $.post('crud/crud_usuario.php', {
-                        acao: 'buscar_por_telefone',
-                        telefone: tel
-                    }, 'json')
-                    .done(res => {
-                        if (res.status === 'ok') {
-                            $('#divNome').removeClass('hidden');
-                            $('#nome').prop('disabled', true).val(res.usuario.nome_usuario);
-                            $('#senha').val('123456');
-                            $('#formLoginCarrinho').attr('action', 'finalizar_pedido.php');
-                            $('#btnFinalizar').prop('disabled', false);
-                        } else if (res.status === 'nao_encontrado') {
-                            $('#divNome').removeClass('hidden');
-                            $('#nome').prop('disabled', false).val('');
-                            $('#senha').val(tel);
-                            $('#formLoginCarrinho').attr('action', 'crud/crud_usuario.php');
-                            $('#btnFinalizar').prop('disabled', false);
-                            Swal.fire('Novo usuário!', 'Sua senha será seu telefone (com DDD).', 'info');
-                        } else {
-                            $('#btnFinalizar').prop('disabled', true);
-                            $('#divNome').addClass('hidden');
-                        }
-                    })
-                    .fail(() => {
-                        $('#btnFinalizar').prop('disabled', true);
-                        $('#divNome').addClass('hidden');
-                    });
-            } else {
-                $('#btnFinalizar').prop('disabled', true);
-                $('#divNome').addClass('hidden');
-            }
+        $('#btnLimparCarrinho').click(function() {
+            Swal.fire({
+                title: 'Limpar carrinho?',
+                text: 'Todos os itens serão removidos.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sim, limpar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'crud/crud_carrinho.php',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            action: 'clear'
+                        })
+                    }).done(() => location.reload());
+                }
+            });
         });
-
-        // Submete formulário de login/cadastro
-        $('#formLoginCarrinho').submit(function(e) {
-            e.preventDefault();
-            const form = $(this),
-                action = form.attr('action'),
-                data = form.serialize();
-            if (action === 'crud/crud_usuario.php') {
-                $.post(action, data, 'json')
-                    .done(res => {
-                        if (res.status === 'ok') {
-                            window.location = res.redirect || 'finalizar_pedido.php';
-                        } else {
-                            Swal.fire('Erro', res.mensagem, 'error');
-                        }
-                    })
-                    .fail(() => Swal.fire('Erro', 'Erro na comunicação.', 'error'));
-            } else {
-                this.submit();
-            }
-        });
-
-        // Inicializa
-        refreshRemoveButtons();
     });
 </script>
+
 <?php include_once 'assets/footer.php'; ?>

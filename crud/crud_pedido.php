@@ -7,25 +7,20 @@ header('Content-Type: application/json; charset=utf-8');
 session_start();
 require_once __DIR__ . '/../assets/conexao.php';
 
-// --- Autenticação ---
 if (!isset($_SESSION['usuario'])) {
     echo json_encode(['status' => 'erro', 'mensagem' => 'Usuário não autenticado.']);
     exit;
 }
 
-// --- Input (JSON ou form-urlencoded) ---
 $raw  = file_get_contents('php://input');
 $json = json_decode($raw, true);
 $data = is_array($json) ? $json : $_POST;
 
-// Ação principal
 $action = $data['action'] ?? $data['acao'] ?? '';
 
-// Usuário
 $u      = $_SESSION['usuario'];
 $idUser = $u['id'] ?? $u['id_usuario'] ?? null;
 
-// --- Helper: registra log de alterações de status ---
 function registrarLogStatus($pdo, $idPedido, $antigo, $novo, $motivo = null)
 {
     $pdo->prepare("
@@ -136,7 +131,7 @@ if ($action === 'criar_pedido_balcao') {
     $telCliente  = $data['telefone_cliente'] ?? $u['telefone_usuario'];
     $tipoEntrega = $data['tipo_entrega']     ?? 'retirada';
     $formaPgto   = $data['forma_pagamento']  ?? '';
-    $valorFrete  = floatval($data['valor_frete'] ?? 0);
+    $valorFrete  = ($tipoEntrega == 'entrega') ? floatval($data['valor_frete']) : 0;
 
     if (empty($items)) {
         echo json_encode(['status' => 'erro', 'mensagem' => 'Carrinho vazio.']);
@@ -281,7 +276,7 @@ if ($action === 'confirmar') {
     // dados
     $tipoEntrega = $data['tipo_entrega']            ?? 'retirada';
     $idEnd       = $data['id_endereco_selecionado'] ?? null;
-    $valorFrete  = floatval($data['valor_frete']    ?? 0);
+    $valorFrete  = ($tipoEntrega == 'entrega') ? floatval($data['valor_frete']) : 0;
     $formaPgto   = $data['forma_pagamento']         ?? '';
     $nomeCli     = $u['nome_usuario']  ?? ($u['nome'] ?? '');
     $telCli      = $u['telefone_usuario'] ?? ($u['telefone'] ?? '');

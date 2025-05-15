@@ -15,7 +15,7 @@ include_once 'assets/header.php';
 
     <h2 class="text-xl font-semibold mt-6 mb-2">1. Dados Coletados</h2>
     <ul class="list-disc list-inside">
-        <li><strong>Dados cadastrais:</strong> nome, e-mail, telefone, CPF (quando houver).</li>
+        <li><strong>Dados cadastrais:</strong> nome, telefone.</li>
         <li><strong>Endereços de entrega:</strong> CEP, rua, número, complemento, bairro, cidade e ponto de referência.</li>
         <li><strong>Dados de pedido:</strong> itens selecionados, sabores, adicionais, quantidade, valor unitário e total.</li>
         <li><strong>Dados de geolocalização:</strong> latitude/longitude obtidas via Google Maps API para cálculo de frete.</li>

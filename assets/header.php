@@ -27,69 +27,61 @@ $mapaDias = [
     'Sunday'    => 'domingo',
 ];
 
-$diaIngles      = date('l');
-$diaSemana      = $mapaDias[$diaIngles] ?? '';
+date_default_timezone_set('America/Sao_Paulo');
 
-$stmtHorario = $pdo->prepare("
-    SELECT hora_abertura, hora_fechamento
-      FROM tb_horario_atendimento
-     WHERE dia_semana = ?
-       AND ativo      = 1
-     LIMIT 1
-");
-$stmtHorario->execute([$diaSemana]);
-$horario = $stmtHorario->fetch(PDO::FETCH_ASSOC);
+$horaAtual = date('H:i:s');
+$diaIngles = date('l');
+$diaSemana = $mapaDias[$diaIngles] ?? '';
 
 $diaInglesOntem = date('l', strtotime('-1 day'));
 $diaSemanaOntem = $mapaDias[$diaInglesOntem] ?? '';
-$stmtOntem = $pdo->prepare("
-    SELECT hora_abertura, hora_fechamento
-      FROM tb_horario_atendimento
-     WHERE dia_semana = ?
-       AND ativo      = 1
-     LIMIT 1
-");
+
+// Consulta de horários
+$stmtHoje = $pdo->prepare("SELECT hora_abertura, hora_fechamento FROM tb_horario_atendimento WHERE dia_semana = ? AND ativo = 1 LIMIT 1");
+$stmtHoje->execute([$diaSemana]);
+$horarioHoje = $stmtHoje->fetch(PDO::FETCH_ASSOC);
+
+$stmtOntem = $pdo->prepare("SELECT hora_abertura, hora_fechamento FROM tb_horario_atendimento WHERE dia_semana = ? AND ativo = 1 LIMIT 1");
 $stmtOntem->execute([$diaSemanaOntem]);
 $horarioOntem = $stmtOntem->fetch(PDO::FETCH_ASSOC);
 
-$horaAtual = date('H:i:s');
-
-function estaAberta($abertura, $fechamento, $horaAtual)
+// Função que verifica se hora atual está dentro do intervalo
+function estaAberta($horaAtual, $abertura, $fechamento)
 {
     if ($abertura <= $fechamento) {
         return $horaAtual >= $abertura && $horaAtual <= $fechamento;
     } else {
+        // Ex: 18:00 até 00:59 => overnight
         return $horaAtual >= $abertura || $horaAtual <= $fechamento;
     }
 }
 
-$aberturaHoje = $horario
-    ? estaAberta($horario['hora_abertura'], $horario['hora_fechamento'], $horaAtual)
-    : false;
+// Verifica abertura com base no hoje
+$abertaHoje = $horarioHoje ? estaAberta($horaAtual, $horarioHoje['hora_abertura'], $horarioHoje['hora_fechamento']) : false;
 
-$aberturaOntemOvernight = false;
-if (
-    $horarioOntem
-    && $horarioOntem['hora_abertura'] > $horarioOntem['hora_fechamento']
-    && $horaAtual <= $horarioOntem['hora_fechamento']
-) {
-    $aberturaOntemOvernight = true;
+// Verifica abertura com base no ontem se tiver virado (overnight)
+$abertaOntemOvernight = false;
+if ($horarioOntem) {
+    if ($horarioOntem['hora_abertura'] > $horarioOntem['hora_fechamento']) {
+        $abertaOntemOvernight = estaAberta($horaAtual, $horarioOntem['hora_abertura'], $horarioOntem['hora_fechamento']);
+    }
 }
 
-$aberta = $aberturaHoje || $aberturaOntemOvernight;
+// Resultado final
+$aberta = $abertaHoje || $abertaOntemOvernight;
 
-// Corrigido: atribuição de $diaRegra em todas as situações
-if ($aberturaHoje) {
-    $diaRegra = $diaSemana;        // abriu pelo horário de hoje
-} elseif ($aberturaOntemOvernight) {
-    $diaRegra = $diaSemanaOntem;   // abriu pelo overnight de ontem
+if ($abertaHoje) {
+    $diaRegra = $diaSemana;
+} elseif ($abertaOntemOvernight) {
+    $diaRegra = $diaSemanaOntem;
 } else {
-    $diaRegra = null;              // está fechada
+    $diaRegra = null;
 }
 
 $statusLoja = $aberta
     ? "Estamos aceitando pedidos!"
     : 'Estamos fechados no momento.';
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="<?= htmlspecialchars($tema) ?>">
@@ -156,6 +148,7 @@ $statusLoja = $aberta
                         <?php if ($usuarioLogado): ?>
 
                             <?php if ($isAdmin): ?>
+                                <li><a href="atendimento.php">Atendimento</a></li>
                                 <li><a href="produtos.php">Produtos</a></li>
                                 <li><a href="categorias.php">Categorias</a></li>
                                 <li><a href="adicionais.php">Adicionais</a></li>
@@ -193,6 +186,7 @@ $statusLoja = $aberta
                     <?php if ($usuarioLogado): ?>
 
                         <?php if ($isAdmin): ?>
+                            <li><a href="atendimento.php">Atendimento</a></li>
                             <li><a href="produtos.php">Produtos</a></li>
                             <li><a href="categorias.php">Categorias</a></li>
                             <li><a href="adicionais.php">Adicionais</a></li>

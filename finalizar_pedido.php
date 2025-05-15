@@ -5,59 +5,53 @@ error_reporting(E_ALL);
 
 include_once 'assets/header.php';
 
-// força login
 if (!isset($_SESSION['usuario'])) {
     header('Location: login.php');
     exit;
 }
 
-$carrinho   = $_SESSION['carrinho'] ?? [];
-$usuario    = $_SESSION['usuario'];
-$idUsuario  = $usuario['id'];
+$carrinho = $_SESSION['carrinho'] ?? [];
+$usuario  = $_SESSION['usuario'];
+$idUsuario = $usuario['id'];
 
-// se carrinho vazio, volta
 if (empty($carrinho)) {
     header('Location: carrinho.php');
     exit;
 }
 
-// dados da loja
 $dadosLoja     = $pdo->query("SELECT * FROM tb_dados_loja LIMIT 1")->fetch(PDO::FETCH_ASSOC);
 $enderecoLoja  = trim($dadosLoja['endereco_completo']);
 $precoBase     = floatval($dadosLoja['preco_base']);
 $precoKm       = floatval($dadosLoja['preco_km']);
 $googleMapsKey = $dadosLoja['google'];
-$limiteEntrega = isset($dadosLoja['limite_entrega'])
-    ? floatval($dadosLoja['limite_entrega'])
-    : null;
+$limiteEntrega = isset($dadosLoja['limite_entrega']) ? floatval($dadosLoja['limite_entrega']) : null;
 
-// endereços do usuário
 $stmt = $pdo->prepare("SELECT * FROM tb_endereco WHERE id_usuario = ?");
 $stmt->execute([$idUsuario]);
 $enderecos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// formas de pagamento e regras de frete
 $formasPgto  = $pdo->query("SELECT * FROM tb_forma_pgto WHERE pagamento_ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
 $regrasFrete = $pdo->query("SELECT * FROM tb_regras_frete WHERE ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
 
-//  total dos produtos = sum(valor_unitario * quantidade)
 $totalProdutos = 0;
 foreach ($carrinho as $item) {
     $totalProdutos += $item['valor_unitario'] * $item['quantidade'];
 }
 ?>
-
 <div class="container mx-auto px-4 py-10 max-w-3xl">
-    <h1 class="text-2xl font-bold mb-6">Finalizar Pedido</h1>
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-center w-full sm:text-left sm:w-auto">Finalizar Pedido</h1>
+        <?php if (!empty($carrinho)): ?>
+            <a href="carrinho.php" class="btn btn-sm btn-outline">Voltar ao Carrinho</a>
+        <?php endif; ?>
+    </div>
 
     <!-- Tipo de Entrega -->
     <div class="mb-6">
         <label class="font-semibold block mb-2">Tipo de entrega</label>
         <div class="flex gap-2">
-            <button type="button" id="btnRetirada"
-                class="btn btn-primary w-1/2">Retirada na Loja</button>
-            <button type="button" id="btnEntrega"
-                class="btn btn-outline w-1/2">Entrega</button>
+            <button type="button" id="btnRetirada" class="btn btn-primary w-1/2">Retirada na Loja</button>
+            <button type="button" id="btnEntrega" class="btn btn-outline w-1/2">Entrega</button>
         </div>
     </div>
 
@@ -67,25 +61,23 @@ foreach ($carrinho as $item) {
             <div class="flex gap-2 items-end">
                 <div class="flex-1">
                     <label class="font-semibold block mb-2">Endereço de Entrega</label>
-                    <select name="id_endereco" id="selectEndereco"
-                        class="select select-bordered w-full">
+                    <select name="id_endereco" id="selectEndereco" class="select select-bordered w-full">
+                        <option value="0">Selecione seu endereço</option>
                         <?php foreach ($enderecos as $end): ?>
                             <option value="<?= $end['id_endereco'] ?>"
                                 data-rua="<?= htmlspecialchars($end['rua']) ?>"
                                 data-numero="<?= htmlspecialchars($end['numero']) ?>"
                                 data-bairro="<?= htmlspecialchars($end['bairro']) ?>"
                                 data-cep="<?= preg_replace('/\D/', '', $end['cep']) ?>">
-                                <?= htmlspecialchars($end['rua']) ?>, <?= $end['numero'] ?> —
-                                <?= htmlspecialchars($end['bairro']) ?>
+                                <?= htmlspecialchars($end['rua']) ?>, <?= $end['numero'] ?> — <?= htmlspecialchars($end['bairro']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <button type="button" class="btnNovoEndereco btn btn-success btn-square mt-auto">
+                <button type="button" class="btnNovoEndereco btn btn-success btn-square mt-auto" title="Cadastrar novo endereço">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
-
         <?php else: ?>
             <p class="text-sm text-red-500 mb-2">Nenhum endereço cadastrado.</p>
             <button type="button" class="btnNovoEndereco btn btn-sm btn-outline w-full">
@@ -100,7 +92,7 @@ foreach ($carrinho as $item) {
                     <label class="block font-medium mb-1">CEP</label>
                     <input type="text" id="cep" class="input input-bordered w-full" placeholder="00000-000">
                 </div>
-                <button type="button" id="btnBuscarCep" class="btn btn-primary btn-square">
+                <button type="button" id="btnBuscarCep" class="btn btn-primary btn-square mt-auto">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
@@ -124,19 +116,16 @@ foreach ($carrinho as $item) {
                     <input type="text" id="apelido" class="input input-bordered w-full" placeholder="Casa, Trabalho…">
                 </div>
             </div>
-            <button type="button" id="btnSalvarEndereco"
-                class="btn btn-success w-full">Salvar Endereço</button>
+            <button type="button" id="btnSalvarEndereco" class="btn btn-success w-full">Salvar Endereço</button>
         </div>
     </div>
-
     <!-- Forma de Pagamento -->
     <div class="mb-6">
         <label class="font-semibold block mb-2">Forma de Pagamento</label>
-        <select name="forma_pagamento" class="select select-bordered w-full">
+        <select name="forma_pagamento" class="select select-bordered w-full" required>
             <?php foreach ($formasPgto as $pg): ?>
                 <option value="<?= htmlspecialchars($pg['nome_pgto']) ?>">
-                    <?= htmlspecialchars($pg['nome_pgto']) ?>
-                    <?= $pg['is_online'] ? '(Online)' : '' ?>
+                    <?= htmlspecialchars($pg['nome_pgto']) ?> <?= $pg['is_online'] ? '(Online)' : '' ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -145,14 +134,14 @@ foreach ($carrinho as $item) {
     <!-- Resumo -->
     <div class="text-right font-bold text-lg mb-6 space-y-1">
         <div>Subtotal: R$<span id="valorSubtotal"><?= number_format($totalProdutos, 2, ',', '.') ?></span></div>
-        <div>Frete: R$<span id="valorFreteVisual">0,00</span></div>
-        <div>Distância: <span id="valorDistanciaVisual">0,00</span> km</div>
+        <div class="class-frete hidden">Frete: R$<span id="valorFreteVisual">0,00</span></div>
+        <div class="class-frete hidden">Distância: <span id="valorDistanciaVisual">0,00</span> km</div>
         <div class="mt-2 border-t pt-2">
             Total: R$<span id="valorTotal"><?= number_format($totalProdutos, 2, ',', '.') ?></span>
         </div>
     </div>
 
-    <!-- Formulário finalização -->
+    <!-- Formulário de finalização -->
     <form id="formFinalizarPedido">
         <input type="hidden" name="tipo_entrega" id="inputTipoEntrega" value="retirada">
         <input type="hidden" name="id_endereco_selecionado" id="idEnderecoSelecionado" value="">
@@ -173,21 +162,19 @@ foreach ($carrinho as $item) {
         const subtotal = <?= $totalProdutos ?>;
 
         function arredondar(valor) {
-            const int = Math.floor(valor),
-                dec = valor - int;
+            const int = Math.floor(valor);
+            const dec = valor - int;
             if (dec <= 0.25) return int;
             if (dec <= 0.75) return int + 0.5;
             return int + 1;
         }
 
         function calcularFrete(destino) {
-            const url =
-                `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric` +
+            const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric` +
                 `&origins=${encodeURIComponent(enderecoLoja)}` +
                 `&destinations=${encodeURIComponent(destino)}` +
                 `&key=${googleApiKey}`;
 
-            // usa proxy para evitar bloqueio CORS
             $.getJSON('/proxys/proxy_google.php?url=' + encodeURIComponent(url), res => {
                 if (res.status !== 'OK') return Swal.fire('Erro', 'Google Matrix falhou.', 'error');
                 const el = res.rows[0].elements[0];
@@ -205,19 +192,13 @@ foreach ($carrinho as $item) {
                     if (subtotal >= parseFloat(reg.valor_minimo) &&
                         km <= parseFloat(reg.distancia_maxima) &&
                         hoje === reg.dia_semana.toLowerCase()) {
-
-                        if (reg.tipo_regra === 'frete_gratis') {
-                            frete = 0;
-                        } else if (reg.tipo_regra === 'desconto_valor') {
-                            frete -= parseFloat(reg.valor_desconto);
-                        } else if (reg.tipo_regra === 'desconto_porcentagem') {
-                            frete -= frete * (parseFloat(reg.valor_desconto) / 100);
-                        }
+                        if (reg.tipo_regra === 'frete_gratis') frete = 0;
+                        else if (reg.tipo_regra === 'desconto_valor') frete -= parseFloat(reg.valor_desconto);
+                        else if (reg.tipo_regra === 'desconto_porcentagem') frete -= frete * (parseFloat(reg.valor_desconto) / 100);
                     }
                 });
 
                 frete = Math.max(0, arredondar(frete));
-
                 $('#valorFreteCalculado').val(frete.toFixed(2));
                 $('#valorFreteVisual').text(frete.toFixed(2).replace('.', ','));
                 $('#valorDistanciaVisual').text(km.toFixed(2).replace('.', ','));
@@ -226,33 +207,36 @@ foreach ($carrinho as $item) {
             });
         }
 
-        // Handler dos botões
         $('#btnEntrega').click(() => {
             $('#inputTipoEntrega').val('entrega');
             $('#btnEntrega').addClass('btn-primary').removeClass('btn-outline');
             $('#btnRetirada').addClass('btn-outline').removeClass('btn-primary');
             $('#enderecoEntrega').removeClass('hidden');
             $('#btnConfirmarPedido').prop('disabled', true);
+            $('.class-frete').removeClass('hidden');
         });
+
         $('#btnRetirada').click(() => {
+            $('.class-frete').addClass('hidden');
             $('#inputTipoEntrega').val('retirada');
             $('#btnRetirada').addClass('btn-primary').removeClass('btn-outline');
             $('#btnEntrega').addClass('btn-outline').removeClass('btn-primary');
             $('#enderecoEntrega').addClass('hidden');
             $('#valorFreteVisual').text('0,00');
+            $('#valorDistanciaVisual').text('0,00');
             $('#valorTotal').text(subtotal.toFixed(2).replace('.', ','));
+            $('#selectEndereco').val(0);
             $('#btnConfirmarPedido').prop('disabled', false);
         });
 
-        // Ao escolher endereço
         $('#selectEndereco').change(function() {
             const opt = $(this).find(':selected');
+            if (opt.val() == 0) return $('#btnConfirmarPedido').prop('disabled', true);
             const destino = `${opt.data('rua')} ${opt.data('numero')}, ${opt.data('bairro')}, ${opt.data('cep')}, Brasil`;
             $('#idEnderecoSelecionado').val(opt.val());
             calcularFrete(destino);
         });
 
-        // CEP ➔ ViaCEP
         $('#btnBuscarCep').click(() => {
             const cep = $('#cep').val().replace(/\D/g, '');
             if (cep.length !== 8) return Swal.fire('Erro', 'CEP inválido.', 'error');
@@ -263,10 +247,12 @@ foreach ($carrinho as $item) {
             });
         });
 
-        // Toggle novo endereço
-        $('.btnNovoEndereco').click(() => $('#formNovoEndereco').toggleClass('hidden'));
+        $('.btnNovoEndereco').click(function() {
+            $('#formNovoEndereco').toggleClass('hidden');
+            const aberto = !$('#formNovoEndereco').hasClass('hidden');
+            $(this).text(aberto ? 'Cancelar' : 'Cadastrar endereço');
+        });
 
-        // Salvar novo endereço
         $('#btnSalvarEndereco').click(() => {
             const dados = {
                 acao: 'cadastrar',
@@ -280,13 +266,14 @@ foreach ($carrinho as $item) {
                 endereco_principal: true
             };
             $.post('crud/crud_endereco.php', dados, res => {
-                if (res.status === 'ok') Swal.fire('Sucesso', res.mensagem, 'success')
-                    .then(() => location.reload());
-                else Swal.fire('Erro', res.mensagem, 'error');
+                if (res.status === 'ok') {
+                    Swal.fire('Sucesso', res.mensagem, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Erro', res.mensagem, 'error');
+                }
             }, 'json');
         });
 
-        // Submeter pedido
         $('#formFinalizarPedido').submit(function(e) {
             e.preventDefault();
             const dados = $(this).serialize() + '&acao=confirmar';

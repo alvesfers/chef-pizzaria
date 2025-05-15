@@ -10,6 +10,7 @@
         const payload = {
             action: 'criar_pedido_balcao',
             nome_cliente: $('#checkout-name').val(),
+            id_cliente: $('#checkoout-id-cliente').val(),
             telefone_cliente: $('#checkout-phone').val(),
             tipo_entrega: $('#checkout-delivery-type').val(),
             forma_pagamento: $('#checkout-payment').val(),

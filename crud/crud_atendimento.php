@@ -1,0 +1,247 @@
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+header('Content-Type: application/json');
+session_start();
+require_once __DIR__ . '/../assets/conexao.php';
+
+$input = json_decode(file_get_contents('php://input'), true);
+$action = $input['action'] ?? null;
+
+if (!$action) {
+    echo json_encode(['status' => 'erro', 'mensagem' => 'Ação inválida']);
+    exit;
+}
+
+function carregarProdutos($pdo)
+{
+    $categorias = $pdo->query("
+        SELECT id_categoria, nome_categoria
+        FROM tb_categoria
+        WHERE categoria_ativa = 1
+        ORDER BY ordem_exibicao
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    $subcategorias = $pdo->query("
+        SELECT sc.id_subcategoria, sc.nome_subcategoria, scc.id_categoria
+        FROM tb_subcategoria sc
+        JOIN tb_subcategoria_categoria scc USING(id_subcategoria)
+        WHERE sc.subcategoria_ativa = 1
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    $produtos = $pdo->query("
+        SELECT id_produto, nome_produto, id_categoria, valor_produto, qtd_sabores
+        FROM tb_produto
+        WHERE produto_ativo = 1
+    ")->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmtSub = $pdo->prepare("
+        SELECT id_subcategoria
+        FROM tb_subcategoria_produto
+        WHERE id_produto = ?
+    ");
+    foreach ($produtos as &$p) {
+        $stmtSub->execute([$p['id_produto']]);
+        $p['subcategorias'] = array_map('intval', $stmtSub->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'categorias' => $categorias,
+        'subcategorias' => $subcategorias,
+        'produtos' => $produtos,
+    ]);
+    exit;
+}
+
+function detalharProduto($pdo, $idProduto)
+{
+    $stmt = $pdo->prepare("SELECT * FROM tb_produto WHERE id_produto = ? AND produto_ativo = 1");
+    $stmt->execute([$idProduto]);
+    $produto = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$produto) {
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Produto não encontrado']);
+        exit;
+    }
+
+    $sabores = [];
+    if ((int)$produto['qtd_sabores'] > 1) {
+        $stmtSabor = $pdo->prepare("
+            SELECT p.id_produto, p.nome_produto, p.valor_produto,
+                   COALESCE(s.nome_subcategoria, 'Outros') AS nome_subcategoria
+            FROM tb_produto p
+            LEFT JOIN tb_subcategoria_produto sp ON p.id_produto = sp.id_produto
+            LEFT JOIN tb_subcategoria s ON sp.id_subcategoria = s.id_subcategoria
+            WHERE p.produto_ativo = 1
+              AND p.qtd_sabores <= 1
+              AND p.nome_produto NOT LIKE '%combo%'
+              AND p.id_categoria = ?
+            ORDER BY s.nome_subcategoria, p.nome_produto
+        ");
+        $stmtSabor->execute([$produto['id_categoria']]);
+        $sabores = $stmtSabor->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    $stmtTipos = $pdo->prepare("
+        SELECT ta.id_tipo_adicional, ta.nome_tipo_adicional,
+               pta.obrigatorio, pta.max_inclusos
+        FROM tb_produto_tipo_adicional pta
+        JOIN tb_tipo_adicional ta USING(id_tipo_adicional)
+        WHERE pta.id_produto = ?
+    ");
+    $stmtTipos->execute([$idProduto]);
+    $tipos = $stmtTipos->fetchAll(PDO::FETCH_ASSOC);
+
+    $adicionaisPorTipo = [];
+    $stmtAdd = $pdo->prepare("
+        SELECT id_adicional, nome_adicional, valor_adicional
+        FROM tb_adicional
+        WHERE id_tipo_adicional = ?
+          AND adicional_ativo = 1
+    ");
+    foreach ($tipos as $tipo) {
+        $stmtAdd->execute([$tipo['id_tipo_adicional']]);
+        $adicionaisPorTipo[] = [
+            'tipo' => $tipo,
+            'adicionais' => $stmtAdd->fetchAll(PDO::FETCH_ASSOC),
+        ];
+    }
+
+    $stmtIncl = $pdo->prepare("SELECT id_adicional FROM tb_produto_adicional_incluso WHERE id_produto = ?");
+    $stmtIncl->execute([$idProduto]);
+    $inclusos = array_map('intval', $stmtIncl->fetchAll(PDO::FETCH_COLUMN));
+
+    echo json_encode([
+        'status' => 'ok',
+        'produto' => $produto,
+        'sabores' => $sabores,
+        'tipos' => $tipos,
+        'adicionais' => $adicionaisPorTipo,
+        'inclusos' => $inclusos
+    ]);
+    exit;
+}
+
+function listarPedidos($pdo)
+{
+    $stmt = $pdo->query("
+        SELECT p.id_pedido, p.nome_cliente AS cliente, p.telefone_cliente, p.status_pedido,
+               p.valor_total, p.criado_em, p.id_entregador
+        FROM tb_pedido p
+        WHERE p.origem = 'balcao'
+        ORDER BY p.criado_em DESC
+    ");
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    exit;
+}
+
+function criarPedidoBalcao($pdo, $input)
+{
+    $nome   = trim($input['nome_cliente'] ?? '');
+    $fone   = preg_replace('/\D/', '', $input['telefone_cliente'] ?? '');
+    $itens  = $input['items'] ?? [];
+    $entrega = $input['tipo_entrega'] ?? 'retirada';
+    $pgto    = $input['forma_pagamento'] ?? null;
+
+    if (!$nome || !$fone || !is_array($itens) || empty($itens)) {
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Dados incompletos']);
+        exit;
+    }
+
+    try {
+        $pdo->beginTransaction();
+
+        // valor total
+        $valorTotal = 0;
+        foreach ($itens as $item) {
+            $valorTotal += $item['qty'] * $item['price'];
+        }
+
+        // inserir pedido
+        $stmt = $pdo->prepare("
+            INSERT INTO tb_pedido
+                (nome_cliente, telefone_cliente, valor_total, tipo_entrega, forma_pagamento, status_pedido, origem, criado_em)
+            VALUES
+                (?, ?, ?, ?, ?, 'aceito', 'balcao', NOW())
+        ");
+        $stmt->execute([$nome, $fone, $valorTotal, $entrega, $pgto]);
+        $idPedido = $pdo->lastInsertId();
+
+        // inserir itens
+        $stmtItem = $pdo->prepare("
+            INSERT INTO tb_item_pedido (id_pedido, id_produto, nome_exibicao, quantidade, valor_unitario)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmtSabor = $pdo->prepare("
+            INSERT INTO tb_item_pedido_sabor (id_item_pedido, id_produto)
+            VALUES (?, ?)
+        ");
+        $stmtAdd = $pdo->prepare("
+            INSERT INTO tb_item_adicional (id_item_pedido, nome_adicional, valor_adicional)
+            VALUES (?, ?, ?)
+        ");
+
+        foreach ($itens as $item) {
+            $stmtItem->execute([
+                $idPedido,
+                $item['prod']['id_produto'],
+                $item['prod']['nome_produto'] ?? $item['prod']['nome'],
+                $item['qty'],
+                $item['price']
+            ]);
+            $idItem = $pdo->lastInsertId();
+
+            // sabores
+            if (!empty($item['flavors'])) {
+                foreach ($item['flavors'] as $sabor) {
+                    $stmtSabor->execute([$idItem, $sabor['id']]);
+                }
+            }
+
+            // adicionais
+            if (!empty($item['addons'])) {
+                foreach ($item['addons'] as $add) {
+                    $stmtAdd->execute([$idItem, $add['nome'], $add['valor']]);
+                }
+            }
+        }
+
+        $pdo->commit();
+
+        echo json_encode([
+            'status' => 'ok',
+            'mensagem' => 'Pedido salvo com sucesso!',
+            'id_pedido' => $idPedido
+        ]);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Erro ao salvar pedido', 'debug' => $e->getMessage()]);
+    }
+}
+
+
+// Roteamento
+switch ($action) {
+    case 'listar_produtos':
+    case 'carregar_produtos':
+        carregarProdutos($pdo);
+        break;
+
+    case 'detalhar_produto':
+        $idProduto = (int)($input['id_produto'] ?? 0);
+        detalharProduto($pdo, $idProduto);
+        break;
+
+    case 'get_pedidos':
+        listarPedidos($pdo);
+        break;
+        
+    case 'criar_pedido_balcao':
+        criarPedidoBalcao($pdo, $input);
+        break;
+
+
+    default:
+        echo json_encode(['status' => 'erro', 'mensagem' => 'Ação não reconhecida']);
+        exit;
+}

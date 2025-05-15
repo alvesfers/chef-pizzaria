@@ -1,5 +1,4 @@
 <?php
-require_once 'assets/conexao.php';
 include_once 'assets/header.php';
 
 $idPedido = $_GET['id'] ?? null;
@@ -33,7 +32,7 @@ $stmtLogs->execute([$idPedido]);
 $logs = $stmtLogs->fetchAll(PDO::FETCH_ASSOC);
 
 // Badge
-$badgeClass = match($pedido['status_pedido']) {
+$badgeClass = match ($pedido['status_pedido']) {
     'pendente' => 'badge-warning',
     'cancelado' => 'badge-error',
     'entregue' => 'badge-success',
@@ -52,8 +51,8 @@ $dadosLoja = $pdo->query("SELECT * FROM tb_dados_loja LIMIT 1")->fetch(PDO::FETC
     </div>
 
     <?php if ($pedido['status_pedido'] !== 'cancelado'): ?>
-        <button onclick="printJS({ printable: 'comprovante', type: 'html', css: 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css' })"
-                class="btn btn-primary btn-sm mb-4">
+        <button class="hidden" onclick="printJS({ printable: 'comprovante', type: 'html', css: 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css' })"
+            class="btn btn-primary btn-sm mb-4">
             <i class="fas fa-print mr-2"></i> Imprimir Comprovante
         </button>
     <?php endif; ?>
@@ -72,9 +71,10 @@ $dadosLoja = $pdo->query("SELECT * FROM tb_dados_loja LIMIT 1")->fetch(PDO::FETC
         <p><strong>Pedido:</strong> #<?= $pedido['id_pedido'] ?></p>
         <p><strong>Data:</strong> <?= date('d/m/Y H:i', strtotime($pedido['criado_em'])) ?></p>
         <p><strong>Cliente:</strong> <?= htmlspecialchars($pedido['nome_cliente']) ?></p>
-        <p><strong>Entrega:</strong> <?= ucfirst($pedido['tipo_entrega']) ?></p>
-        <p><strong>Endereço:</strong> <?= htmlspecialchars($pedido['endereco']) ?></p>
-
+        <p><strong>Tipo de Entrega:</strong> <?= ucfirst($pedido['tipo_entrega']) ?></p>
+        <?php if ($pedido['tipo_entrega'] == 'entrega'): ?>
+            <p><strong>Endereço:</strong> <?= htmlspecialchars($pedido['endereco']) ?></p>
+        <?php endif; ?>
         <hr class="my-2">
 
         <p class="font-bold mb-1">Itens:</p>
@@ -101,14 +101,25 @@ $dadosLoja = $pdo->query("SELECT * FROM tb_dados_loja LIMIT 1")->fetch(PDO::FETC
                     </div>
                 <?php endif; ?>
 
-                <?php if ($adicionais): ?>
-                    <div class="ml-4 text-gray-600 text-xs">
-                        Adicionais:
-                        <?php foreach ($adicionais as $add): ?>
-                            <p>- <?= $add['nome_adicional'] ?> (R$ <?= number_format($add['valor_adicional'], 2, ',', '.') ?>)</p>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                <div class="ml-4 mt-1 text-xs text-gray-600">
+                    <div class="mb-1 font-semibold">Adicionais:</div>
+                    <?php if ($adicionais): ?>
+                        <ul class="list-disc list-inside">
+                            <?php foreach ($adicionais as $add): ?>
+                                <li>
+                                    <?= htmlspecialchars($add['nome_adicional']) ?>
+                                    <?php if (floatval($add['valor_adicional']) > 0): ?>
+                                        — R$ <?= number_format($add['valor_adicional'], 2, ',', '.') ?>
+                                    <?php endif; ?>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else: ?>
+                        <p class="italic text-gray-400">Nenhum adicional.</p>
+                    <?php endif; ?>
+                </div>
+
+
             </div>
         <?php endforeach; ?>
 

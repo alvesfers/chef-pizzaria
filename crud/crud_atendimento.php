@@ -237,8 +237,6 @@ function criarPedidoBalcao($pdo, $input)
     }
 }
 
-
-// Roteamento
 switch ($action) {
     case 'listar_produtos':
     case 'carregar_produtos':

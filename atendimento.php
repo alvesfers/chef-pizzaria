@@ -305,6 +305,10 @@ $tiposEntrega = ['retirada' => 'Retirada na loja', 'entrega' => 'Entrega'];
 
 </div>
 
+<div id="loading-overlay" class="fixed inset-0 bg-black/50 z-50 hidden justify-center items-center">
+    <span class="loading loading-spinner loading-lg text-white"></span>
+</div>
+<audio id="notification-sound" src="assets/audio/notification.mp3" preload="auto"></audio>
 <!-- Injeção das variáveis JS -->
 <script>
     window.__entregadores__ = <?= json_encode($entregadores, JSON_UNESCAPED_UNICODE) ?>;
@@ -316,6 +320,8 @@ $tiposEntrega = ['retirada' => 'Retirada na loja', 'entrega' => 'Entrega'];
     window.__googleMapsKey__ = <?= json_encode($googleMapsKey, JSON_UNESCAPED_UNICODE) ?>;
     window.__limiteEntrega__ = <?= $limiteEntrega !== null ? $limiteEntrega : 'null' ?>;
     window.__regrasFrete__ = <?= json_encode($regrasFrete) ?>;
+    window.__nomeLoja__ = <?= json_encode($nomeLoja) ?>;
+    window.__enderecoLoja__ = <?= json_encode($enderecoLoja) ?>;
 </script>
 
 

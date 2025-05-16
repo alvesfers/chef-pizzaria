@@ -97,7 +97,9 @@ $statusLoja = $aberta
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="icon" href="/assets/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/images/logo">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/logo">
+
 </head>
 
 <body class="flex flex-col min-h-screen bg-base-200">
@@ -152,6 +154,7 @@ $statusLoja = $aberta
                                 <li><a href="produtos.php">Produtos</a></li>
                                 <li><a href="categorias.php">Categorias</a></li>
                                 <li><a href="adicionais.php">Adicionais</a></li>
+                                <li><a href="loja.php">Minha loja</a></li>
                             <?php else: ?>
                                 <li><a href="meus_dados.php">Meus Dados</a></li>
                             <?php endif; ?>
@@ -177,8 +180,8 @@ $statusLoja = $aberta
             </div>
 
             <!-- DESKTOP: menu horizontal -->
-            <div class="hidden lg:flex absolute left-1/2 transform -translate-x-1/2">
-                <ul class="menu menu-horizontal px-1 gap-4">
+            <div class="hidden md:flex flex-1 justify-center">
+                <ul class="menu menu-horizontal px-2 gap-3">
                     <li><a href="index.php">Início</a></li>
                     <li><a href="index.php?#cardapio">Cardápio</a></li>
                     <li><a href="index.php?#contato">Contato</a></li>
@@ -190,6 +193,7 @@ $statusLoja = $aberta
                             <li><a href="produtos.php">Produtos</a></li>
                             <li><a href="categorias.php">Categorias</a></li>
                             <li><a href="adicionais.php">Adicionais</a></li>
+                            <li><a href="loja.php">Minha loja</a></li>
                         <?php else: ?>
                             <li><a href="meus_dados.php">Meus Dados</a></li>
                         <?php endif; ?>

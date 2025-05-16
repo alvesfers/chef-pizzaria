@@ -76,7 +76,7 @@ $total = max(0, $totalItens + $frete - $desconto);
 <body onload="window.print()">
     <div class="center">
         <?php if (!empty($dadosLoja['logo'])): ?>
-            <img src="<?= $dadosLoja['logo'] ?>" class="logo" alt="Logo">
+            <img src="assets/images/logo" class="logo" alt="Logo">
         <?php endif; ?>
         <strong><?= strtoupper($dadosLoja['nome_loja'] ?? 'PIZZARIA') ?></strong><br>
         <?= $dadosLoja['endereco_completo'] ?? '' ?>

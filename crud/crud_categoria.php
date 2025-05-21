@@ -35,6 +35,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
     $stmt3->execute([$id]);
     $cat['tipo_adicionais'] = $stmt3->fetchAll(PDO::FETCH_COLUMN);
 
+    // categorias relacionadas
+    $stmt4 = $pdo->prepare("
+        SELECT id_categoria_relacionada
+            FROM tb_categoria_relacionada
+        WHERE id_categoria = ?
+    ");
+    $stmt4->execute([$id]);
+    $cat['categorias_relacionadas'] = $stmt4->fetchAll(PDO::FETCH_COLUMN);
+
     echo json_encode(['status' => 'ok', 'categoria' => $cat]);
     exit;
 }
@@ -118,5 +127,23 @@ if (!empty($input['tipo_adicionais']) && is_array($input['tipo_adicionais'])) {
         $stmtTA->execute([$id, intval($taId)]);
     }
 }
+
+// 3) atualizar categoria_relacionada
+$pdo->prepare("DELETE FROM tb_categoria_relacionada WHERE id_categoria = ?")
+    ->execute([$id]);
+
+if (!empty($input['categorias_relacionadas']) && is_array($input['categorias_relacionadas'])) {
+    $stmtCR = $pdo->prepare("
+      INSERT INTO tb_categoria_relacionada
+        (id_categoria, id_categoria_relacionada)
+      VALUES (?, ?)
+    ");
+    foreach ($input['categorias_relacionadas'] as $relId) {
+        if ($relId != $id) { // evita vincular a si mesma
+            $stmtCR->execute([$id, intval($relId)]);
+        }
+    }
+}
+
 
 echo json_encode(['status' => 'ok', 'id' => $id]);

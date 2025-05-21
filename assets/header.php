@@ -27,8 +27,6 @@ $mapaDias = [
     'Sunday'    => 'domingo',
 ];
 
-date_default_timezone_set('America/Sao_Paulo');
-
 $horaAtual = date('H:i:s');
 $diaIngles = date('l');
 $diaSemana = $mapaDias[$diaIngles] ?? '';
@@ -131,6 +129,13 @@ $statusLoja = $aberta
             font-weight: 500;
             font-size: 14px;
         }
+
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .menu-horizontal>li>a {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+        }
     </style>
 
     <header>
@@ -173,21 +178,20 @@ $statusLoja = $aberta
             </div>
 
             <!-- LOGO -->
-            <div class="flex-1 justify-center lg:justify-start">
+            <div class="navbar-center">
                 <a href="index.php" class="btn btn-ghost normal-case text-xl font-bold tracking-wide">
                     <?= htmlspecialchars($nomeLoja) ?>
                 </a>
             </div>
 
             <!-- DESKTOP: menu horizontal -->
-            <div class="hidden md:flex flex-1 justify-center">
-                <ul class="menu menu-horizontal px-2 gap-3">
+            <div class="hidden md:flex navbar-center">
+                <ul class="menu menu-horizontal gap-4">
                     <li><a href="index.php">Início</a></li>
                     <li><a href="index.php?#cardapio">Cardápio</a></li>
                     <li><a href="index.php?#contato">Contato</a></li>
 
                     <?php if ($usuarioLogado): ?>
-
                         <?php if ($isAdmin): ?>
                             <li><a href="atendimento.php">Atendimento</a></li>
                             <li><a href="produtos.php">Produtos</a></li>
@@ -197,15 +201,11 @@ $statusLoja = $aberta
                         <?php else: ?>
                             <li><a href="meus_dados.php">Meus Dados</a></li>
                         <?php endif; ?>
-
                         <li><a href="meus_pedidos.php">Meus Pedidos</a></li>
                         <li><a id="btnLogout" class="text-red-400">Sair</a></li>
-
                     <?php else: ?>
-
                         <li><a href="login.php">Login</a></li>
                         <li><a href="cadastro.php">Cadastro</a></li>
-
                     <?php endif; ?>
                 </ul>
             </div>

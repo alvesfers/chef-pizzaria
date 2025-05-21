@@ -34,6 +34,23 @@
         renderPagination();
     }
 
+    function buildModalCategoriasRelacionadas(selecionadas = []) {
+        const $wrap = $('#cf-categorias-relacionadas').empty();
+        ALL.forEach(c => {
+            const checked = selecionadas.includes(c.id_categoria) ? 'checked' : '';
+            $wrap.append(`
+          <label class="flex items-center gap-2">
+            <input type="checkbox"
+                   name="categorias_relacionadas[]"
+                   value="${c.id_categoria}"
+                   ${checked} />
+            <span>${c.nome_categoria}</span>
+          </label>
+        `);
+        });
+    }
+
+
     function renderPagination() {
         const total = Math.ceil(filtered.length / perPage);
         const $pg = $('#pagination').empty();
@@ -136,6 +153,8 @@
         $('#cf-ordem').val(cat.ordem_exibicao != null ? cat.ordem_exibicao : 0);
         buildModalSubcats(cat.subcategorias || []);
         buildModalTipoAdicionais(cat.tipo_adicionais || []);
+        buildModalCategoriasRelacionadas(cat.categorias_relacionadas || []);
+
         $('#modal-category').prop('checked', true);
     }
 
@@ -194,6 +213,9 @@
                 .map((_, cb) => +cb.value).get();
             data.tipo_adicionais = $('#cf-tipo-adicionais input:checked')
                 .map((_, cb) => +cb.value).get();
+            data.categorias_relacionadas = $('#cf-categorias-relacionadas input:checked')
+                .map((_, cb) => +cb.value).get();
+
             $.ajax({
                 url: 'crud/crud_categoria.php',
                 method: 'POST', contentType: 'application/json',

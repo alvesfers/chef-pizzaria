@@ -86,6 +86,15 @@ $tipoAdicionais = $pdo
                     class="input input-bordered w-full" required />
             </div>
 
+            <!-- Categorias Relacionadas -->
+            <div class="mb-4">
+                <label class="block font-medium mb-1">Categorias Relacionadas</label>
+                <div id="cf-categorias-relacionadas"
+                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-auto border p-2 rounded">
+                    <!-- preenchido via JS -->
+                </div>
+            </div>
+
             <!-- Subcategorias -->
             <div class="mb-4">
                 <label class="block font-medium mb-1">Subcategorias</label>
@@ -163,9 +172,10 @@ $tipoAdicionais = $pdo
 </div>
 
 <script>
-    window.__categorias__ = <?= json_encode($categorias,      JSON_UNESCAPED_UNICODE) ?>;
-    window.__subcategorias__ = <?= json_encode($subcats,         JSON_UNESCAPED_UNICODE) ?>;
-    window.__tipoAdicionais__ = <?= json_encode($tipoAdicionais,  JSON_UNESCAPED_UNICODE) ?>;
+    window.__categorias__ = <?= json_encode($categorias, JSON_UNESCAPED_UNICODE) ?>;
+    window.__subcategorias__ = <?= json_encode($subcats, JSON_UNESCAPED_UNICODE) ?>;
+    window.__tipoAdicionais__ = <?= json_encode($tipoAdicionais, JSON_UNESCAPED_UNICODE) ?>;
 </script>
+
 <script src="assets/js/categorias.js"></script>
 <?php include_once 'assets/footer.php'; ?>

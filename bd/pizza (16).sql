@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 23/05/2025 às 17:27
+-- Tempo de geração: 23/05/2025 às 23:06
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -195,7 +195,7 @@ CREATE TABLE `tb_dados_loja` (
 --
 
 INSERT INTO `tb_dados_loja` (`id_loja`, `nome_loja`, `cep`, `endereco_completo`, `logo`, `tema`, `instagram`, `whatsapp`, `google`, `preco_base`, `preco_km`, `limite_entrega`, `tempo_entrega`, `tempo_retirada`, `usar_horarios`) VALUES
-(1, 'Fernando Pizzas', '04434150', 'Rua Germano Gottsfritz, 431', NULL, 'light', 'alvesferz', '11961723132', 'AIzaSyDg5xiBHnQKhUvwCSjOY2YJ4SN5L0wEj78', 0.00, 1.00, 5.00, 45, 20, 1);
+(1, 'Fernando Pizzas', '04434150', 'Rua Germano Gottsfritz, 431', NULL, 'light', 'alvesferz', '11961723132', 'AIzaSyDg5xiBHnQKhUvwCSjOY2YJ4SN5L0wEj78', 1.00, 1.00, 5.00, 45, 20, 1);
 
 -- --------------------------------------------------------
 
@@ -226,7 +226,9 @@ INSERT INTO `tb_endereco` (`id_endereco`, `id_usuario`, `apelido`, `cep`, `rua`,
 (11, 1, 'sadas', '04430150', 'Avenida Pio XI', '100', '', 'Vila Missionária', '', 0, 1, '2025-05-15 19:59:14'),
 (12, 1, 'sdasd', '04434150', 'Rua Germano Gottsfritz', '50', '', 'Jardim Uberaba', '', 0, 1, '2025-05-15 20:00:55'),
 (13, 1, 'zxsa', '04434150', 'Rua Germano Gottsfritz', '20', '', 'Jardim Uberaba', '', 0, 1, '2025-05-15 20:02:19'),
-(14, 1, 'ASDSas', '04334150', 'Rua Hildebrando Siqueira', '10', '', 'Vila Fachini', '', 1, 1, '2025-05-15 20:04:33');
+(14, 1, 'ASDSas', '04334150', 'Rua Hildebrando Siqueira', '10', '', 'Vila Fachini', '', 1, 1, '2025-05-15 20:04:33'),
+(18, 8, 'Barbearia', '04674225', 'Avenida Sargento Geraldo Sant\'Ana', '563', '', 'Jardim Taquaral', '', 0, 1, '2025-05-23 15:37:23'),
+(19, 8, 'ss', '04434150', 'Rua Germano Gottsfritz', '422', '', 'Jardim Uberaba', '', 1, 1, '2025-05-23 16:54:00');
 
 -- --------------------------------------------------------
 
@@ -253,7 +255,7 @@ INSERT INTO `tb_forma_pgto` (`id_forma`, `nome_pgto`, `pagamento_ativo`, `is_onl
 (1, 'Pix', 1, 0, NULL, NULL, '2025-04-25 20:08:35', '2025-04-25 20:09:32'),
 (2, 'Cartão de Crédito', 1, 0, NULL, NULL, '2025-04-25 20:08:55', '2025-04-25 20:08:55'),
 (3, 'Cartão de Débito', 1, 0, NULL, NULL, '2025-04-25 20:09:15', '2025-04-25 20:09:15'),
-(4, 'Online', 1, 1, NULL, NULL, '2025-04-25 20:09:45', '2025-04-25 20:10:00');
+(5, 'Dinheiro', 1, 0, NULL, NULL, '2025-05-23 15:40:27', '2025-05-23 15:40:27');
 
 -- --------------------------------------------------------
 
@@ -311,6 +313,16 @@ CREATE TABLE `tb_item_adicional` (
   `nome_adicional` varchar(100) DEFAULT NULL,
   `valor_adicional` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `tb_item_adicional`
+--
+
+INSERT INTO `tb_item_adicional` (`id_item_adicional`, `id_item_pedido`, `id_adicional`, `nome_adicional`, `valor_adicional`) VALUES
+(1, 4, 13, 'Adicional 1', 1.00),
+(2, 4, 14, 'Adicional 2', 5.00),
+(3, 5, 13, 'Adicional 1', 1.00),
+(5, 15, 14, 'Adicional 2 — R$5.00', 5.00);
 
 -- --------------------------------------------------------
 
@@ -409,7 +421,7 @@ CREATE TABLE `tb_produto` (
 --
 
 INSERT INTO `tb_produto` (`id_produto`, `id_categoria`, `nome_produto`, `slug_produto`, `valor_produto`, `imagem_produto`, `descricao_produto`, `produto_ativo`, `qtd_produto`, `tipo_calculo_preco`, `qtd_sabores`) VALUES
-(26, 5, 'Produto 1', NULL, 15.00, NULL, 'Produto comum com controle de estoque', 1, 50, 'maior', 1),
+(26, 5, 'Produto 1', NULL, 15.00, NULL, 'Produto comum com controle de estoque', 1, 41, 'maior', 1),
 (27, 5, 'Produto 2', NULL, 10.00, NULL, 'Produto com mais de um sabor (pega as opções que tem na categoria e NÃO estão na subcategoria Mais sabores)', 1, -1, 'maior', 2),
 (28, 5, 'Produto 3', NULL, 20.00, NULL, 'Produto com adicionais inclusos (por tipo de adicional) a escolha do usuario', 1, -1, 'maior', 1),
 (29, 5, 'Produto 4', NULL, 20.00, NULL, 'Produto com adicionais inclusos (por tipo de adicional) pré definido pelo cadastro', 1, -1, 'maior', 1);
@@ -671,7 +683,8 @@ CREATE TABLE `tb_usuario` (
 
 INSERT INTO `tb_usuario` (`id_usuario`, `nome_usuario`, `telefone_usuario`, `senha_usuario`, `tipo_usuario`, `usuario_ativo`, `criado_em`) VALUES
 (1, 'Alves', '11961723132', '$2y$10$napjD/xTpHYZDrdkWqUTVe8oUP87g.Pf7ZVF4LuRwgxEFl3arUs7K', 'admin', 1, '2025-04-25 19:39:28'),
-(7, 'Pedro', '11972332906', '$2y$10$gGZou9G0NYbR/bE0s83LgeFyOFWWghl0BcWT0Qx97QmIreg6poLIm', 'cliente', 1, '2025-05-17 00:01:19');
+(7, 'Pedro', '11972332906', '$2y$10$gGZou9G0NYbR/bE0s83LgeFyOFWWghl0BcWT0Qx97QmIreg6poLIm', 'cliente', 1, '2025-05-17 00:01:19'),
+(8, 'Fernando', '11222222222', '$2y$10$X3EZwDsEv.VGin7RnR7sKukacj3907m3ndwBcgBWaK2W7xLP.gCV6', 'cliente', 1, '2025-05-23 15:35:50');
 
 --
 -- Índices para tabelas despejadas
@@ -906,13 +919,13 @@ ALTER TABLE `tb_dados_loja`
 -- AUTO_INCREMENT de tabela `tb_endereco`
 --
 ALTER TABLE `tb_endereco`
-  MODIFY `id_endereco` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id_endereco` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT de tabela `tb_forma_pgto`
 --
 ALTER TABLE `tb_forma_pgto`
-  MODIFY `id_forma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_forma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de tabela `tb_funcionario`
@@ -930,13 +943,13 @@ ALTER TABLE `tb_horario_atendimento`
 -- AUTO_INCREMENT de tabela `tb_item_adicional`
 --
 ALTER TABLE `tb_item_adicional`
-  MODIFY `id_item_adicional` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_item_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de tabela `tb_item_pedido`
 --
 ALTER TABLE `tb_item_pedido`
-  MODIFY `id_item_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_item_pedido` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `tb_item_pedido_sabor`
@@ -948,13 +961,13 @@ ALTER TABLE `tb_item_pedido_sabor`
 -- AUTO_INCREMENT de tabela `tb_pedido`
 --
 ALTER TABLE `tb_pedido`
-  MODIFY `id_pedido` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_pedido` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `tb_pedido_status_log`
 --
 ALTER TABLE `tb_pedido_status_log`
-  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto`
@@ -1014,7 +1027,7 @@ ALTER TABLE `tb_tipo_adicional_categoria`
 -- AUTO_INCREMENT de tabela `tb_usuario`
 --
 ALTER TABLE `tb_usuario`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Restrições para tabelas despejadas

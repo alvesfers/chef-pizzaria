@@ -128,7 +128,6 @@ function listarPedidos($pdo)
         SELECT p.id_pedido, p.nome_cliente AS cliente, p.telefone_cliente, p.status_pedido,
                p.valor_total, p.criado_em, p.id_entregador
         FROM tb_pedido p
-        WHERE p.origem != 'balcao'
         ORDER BY p.criado_em DESC
     ");
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
@@ -167,11 +166,23 @@ function criarPedidoBalcao($pdo, $input)
         // Inserir pedido
         $stmt = $pdo->prepare("
             INSERT INTO tb_pedido
-                (id_usuario, id_funcionario, endereco, nome_cliente, telefone_cliente,
-                 valor_total, tipo_entrega, forma_pagamento, status_pedido, origem,
-                 valor_frete, desconto_aplicado, criado_em)
+                (
+            
+                id_usuario,
+                id_funcionario, 
+                endereco, 
+                nome_cliente, 
+                telefone_cliente,
+                valor_total, 
+                tipo_entrega, 
+                forma_pagamento, 
+                status_pedido, 
+                origem,
+                valor_frete, 
+                desconto_aplicado, 
+                criado_em)
             VALUES
-                (?, ?, ?, ?, ?, ?, ?, 'aceito', 'balcao', ?, ?, ?, NOW())
+                (?, ?, ?, ?, ?, ?, ?, ?, 'aceito', 'balcao', ?, ?, NOW())
         ");
         $stmt->execute([
             $id_usuario ?: null,
@@ -188,7 +199,7 @@ function criarPedidoBalcao($pdo, $input)
         $idPedido = $pdo->lastInsertId();
 
         // Itens do pedido
-        $stmtItem = $pdo->prepare("
+        $stmtItem  = $pdo->prepare("
             INSERT INTO tb_item_pedido (id_pedido, id_produto, nome_exibicao, quantidade, valor_unitario)
             VALUES (?, ?, ?, ?, ?)
         ");
@@ -196,12 +207,15 @@ function criarPedidoBalcao($pdo, $input)
             INSERT INTO tb_item_pedido_sabor (id_item_pedido, id_produto)
             VALUES (?, ?)
         ");
-        $stmtAdd = $pdo->prepare("
-            INSERT INTO tb_item_adicional (id_item_pedido, nome_adicional, valor_adicional)
-            VALUES (?, ?, ?)
+        $insAdd = $pdo->prepare("
+            INSERT INTO tb_item_adicional
+                (id_item_pedido, id_adicional, nome_adicional, valor_adicional)
+            VALUES (?, ?, ?, ?)
         ");
 
+
         foreach ($itens as $item) {
+            // insere item
             $stmtItem->execute([
                 $idPedido,
                 $item['prod']['id_produto'],
@@ -211,15 +225,29 @@ function criarPedidoBalcao($pdo, $input)
             ]);
             $idItem = $pdo->lastInsertId();
 
+            // sabores (ajuste aqui)
             if (!empty($item['flavors'])) {
                 foreach ($item['flavors'] as $sabor) {
-                    $stmtSabor->execute([$idItem, $sabor['id']]);
+                    // se veio como array com ['id'], usa-o; senão assume que $sabor já é o ID
+                    $idSabor = is_array($sabor)
+                        ? (isset($sabor['id']) ? intval($sabor['id']) : 0)
+                        : intval($sabor);
+                    if ($idSabor > 0) {
+                        $stmtSabor->execute([$idItem, $idSabor]);
+                    }
                 }
             }
 
+            // adicionais
             if (!empty($item['addons'])) {
                 foreach ($item['addons'] as $add) {
-                    $stmtAdd->execute([$idItem, $add['nome'], $add['valor']]);
+                    // 2) agora passo também o ID do adicional
+                    $insAdd->execute([
+                        $idItem,
+                        $add['id'],          // <-- id_adicional
+                        $add['nome'],        // ou $add['nome_adicional']
+                        $add['valor']        // ou $add['valor_adicional']
+                    ]);
                 }
             }
         }

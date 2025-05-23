@@ -1,7 +1,6 @@
 <?php
 include_once 'assets/header.php';
 
-// 1) Todos os tipos de adicionais (ativos e inativos)
 $tipoAdicionais = $pdo->query("
     SELECT 
       id_tipo_adicional,
@@ -14,7 +13,6 @@ $tipoAdicionais = $pdo->query("
     ORDER BY nome_tipo_adicional
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-// 2) Todos os adicionais
 $adicionais = $pdo->query("
     SELECT 
       id_adicional,
@@ -29,14 +27,12 @@ $adicionais = $pdo->query("
 <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-4">Gerenciar Tipos de Adicional</h1>
 
-    <!-- botão criar -->
     <div class="flex flex-col sm:flex-row gap-2 mb-4">
         <button id="btn-new-tipo" class="btn btn-primary flex-1">
             Novo Tipo
         </button>
     </div>
 
-    <!-- tabela responsiva -->
     <div class="overflow-x-auto">
         <table class="table w-full">
             <thead>
@@ -54,7 +50,6 @@ $adicionais = $pdo->query("
     </div>
 </div>
 
-<!-- Modal Tipo de Adicional -->
 <input type="checkbox" id="modal-tipo" class="modal-toggle" />
 <div class="modal">
     <div class="modal-box max-w-full sm:max-w-2xl">
@@ -104,7 +99,6 @@ $adicionais = $pdo->query("
 
             <h4 class="font-semibold mb-2">Adicionais deste Tipo</h4>
             <div class="overflow-x-auto mb-2" id="tf-adicionais-list">
-                <!-- tabela de adicionais, via JS -->
             </div>
             <button type="button" id="btn-new-adicional"
                 class="btn btn-sm btn-secondary mb-4">
@@ -119,7 +113,6 @@ $adicionais = $pdo->query("
     </div>
 </div>
 
-<!-- Modal Adicional -->
 <input type="checkbox" id="modal-adicional" class="modal-toggle" />
 <div class="modal">
     <div class="modal-box max-w-full sm:max-w-md">

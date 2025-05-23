@@ -1,5 +1,5 @@
 <?php
-// finalizar_pedido.php
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -20,7 +20,6 @@ if (empty($carrinho)) {
     exit;
 }
 
-// — Carrega dados da loja e regras de frete
 $dadosLoja     = $pdo->query("SELECT * FROM tb_dados_loja LIMIT 1")->fetch(PDO::FETCH_ASSOC);
 $precoBase     = floatval($dadosLoja['preco_base']);
 $precoKm       = floatval($dadosLoja['preco_km']);
@@ -29,14 +28,12 @@ $googleMapsKey = $dadosLoja['google'];
 $limiteEntrega = isset($dadosLoja['limite_entrega']) ? floatval($dadosLoja['limite_entrega']) : null;
 $regrasFrete   = $pdo->query("SELECT * FROM tb_regras_frete WHERE ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
 
-// — Carrega endereços e formas de pagamento
 $stmt       = $pdo->prepare("SELECT * FROM tb_endereco WHERE id_usuario = ?");
 $stmt->execute([$idUsuario]);
 $enderecos  = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $formasPgto = $pdo->query("SELECT * FROM tb_forma_pgto WHERE pagamento_ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
 
-// — Calcula subtotal
 $subtotal = 0;
 foreach ($carrinho as $item) {
     $subtotal += $item['valor_unitario'] * $item['quantidade'];
@@ -49,7 +46,6 @@ foreach ($carrinho as $item) {
     </div>
 
     <form id="formFinalizarPedido">
-        <!-- Tipo de Entrega -->
         <div class="mb-6">
             <label class="font-semibold block mb-2">Tipo de entrega</label>
             <div class="flex gap-2">
@@ -59,7 +55,6 @@ foreach ($carrinho as $item) {
             <input type="hidden" name="tipo_entrega" id="inputTipoEntrega" value="retirada">
         </div>
 
-        <!-- Endereço de Entrega -->
         <div id="enderecoEntrega" class="mb-6 hidden">
             <?php if ($enderecos): ?>
                 <div class="flex gap-2 items-end">
@@ -89,7 +84,6 @@ foreach ($carrinho as $item) {
             <input type="hidden" name="id_endereco_selecionado" id="idEnderecoSelecionado" value="">
 
             <div id="formNovoEndereco" class="hidden mt-6 space-y-4">
-                <!-- campos do novo endereço -->
                 <div class="flex gap-2">
                     <div class="flex-1">
                         <label class="block font-medium mb-1">CEP</label>
@@ -123,7 +117,6 @@ foreach ($carrinho as $item) {
             </div>
         </div>
 
-        <!-- Forma de Pagamento -->
         <div class="mb-6">
             <label class="font-semibold block mb-2">Forma de Pagamento</label>
             <select id="selectForma" class="select select-bordered w-full" required>
@@ -136,7 +129,6 @@ foreach ($carrinho as $item) {
             <input type="hidden" name="forma_pagamento" id="inputFormaPagamento" value="">
         </div>
 
-        <!-- Cupom de Desconto -->
         <div class="mb-6">
             <label class="font-semibold block mb-2">Cupom de Desconto</label>
             <div class="flex gap-2">
@@ -147,7 +139,6 @@ foreach ($carrinho as $item) {
             <input type="hidden" name="codigo_cupom" id="inputCodigoCupom" value="">
         </div>
 
-        <!-- Resumo -->
         <div class="text-right font-bold text-lg mb-6 space-y-1">
             <div>Subtotal: R$<span id="valorSubtotal"><?= number_format($subtotal, 2, ',', '.') ?></span></div>
             <div class="class-frete hidden">Frete: R$<span id="valorFreteVisual">0,00</span></div>
@@ -227,7 +218,6 @@ foreach ($carrinho as $item) {
             $('#valorTotal').text(total.toFixed(2).replace('.', ','));
         }
 
-        // entrega/retirada
         $('#btnEntrega').click(() => {
             $('#inputTipoEntrega').val('entrega');
             $('#btnEntrega').addClass('btn-primary').removeClass('btn-outline');
@@ -236,6 +226,7 @@ foreach ($carrinho as $item) {
             $('#btnConfirmarPedido').prop('disabled', true);
             $('.class-frete').removeClass('hidden');
         });
+
         $('#btnRetirada').click(() => {
             $('#inputTipoEntrega').val('retirada');
             $('#btnRetirada').addClass('btn-primary').removeClass('btn-outline');
@@ -247,7 +238,6 @@ foreach ($carrinho as $item) {
             $('#btnConfirmarPedido').prop('disabled', false);
         });
 
-        // select endereço -> calcular frete
         $('#selectEndereco').change(function() {
             const opt = $(this).find(':selected');
             if (opt.val() == 0) return $('#btnConfirmarPedido').prop('disabled', true);
@@ -296,12 +286,10 @@ foreach ($carrinho as $item) {
             }
         });
 
-
         $('#selectForma').change(function() {
             $('#inputFormaPagamento').val($(this).val());
         }).trigger('change');
 
-        // aplicar cupom
         $('#btnAplicarCupom').click(() => {
             const codigo = $('#inputCupom').val().trim();
             if (!codigo) {
@@ -340,7 +328,6 @@ foreach ($carrinho as $item) {
             });
         });
 
-        // submeter
         $('#formFinalizarPedido').submit(function(e) {
             e.preventDefault();
             const dados = $(this).serialize() + '&acao=confirmar';

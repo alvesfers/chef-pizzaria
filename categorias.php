@@ -1,7 +1,6 @@
 <?php
 include_once 'assets/header.php';
 
-// 1) Categorias
 $categorias = $pdo
     ->query("
         SELECT 
@@ -15,7 +14,6 @@ $categorias = $pdo
     ")
     ->fetchAll(PDO::FETCH_ASSOC);
 
-// 2) Todas as subcategorias ativas
 $subcats = $pdo
     ->query("
         SELECT 
@@ -27,7 +25,6 @@ $subcats = $pdo
     ")
     ->fetchAll(PDO::FETCH_ASSOC);
 
-// 3) Todos os tipos de adicional ativos
 $tipoAdicionais = $pdo
     ->query("
         SELECT 
@@ -43,7 +40,6 @@ $tipoAdicionais = $pdo
 <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-4">Gerenciar Categorias</h1>
 
-    <!-- botões -->
     <div class="flex flex-col sm:flex-row gap-2 mb-4">
         <button id="btn-new-category" class="btn btn-primary flex-1">
             Nova Categoria
@@ -53,7 +49,6 @@ $tipoAdicionais = $pdo
         </button>
     </div>
 
-    <!-- tabela responsiva -->
     <div class="overflow-x-auto mb-4">
         <table class="table w-full">
             <thead>
@@ -72,7 +67,6 @@ $tipoAdicionais = $pdo
     <div id="pagination" class="flex justify-center mt-4"></div>
 </div>
 
-<!-- ========== Modal Nova/Edição de Categoria ========== -->
 <input type="checkbox" id="modal-category" class="modal-toggle" />
 <div class="modal">
     <div class="modal-box max-w-full sm:max-w-md">
@@ -86,30 +80,23 @@ $tipoAdicionais = $pdo
                     class="input input-bordered w-full" required />
             </div>
 
-            <!-- Categorias Relacionadas -->
             <div class="mb-4">
                 <label class="block font-medium mb-1">Categorias Relacionadas</label>
-                <div id="cf-categorias-relacionadas"
-                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-auto border p-2 rounded">
-                    <!-- preenchido via JS -->
+                <div id="cf-categorias-relacionadas" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-auto border p-2 rounded">
+
                 </div>
             </div>
 
-            <!-- Subcategorias -->
             <div class="mb-4">
                 <label class="block font-medium mb-1">Subcategorias</label>
-                <div id="cf-subcategorias"
-                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-auto border p-2 rounded">
-                    <!-- preenchido via JS -->
+                <div id="cf-subcategorias" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-auto border p-2 rounded">
                 </div>
             </div>
 
-            <!-- Tipos de Adicional -->
             <div class="mb-4">
                 <label class="block font-medium mb-1">Tipos de Adicional</label>
-                <div id="cf-tipo-adicionais"
-                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-auto border p-2 rounded">
-                    <!-- preenchido via JS -->
+                <div id="cf-tipo-adicionais" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-auto border p-2 rounded">
+
                 </div>
             </div>
 
@@ -146,7 +133,6 @@ $tipoAdicionais = $pdo
     </div>
 </div>
 
-<!-- ========== Modal Gerenciar Subcategorias ========== -->
 <input type="checkbox" id="modal-subcats" class="modal-toggle" />
 <div class="modal">
     <div class="modal-box max-w-full sm:max-w-lg">

@@ -152,8 +152,8 @@ $statusLoja = $aberta
                                         <li><a href="produtos.php">Produtos</a></li>
                                         <li><a href="categorias.php">Categorias</a></li>
                                         <li><a href="adicionais.php">Adicionais</a></li>
-                                        <li><a href="cupons.php">Cupons</a></li>
-                                        <li><a href="usuarios.php">Usuários</a></li>
+                                        <li class="hidden"><a href="cupons.php">Cupons</a></li>
+                                        <li class="hidden"><a href="usuarios.php">Usuários</a></li>
                                     </ul>
                                 </li>
                                 <li><a href="loja.php">Minha Loja</a></li>
@@ -196,8 +196,8 @@ $statusLoja = $aberta
                                 <li><a href="produtos.php">Produtos</a></li>
                                 <li><a href="categorias.php">Categorias</a></li>
                                 <li><a href="adicionais.php">Adicionais</a></li>
-                                <li><a href="cupons.php">Cupons</a></li>
-                                <li><a href="usuarios.php">Usuários</a></li>
+                                <li class="hidden"><a href="cupons.php">Cupons</a></li>
+                                <li class="hidden"><a href="usuarios.php">Usuários</a></li>
                             </ul>
                         </li>
                         <li><a href="loja.php">Minha Loja</a></li>
@@ -230,5 +230,3 @@ $statusLoja = $aberta
     </header>
 
     <main class="flex-grow mt-16">
-        <main class="flex-grow mt-16">
-            <!-- Conteúdo da página -->

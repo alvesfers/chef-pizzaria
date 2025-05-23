@@ -146,13 +146,16 @@
 
             const qtd = parseInt($('#detail-prod-qty').val(), 10) || 1;
             const sabores = $('input[name="flavor"]:checked')
-                .map((_, el) => $(el).next().text()).get();
+                .map((_, el) => ({ id: parseInt(el.value, 10) }))
+                .get();
+
 
             const addons = $('input[name="addon"]:checked')
                 .map((_, el) => {
+                    const id = parseInt(el.value, 10);
                     const nome = $(el).next().text();
                     const valor = parseFloat(el.dataset.preco) || 0;
-                    return { nome, valor };
+                    return { id, nome, valor };
                 }).get();
 
             const totalText = $('#valor-total-modal').text().replace(/[^\d,]/g, '').replace(',', '.') / 100;

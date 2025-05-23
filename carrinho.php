@@ -1,14 +1,12 @@
 <?php
-// carrinho.php
+
 include_once 'assets/header.php';
 
 $carrinho = $_SESSION['carrinho'] ?? [];
 $usuario  = $_SESSION['usuario'] ?? null;
 
-// prepara statement para ler estoque
 $stmtStock = $pdo->prepare("SELECT qtd_produto FROM tb_produto WHERE id_produto = ?");
 
-// calcula total geral
 $totalGeral = 0;
 foreach ($carrinho as $item) {
     $totalGeral += $item['valor_unitario'] * $item['quantidade'];
@@ -30,12 +28,10 @@ foreach ($carrinho as $item) {
     <?php else: ?>
         <div class="space-y-6 mb-8">
             <?php foreach ($carrinho as $key => $item):
-                // lê estoque atual do produto
                 $stmtStock->execute([$item['id_produto']]);
                 $row = $stmtStock->fetch(PDO::FETCH_ASSOC);
                 $stock = $row ? intval($row['qtd_produto']) : 0;
-                // define quantidade máxima permitida
-                // se stock > 0: estoque real; se stock < 0: ilimitado mas máximo 10; se stock == 0: sem estoque
+
                 if ($stock === 0) {
                     $maxQtd = 0;
                 } elseif ($stock > 0) {
@@ -69,7 +65,6 @@ foreach ($carrinho as $item) {
                         </div>
                     </div>
 
-                    <!-- Sabores -->
                     <?php if (!empty($item['sabores'])): ?>
                         <button class="btn btn-link p-0 mt-2 text-sm text-left text-primary"
                             data-toggle="sabores-<?= $key ?>">
@@ -87,7 +82,6 @@ foreach ($carrinho as $item) {
                         </div>
                     <?php endif; ?>
 
-                    <!-- Adicionais -->
                     <?php if (!empty($item['adicionais'])): ?>
                         <button class="btn btn-link p-0 mt-2 text-sm text-left text-primary"
                             data-toggle="adicionais-<?= $key ?>">
@@ -126,7 +120,6 @@ foreach ($carrinho as $item) {
     <?php endif; ?>
 </div>
 
-<!-- Modal de login automático -->
 <input type="checkbox" id="modalLoginCarrinho" class="modal-toggle" <?= !$usuario ? 'checked' : '' ?>>
 <div class="modal">
     <div class="modal-box relative">
@@ -135,21 +128,18 @@ foreach ($carrinho as $item) {
         </label>
         <h3 class="text-lg font-bold mb-4">Identifique-se para continuar</h3>
         <form id="formLoginAuto" class="space-y-4">
-            <!-- (mantém o conteúdo do formulário de login) -->
         </form>
     </div>
 </div>
 
 <script>
     $(function() {
-        // alterna visibilidade de detalhes
         $('[data-toggle]').on('click', function() {
             const tgt = $(this).data('toggle');
             $('#' + tgt).toggleClass('hidden');
             $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
         });
 
-        // função para atualizar quantidade com validação de estoque
         function atualizarCarrinho(key, delta) {
             const card = $(`[data-key="${key}"]`);
             const maxQtd = parseInt(card.data('max'), 10);

@@ -1,4 +1,5 @@
 <?php
+// produto.php
 include_once 'assets/header.php';
 
 // Valida ID na URL
@@ -9,35 +10,35 @@ if (empty($_GET['id']) || !is_numeric($_GET['id'])) {
 }
 
 $idProduto = (int) $_GET['id'];
-date_default_timezone_set('America/Sao_Paulo');
 
-// Mapeia dia da semana para PT-BR
-$mapaDias = [
-    'monday'    => 'segunda',
-    'tuesday'   => 'terça',
-    'wednesday' => 'quarta',
-    'thursday'  => 'quinta',
-    'friday'    => 'sexta',
-    'saturday'  => 'sábado',
-    'sunday'    => 'domingo',
-];
-$diaSemana = $mapaDias[strtolower(date('l'))];
-
-// 1) Busca produto ativo e com estoque
+// 1) Busca produto ativo e verifica estoque
 $stmt = $pdo->prepare("
-    SELECT *
+    SELECT *,
+           valor_produto    AS base,
+           qtd_produto
       FROM tb_produto
      WHERE id_produto   = ?
        AND produto_ativo = 1
-       AND qtd_produto <> 0
 ");
 $stmt->execute([$idProduto]);
 $produto = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$produto) {
-    echo "<p class='text-center mt-10 text-red-500'>Produto não encontrado, inativo ou sem estoque.</p>";
+    echo "<p class='text-center mt-10 text-red-500'>Produto não encontrado ou inativo.</p>";
     include_once 'assets/footer.php';
     exit;
 }
+
+// determina estoque lógico
+// se qtd_produto > 0 => estoque real
+// se qtd_produto < 0 => ilimitado, mas vamos tratar max 10
+// se qtd_produto = 0 => sem estoque
+$estoque = (int)$produto['qtd_produto'];
+$maxQtd  = $estoque === 0
+    ? 0
+    : ($estoque > 0
+        ? $estoque
+        : 10
+    );
 
 // 2) Verifica promoção do dia
 $stmtPromo = $pdo->prepare("
@@ -51,11 +52,11 @@ $stmtPromo->execute([$idProduto, $diaSemana]);
 $promo = $stmtPromo->fetchColumn();
 $valorBase = $promo !== false
     ? (float)$promo
-    : (float)$produto['valor_produto'];
+    : (float)$produto['base'];
 
 // 3) Sabores (se multi-sabores)
-$qtdSabores  = (int) ($produto['qtd_sabores'] ?? 1);
-$tipoCalculo = $produto['tipo_calculo_preco'] ?? 'maior';
+$qtdSabores  = (int) $produto['qtd_sabores'];
+$tipoCalculo = $produto['tipo_calculo_preco'];
 
 $sabores = [];
 if ($qtdSabores > 1) {
@@ -65,8 +66,8 @@ if ($qtdSabores > 1) {
                p.valor_produto,
                COALESCE(s.nome_subcategoria,'Sem Categoria') AS nome_subcategoria
           FROM tb_produto p
-     LEFT JOIN tb_subcategoria_produto sp ON p.id_produto = sp.id_produto
-     LEFT JOIN tb_subcategoria s           ON sp.id_subcategoria = s.id_subcategoria
+     LEFT JOIN tb_subcategoria_produto sp USING(id_produto)
+     LEFT JOIN tb_subcategoria s           USING(id_subcategoria)
          WHERE p.produto_ativo = 1
            AND p.qtd_sabores  <= 1
            AND p.nome_produto NOT LIKE '%combo%'
@@ -93,10 +94,9 @@ $stmtTipos = $pdo->prepare("
            pta.obrigatorio,
            pta.max_inclusos
       FROM tb_produto_tipo_adicional pta
-      JOIN tb_tipo_adicional ta
-        ON ta.id_tipo_adicional = pta.id_tipo_adicional
-       AND ta.tipo_ativo        = 1
+      JOIN tb_tipo_adicional ta USING(id_tipo_adicional)
      WHERE pta.id_produto = ?
+       AND ta.tipo_ativo   = 1
 ");
 $stmtTipos->execute([$idProduto]);
 $tiposAdicionais = $stmtTipos->fetchAll(PDO::FETCH_ASSOC);
@@ -119,7 +119,12 @@ foreach ($tiposAdicionais as $tipo) {
 ?>
 
 <div class="container mx-auto px-4 py-10 max-w-2xl"
-    x-data="produtoHandler(<?= $valorBase ?>, <?= $qtdSabores ?>, '<?= $tipoCalculo ?>')">
+    x-data="produtoHandler(
+         <?= $valorBase ?>,
+         <?= $qtdSabores ?>,
+         '<?= $tipoCalculo ?>',
+         <?= $maxQtd ?>
+     )">
 
     <div class="flex items-center justify-center relative mb-6">
         <a href="index.php"
@@ -139,6 +144,11 @@ foreach ($tiposAdicionais as $tipo) {
         <input type="hidden" name="id_produto" value="<?= $idProduto ?>">
 
         <div class="space-y-6">
+            <!-- estoque -->
+            <template x-if="maxQtd === 0">
+                <p class="text-red-500">Produto sem estoque no momento.</p>
+            </template>
+
             <!-- Sabores -->
             <?php if ($qtdSabores > 1): ?>
                 <div class="space-y-4">
@@ -226,9 +236,13 @@ foreach ($tiposAdicionais as $tipo) {
                 <input type="number"
                     name="quantidade"
                     min="1"
+                    :max="maxQtd"
                     x-model="quantidade"
                     class="input input-bordered w-24"
                     @input="calcularTotal">
+                <p class="text-sm text-gray-500 mt-1" x-show="maxQtd > 0">
+                    Máximo: <span x-text="maxQtd"></span>
+                </p>
             </div>
 
             <!-- Total -->
@@ -236,7 +250,9 @@ foreach ($tiposAdicionais as $tipo) {
                 Total: <span x-text="formatarPreco(total)"></span>
             </div>
 
-            <button type="submit" class="btn btn-primary w-full mt-4" <?= $aberta ? '' : 'disabled' ?>>
+            <button type="submit"
+                class="btn btn-primary w-full mt-4"
+                :disabled="maxQtd === 0 || quantidade > maxQtd">
                 Adicionar ao Carrinho
             </button>
         </div>
@@ -244,7 +260,7 @@ foreach ($tiposAdicionais as $tipo) {
 </div>
 
 <script>
-    function produtoHandler(valorBase, qtdSabores, tipoCalculo) {
+    function produtoHandler(valorBase, qtdSabores, tipoCalculo, maxQtd) {
         return {
             quantidade: 1,
             total: valorBase,
@@ -267,7 +283,6 @@ foreach ($tiposAdicionais as $tipo) {
             },
 
             calcularTotal() {
-                // 1) Base
                 let base = valorBase;
                 if (qtdSabores > 1 && this.saboresSelecionados.length === qtdSabores) {
                     const vals = this.saboresSelecionados.map(s => s.valor);
@@ -275,7 +290,6 @@ foreach ($tiposAdicionais as $tipo) {
                         vals.reduce((a, b) => a + b, 0) / vals.length :
                         Math.max(...vals);
                 }
-                // 2) Agrupa e soma apenas extras
                 let extras = 0;
                 const byTipo = {};
                 document.querySelectorAll('input.adicional:checked').forEach(ch => {
@@ -299,6 +313,14 @@ foreach ($tiposAdicionais as $tipo) {
             },
 
             enviarFormulario() {
+                if (maxQtd === 0) {
+                    Swal.fire('Erro', 'Produto sem estoque.', 'error');
+                    return;
+                }
+                if (this.quantidade > maxQtd) {
+                    Swal.fire('Erro', 'Quantidade máxima é ' + maxQtd + '.', 'warning');
+                    return;
+                }
                 if (qtdSabores > 1 && this.saboresSelecionados.length !== qtdSabores) {
                     Swal.fire('Atenção', 'Selecione exatamente ' + qtdSabores + ' sabor(es).', 'warning');
                     return;
@@ -310,11 +332,9 @@ foreach ($tiposAdicionais as $tipo) {
                     sabores: [],
                     adicionais: {}
                 };
-                // sabores
                 $('#formProduto input[name="sabores[]"]:checked').each((_, el) => {
                     payload.sabores.push(parseInt(el.value, 10));
                 });
-                // adicionais
                 $('#formProduto input.adicional:checked').each((_, el) => {
                     const $el = $(el),
                         tp = $el.data('tipo');
@@ -331,7 +351,7 @@ foreach ($tiposAdicionais as $tipo) {
                     if (res.status === 'ok') {
                         Swal.fire({
                             title: 'Adicionado ao Carrinho!',
-                            text: 'Ir para o carrinho ou continuar comprando?',
+                            text: 'Ir para o carrinho ou continuar?',
                             icon: 'success',
                             showCancelButton: true,
                             confirmButtonText: 'Carrinho',
@@ -345,7 +365,7 @@ foreach ($tiposAdicionais as $tipo) {
                         Swal.fire('Erro', res.mensagem || 'Não foi possível adicionar.', 'error');
                     }
                 }).fail(() => {
-                    Swal.fire('Erro', 'Falha de comunicação com o servidor.', 'error');
+                    Swal.fire('Erro', 'Falha de comunicação.', 'error');
                 });
             }
         };

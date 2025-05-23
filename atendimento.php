@@ -326,11 +326,11 @@ $tiposEntrega = ['retirada' => 'Retirada na loja', 'entrega' => 'Entrega'];
 
 
 <!-- Seus scripts separados por módulos -->
-<script src="assets/js/panelAtendimento.js"></script>
-<script src="assets/js/novoPedido.js"></script>
-<script src="assets/js/carrinho.js"></script>
-<script src="assets/js/produtoDetail.js"></script>
-<script src="assets/js/checkout.js"></script>
+<script src="assets/js/atendimento/panelAtendimento.js"></script>
+<script src="assets/js/atendimento/novoPedido.js"></script>
+<script src="assets/js/atendimento/carrinho.js"></script>
+<script src="assets/js/atendimento/produtoDetail.js"></script>
+<script src="assets/js/atendimento/checkout.js"></script>
 </div>
 
 <?php include_once 'assets/footer.php'; ?>

@@ -16,10 +16,8 @@ switch ($action) {
     case 'add':
         $idProduto  = intval($input['id_produto'] ?? 0);
         $quantidade = max(1, intval($input['quantidade'] ?? 1));
-
         $saboresInput    = $input['sabores']    ?? [];
         $sabores         = is_array($saboresInput)    ? array_map('intval', $saboresInput) : [];
-
         $adicionaisInput = $input['adicionais'] ?? [];
         $adicionais      = is_array($adicionaisInput) ? $adicionaisInput : [];
 
@@ -28,6 +26,37 @@ switch ($action) {
             exit;
         }
 
+        // 1) Busca estoque e verifica se ativo
+        $stmtStock = $pdo->prepare("
+            SELECT produto_ativo, qtd_produto
+              FROM tb_produto
+             WHERE id_produto = ?
+        ");
+        $stmtStock->execute([$idProduto]);
+        $prdStock = $stmtStock->fetch(PDO::FETCH_ASSOC);
+
+        if (!$prdStock || !$prdStock['produto_ativo']) {
+            echo json_encode(['status' => 'erro', 'mensagem' => 'Produto não encontrado ou inativo.']);
+            exit;
+        }
+
+        $stock = intval($prdStock['qtd_produto']);
+        if ($stock === 0) {
+            // sem estoque
+            echo json_encode(['status' => 'erro', 'mensagem' => 'Produto sem estoque.']);
+            exit;
+        }
+        // define máximo: se stock > 0, usa o stock; se stock < 0, ilimitado mas máximo 10
+        $maxDisponivel = $stock > 0 ? $stock : 10;
+        if ($quantidade > $maxDisponivel) {
+            echo json_encode([
+                'status'   => 'erro',
+                'mensagem' => "Quantidade máxima disponível: {$maxDisponivel}."
+            ]);
+            exit;
+        }
+
+        // 2) Dados básicos do produto
         date_default_timezone_set('America/Sao_Paulo');
         $mapaDias = [
             'monday'    => 'segunda',
@@ -59,7 +88,7 @@ switch ($action) {
         $qtdSaboresProd = intval($prod['qtd_sabores']);
         $valorBase      = floatval($prod['valor_produto']);
 
-        // Aplica promoção se houver
+        // 3) Aplica promoção se houver
         $stmt = $pdo->prepare("
             SELECT valor_promocional
               FROM tb_campanha_produto_dia
@@ -73,7 +102,7 @@ switch ($action) {
             $valorBase = floatval($promo);
         }
 
-        // Processa sabores
+        // 4) Processa sabores
         $saboresFormatados = [];
         if ($qtdSaboresProd > 1) {
             if (count($sabores) !== $qtdSaboresProd) {
@@ -110,7 +139,7 @@ switch ($action) {
             }
         }
 
-        // Limites de inclusos
+        // 5) Limites de inclusos por tipo
         $stmt = $pdo->prepare("
             SELECT id_tipo_adicional, max_inclusos
               FROM tb_produto_tipo_adicional
@@ -119,7 +148,7 @@ switch ($action) {
         $stmt->execute([$idProduto]);
         $tipoLimits = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
 
-        // Inclusos padrão
+        // inclusos padrão
         $stmt = $pdo->prepare("
             SELECT id_adicional
               FROM tb_produto_adicional_incluso
@@ -128,7 +157,7 @@ switch ($action) {
         $stmt->execute([$idProduto]);
         $defaultInclusos = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
 
-        // Formata adicionais
+        // formata adicionais
         $adicionaisFormatados = [];
         $stmtA = $pdo->prepare("
             SELECT nome_adicional, valor_adicional
@@ -158,7 +187,7 @@ switch ($action) {
             }
         }
 
-        // Calcula valor unitário
+        // 6) Calcula valor unitário
         $valorUnitario = $valorBase;
         foreach ($adicionaisFormatados as $a) {
             if ($a['extra']) {
@@ -166,7 +195,7 @@ switch ($action) {
             }
         }
 
-        // Chave única
+        // 7) Gera chave única do item
         $key = md5(
             $idProduto . '-' .
                 implode(',', array_column($saboresFormatados,   'id')) . '-' .
@@ -195,7 +224,7 @@ switch ($action) {
         exit;
 
     case 'update':
-        $key = $input['key'] ?? '';
+        $key   = $input['key'] ?? '';
         $delta = intval($input['quantidade'] ?? 0);
 
         if (!isset($_SESSION['carrinho'][$key])) {
@@ -204,7 +233,6 @@ switch ($action) {
         }
 
         $atual = $_SESSION['carrinho'][$key]['quantidade'];
-
         if ($delta === 999) {
             $_SESSION['carrinho'][$key]['quantidade']++;
         } elseif ($delta === -1) {

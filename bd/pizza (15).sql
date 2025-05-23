@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 22/05/2025 às 00:03
+-- Tempo de geração: 23/05/2025 às 17:27
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -134,39 +134,10 @@ CREATE TABLE `tb_categoria_relacionada` (
 --
 
 INSERT INTO `tb_categoria_relacionada` (`id_categoria`, `id_categoria_relacionada`, `label_relacionada`, `obrigatorio`) VALUES
-(1, 4, '', 0),
-(1, 6, '', 0),
-(1, 7, '', 0),
+(1, 4, 'Fogazza', 0),
+(1, 6, 'Broto', 0),
+(1, 7, 'Calzone', 0),
 (5, 1, 'Pizza', 0);
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `tb_combo_item`
---
-
-CREATE TABLE `tb_combo_item` (
-  `id_combo_item` int(11) NOT NULL,
-  `id_combo` int(11) NOT NULL,
-  `id_produto` int(11) NOT NULL,
-  `quantidade` int(11) DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `tb_combo_promocional`
---
-
-CREATE TABLE `tb_combo_promocional` (
-  `id_combo` int(11) NOT NULL,
-  `nome_combo` varchar(150) NOT NULL,
-  `descricao_combo` text DEFAULT NULL,
-  `valor_combo` decimal(10,2) NOT NULL,
-  `imagem_combo` varchar(255) DEFAULT NULL,
-  `tipo_combo` enum('fixo','personalizável') DEFAULT 'fixo',
-  `combo_ativo` tinyint(1) DEFAULT 1
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -193,7 +164,7 @@ CREATE TABLE `tb_cupom` (
 --
 
 INSERT INTO `tb_cupom` (`id_cupom`, `codigo`, `descricao`, `tipo`, `valor`, `uso_unico`, `quantidade_usos`, `minimo_pedido`, `valido_de`, `valido_ate`, `cupom_ativo`) VALUES
-(1, 'FRETE10', '10% de desconto acima de R$30', 'porcentagem', 10.00, 0, NULL, 30.00, '2025-04-24', NULL, 1);
+(1, 'CUPAOZAO', '10% de desconto acima de R$30', 'porcentagem', 10.00, 0, NULL, 30.00, '2025-04-24', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -224,7 +195,7 @@ CREATE TABLE `tb_dados_loja` (
 --
 
 INSERT INTO `tb_dados_loja` (`id_loja`, `nome_loja`, `cep`, `endereco_completo`, `logo`, `tema`, `instagram`, `whatsapp`, `google`, `preco_base`, `preco_km`, `limite_entrega`, `tempo_entrega`, `tempo_retirada`, `usar_horarios`) VALUES
-(1, 'Fernando Pizzas', '04434150', 'Rua Germano Gottsfritz, 431', NULL, NULL, 'alvesferz', '11961723132', 'AIzaSyDg5xiBHnQKhUvwCSjOY2YJ4SN5L0wEj78', 0.00, 1.00, 5.00, 45, 20, 1);
+(1, 'Fernando Pizzas', '04434150', 'Rua Germano Gottsfritz, 431', NULL, 'light', 'alvesferz', '11961723132', 'AIzaSyDg5xiBHnQKhUvwCSjOY2YJ4SN5L0wEj78', 0.00, 1.00, 5.00, 45, 20, 1);
 
 -- --------------------------------------------------------
 
@@ -357,14 +328,6 @@ CREATE TABLE `tb_item_pedido` (
   `valor_unitario` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Despejando dados para a tabela `tb_item_pedido`
---
-
-INSERT INTO `tb_item_pedido` (`id_item_pedido`, `id_pedido`, `id_produto`, `id_combo`, `nome_exibicao`, `quantidade`, `valor_unitario`) VALUES
-(1, 1, 26, NULL, 'Produto 1', 1, 15.00),
-(2, 2, 26, NULL, 'Produto 1', 1, 15.00);
-
 -- --------------------------------------------------------
 
 --
@@ -406,14 +369,6 @@ CREATE TABLE `tb_pedido` (
   `motivo_cancelamento` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Despejando dados para a tabela `tb_pedido`
---
-
-INSERT INTO `tb_pedido` (`id_pedido`, `id_usuario`, `id_funcionario`, `id_entregador`, `nome_cliente`, `telefone_cliente`, `endereco`, `tipo_entrega`, `forma_pagamento`, `origem`, `observacoes`, `valor_total`, `valor_frete`, `id_cupom`, `desconto_aplicado`, `status_pedido`, `criado_em`, `cancelado_em`, `motivo_cancelamento`) VALUES
-(1, NULL, NULL, NULL, 'Alves', '11961723132', 'Rua Germano Gottsfritz, 431 - Jardim Uberaba', 'entrega', '', '', NULL, 15.00, 0.00, NULL, 0.00, 'aceito', '2025-05-16 00:17:04', NULL, NULL),
-(2, 7, NULL, NULL, 'Pedro', '11972332906', 'Retirada na loja', 'retirada', '', '', NULL, 15.00, 0.00, NULL, 0.00, 'aceito', '2025-05-17 00:01:23', NULL, NULL);
-
 -- --------------------------------------------------------
 
 --
@@ -428,16 +383,6 @@ CREATE TABLE `tb_pedido_status_log` (
   `motivo` text DEFAULT NULL,
   `alterado_em` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `tb_pedido_status_log`
---
-
-INSERT INTO `tb_pedido_status_log` (`id_log`, `id_pedido`, `status_anterior`, `status_novo`, `motivo`, `alterado_em`) VALUES
-(1, 1, NULL, 'pendente', NULL, '2025-05-16 00:17:04'),
-(2, 1, 'pendente', 'aceito', NULL, '2025-05-16 00:17:15'),
-(3, 2, NULL, 'pendente', NULL, '2025-05-17 00:01:23'),
-(4, 2, 'pendente', 'aceito', NULL, '2025-05-17 00:01:57');
 
 -- --------------------------------------------------------
 
@@ -464,19 +409,10 @@ CREATE TABLE `tb_produto` (
 --
 
 INSERT INTO `tb_produto` (`id_produto`, `id_categoria`, `nome_produto`, `slug_produto`, `valor_produto`, `imagem_produto`, `descricao_produto`, `produto_ativo`, `qtd_produto`, `tipo_calculo_preco`, `qtd_sabores`) VALUES
-(26, 5, 'Teste', NULL, 15.00, NULL, 'Produto comum com controle de estoque', 1, 0, 'maior', 1),
+(26, 5, 'Produto 1', NULL, 15.00, NULL, 'Produto comum com controle de estoque', 1, 50, 'maior', 1),
 (27, 5, 'Produto 2', NULL, 10.00, NULL, 'Produto com mais de um sabor (pega as opções que tem na categoria e NÃO estão na subcategoria Mais sabores)', 1, -1, 'maior', 2),
 (28, 5, 'Produto 3', NULL, 20.00, NULL, 'Produto com adicionais inclusos (por tipo de adicional) a escolha do usuario', 1, -1, 'maior', 1),
-(29, 5, 'Produto 4', NULL, 20.00, NULL, 'Produto com adicionais inclusos (por tipo de adicional) pré definido pelo cadastro', 1, -1, 'maior', 1),
-(30, 1, 'Pizza de Teste', NULL, 20.00, NULL, 'sdadsaddassad', 1, -1, 'maior', 1),
-(31, 4, 'Fogazza de Teste', NULL, 10.00, NULL, 'sdadsaddassad', 1, -1, 'maior', 1),
-(32, 6, 'Broto de Teste', NULL, 15.00, NULL, 'sdadsaddassad', 1, -1, 'maior', 1),
-(33, 7, 'Calzone de Teste', NULL, 15.00, NULL, 'sdadsaddassad', 1, -1, 'maior', 1),
-(34, 1, 'Exemplo', NULL, 10.00, NULL, '', 1, -1, 'maior', 1),
-(35, 4, 'Fogazza de Exemplo', NULL, 10.00, NULL, '', 1, -1, 'maior', 1),
-(36, 5, 'Exemplo de Exemplo', NULL, 15.00, NULL, '', 1, -1, 'maior', 1),
-(37, 6, 'Broto de Exemplo', NULL, 20.00, NULL, '', 1, 0, 'maior', 1),
-(38, 7, 'Calzone de Exemplo', NULL, 15.00, NULL, '', 1, -1, 'maior', 1);
+(29, 5, 'Produto 4', NULL, 20.00, NULL, 'Produto com adicionais inclusos (por tipo de adicional) pré definido pelo cadastro', 1, -1, 'maior', 1);
 
 -- --------------------------------------------------------
 
@@ -624,13 +560,13 @@ INSERT INTO `tb_subcategoria_categoria` (`id_subcategoria_categoria`, `id_catego
 (61, 7, 6),
 (62, 7, 4),
 (63, 7, 5),
-(64, 1, 2),
-(65, 1, 3),
-(66, 1, 10),
-(67, 1, 1),
-(68, 1, 6),
-(69, 1, 4),
-(70, 1, 5);
+(85, 1, 2),
+(86, 1, 3),
+(87, 1, 10),
+(88, 1, 1),
+(89, 1, 6),
+(90, 1, 4),
+(91, 1, 5);
 
 -- --------------------------------------------------------
 
@@ -653,58 +589,7 @@ INSERT INTO `tb_subcategoria_produto` (`id_subcategoria_produto`, `id_produto`, 
 (98, 27, 11),
 (99, 28, 12),
 (100, 29, 12),
-(103, 26, 11),
-(104, 30, 2),
-(105, 30, 3),
-(106, 30, 1),
-(107, 30, 6),
-(108, 31, 2),
-(109, 31, 3),
-(110, 31, 1),
-(111, 31, 6),
-(112, 32, 2),
-(113, 32, 3),
-(114, 32, 1),
-(115, 32, 6),
-(116, 33, 2),
-(117, 33, 3),
-(118, 33, 1),
-(119, 33, 6),
-(120, 34, 2),
-(121, 34, 3),
-(122, 34, 10),
-(123, 34, 1),
-(124, 34, 6),
-(125, 34, 4),
-(126, 34, 5),
-(127, 35, 2),
-(128, 35, 3),
-(129, 35, 10),
-(130, 35, 1),
-(131, 35, 6),
-(132, 35, 4),
-(133, 35, 5),
-(134, 36, 2),
-(135, 36, 3),
-(136, 36, 10),
-(137, 36, 1),
-(138, 36, 6),
-(139, 36, 4),
-(140, 36, 5),
-(148, 38, 2),
-(149, 38, 3),
-(150, 38, 10),
-(151, 38, 1),
-(152, 38, 6),
-(153, 38, 4),
-(154, 38, 5),
-(155, 37, 2),
-(156, 37, 3),
-(157, 37, 10),
-(158, 37, 1),
-(159, 37, 6),
-(160, 37, 4),
-(161, 37, 5);
+(103, 26, 11);
 
 -- --------------------------------------------------------
 
@@ -761,8 +646,8 @@ INSERT INTO `tb_tipo_adicional_categoria` (`id_tipo_adicional_categoria`, `id_ca
 (22, 6, 5, 0),
 (23, 7, 1, 0),
 (24, 7, 5, 0),
-(25, 1, 1, 0),
-(26, 1, 5, 0);
+(31, 1, 1, 0),
+(32, 1, 5, 0);
 
 -- --------------------------------------------------------
 
@@ -824,20 +709,6 @@ ALTER TABLE `tb_categoria`
 --
 ALTER TABLE `tb_categoria_relacionada`
   ADD PRIMARY KEY (`id_categoria`,`id_categoria_relacionada`);
-
---
--- Índices de tabela `tb_combo_item`
---
-ALTER TABLE `tb_combo_item`
-  ADD PRIMARY KEY (`id_combo_item`),
-  ADD KEY `fk_comboitem_combo` (`id_combo`),
-  ADD KEY `fk_comboitem_prod` (`id_produto`);
-
---
--- Índices de tabela `tb_combo_promocional`
---
-ALTER TABLE `tb_combo_promocional`
-  ADD PRIMARY KEY (`id_combo`);
 
 --
 -- Índices de tabela `tb_cupom`
@@ -1020,18 +891,6 @@ ALTER TABLE `tb_categoria`
   MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT de tabela `tb_combo_item`
---
-ALTER TABLE `tb_combo_item`
-  MODIFY `id_combo_item` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `tb_combo_promocional`
---
-ALTER TABLE `tb_combo_promocional`
-  MODIFY `id_combo` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT de tabela `tb_cupom`
 --
 ALTER TABLE `tb_cupom`
@@ -1101,7 +960,7 @@ ALTER TABLE `tb_pedido_status_log`
 -- AUTO_INCREMENT de tabela `tb_produto`
 --
 ALTER TABLE `tb_produto`
-  MODIFY `id_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 
 --
 -- AUTO_INCREMENT de tabela `tb_produto_adicional_incluso`
@@ -1113,7 +972,7 @@ ALTER TABLE `tb_produto_adicional_incluso`
 -- AUTO_INCREMENT de tabela `tb_produto_tipo_adicional`
 --
 ALTER TABLE `tb_produto_tipo_adicional`
-  MODIFY `id_produto_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `id_produto_tipo_adicional` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=118;
 
 --
 -- AUTO_INCREMENT de tabela `tb_regras_frete`
@@ -1131,13 +990,13 @@ ALTER TABLE `tb_subcategoria`
 -- AUTO_INCREMENT de tabela `tb_subcategoria_categoria`
 --
 ALTER TABLE `tb_subcategoria_categoria`
-  MODIFY `id_subcategoria_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=71;
+  MODIFY `id_subcategoria_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
 
 --
 -- AUTO_INCREMENT de tabela `tb_subcategoria_produto`
 --
 ALTER TABLE `tb_subcategoria_produto`
-  MODIFY `id_subcategoria_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=162;
+  MODIFY `id_subcategoria_produto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=184;
 
 --
 -- AUTO_INCREMENT de tabela `tb_tipo_adicional`
@@ -1149,7 +1008,7 @@ ALTER TABLE `tb_tipo_adicional`
 -- AUTO_INCREMENT de tabela `tb_tipo_adicional_categoria`
 --
 ALTER TABLE `tb_tipo_adicional_categoria`
-  MODIFY `id_tipo_adicional_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id_tipo_adicional_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT de tabela `tb_usuario`
@@ -1178,13 +1037,6 @@ ALTER TABLE `tb_campanha_brinde`
 --
 ALTER TABLE `tb_campanha_produto_dia`
   ADD CONSTRAINT `fk_camp_pd_prod` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON UPDATE CASCADE;
-
---
--- Restrições para tabelas `tb_combo_item`
---
-ALTER TABLE `tb_combo_item`
-  ADD CONSTRAINT `fk_comboitem_combo` FOREIGN KEY (`id_combo`) REFERENCES `tb_combo_promocional` (`id_combo`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_comboitem_prod` FOREIGN KEY (`id_produto`) REFERENCES `tb_produto` (`id_produto`) ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `tb_endereco`

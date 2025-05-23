@@ -6,9 +6,13 @@ session_start();
 require_once __DIR__ . '/../assets/conexao.php';
 header('Content-Type: application/json');
 
-// GET por ID
+// ——————————————————————————
+// 1) GET por ID
+// ——————————————————————————
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
     $id = (int)$_GET['id'];
+
+    // busca categoria
     $stmt = $pdo->prepare("SELECT * FROM tb_categoria WHERE id_categoria = ?");
     $stmt->execute([$id]);
     $cat = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -35,20 +39,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
     $stmt3->execute([$id]);
     $cat['tipo_adicionais'] = $stmt3->fetchAll(PDO::FETCH_COLUMN);
 
-    // categorias relacionadas
+    // categorias relacionadas: traz id, label e obrigatorio
     $stmt4 = $pdo->prepare("
-        SELECT id_categoria_relacionada
-            FROM tb_categoria_relacionada
-        WHERE id_categoria = ?
+        SELECT id_categoria_relacionada,
+               label_relacionada,
+               obrigatorio
+          FROM tb_categoria_relacionada
+         WHERE id_categoria = ?
     ");
     $stmt4->execute([$id]);
-    $cat['categorias_relacionadas'] = $stmt4->fetchAll(PDO::FETCH_COLUMN);
+    $cat['categorias_relacionadas'] = $stmt4->fetchAll(PDO::FETCH_ASSOC);
 
     echo json_encode(['status' => 'ok', 'categoria' => $cat]);
     exit;
 }
 
-// POST JSON
+// ——————————————————————————
+// 2) POST JSON
+// ——————————————————————————
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) {
     echo json_encode(['status' => 'erro', 'mensagem' => 'Requisição inválida']);
@@ -64,7 +72,7 @@ if (($input['action'] ?? '') === 'delete') {
     exit;
 }
 
-// validação
+// validações
 $nome = trim($input['nome_categoria'] ?? '');
 if ($nome === '') {
     echo json_encode(['status' => 'erro', 'mensagem' => 'Nome obrigatório']);
@@ -83,7 +91,7 @@ $data = [
     'ordem_exibicao'  => $ordem,
 ];
 
-// CREATE / UPDATE
+// CREATE / UPDATE em tb_categoria
 if (!empty($input['id_categoria'])) {
     $id   = intval($input['id_categoria']);
     $sets = array_map(fn($c) => "$c=:$c", array_keys($data));
@@ -128,22 +136,38 @@ if (!empty($input['tipo_adicionais']) && is_array($input['tipo_adicionais'])) {
     }
 }
 
-// 3) atualizar categoria_relacionada
+// 3) atualizar categoria_relacionada (agora com label e obrigatorio)
 $pdo->prepare("DELETE FROM tb_categoria_relacionada WHERE id_categoria = ?")
     ->execute([$id]);
 
+// prepara statements para inserção
+$stmtGetName = $pdo->prepare("SELECT nome_categoria FROM tb_categoria WHERE id_categoria = ?");
+$stmtCR      = $pdo->prepare("
+  INSERT INTO tb_categoria_relacionada
+    (id_categoria, id_categoria_relacionada, label_relacionada, obrigatorio)
+  VALUES (?, ?, ?, ?)
+");
+
 if (!empty($input['categorias_relacionadas']) && is_array($input['categorias_relacionadas'])) {
-    $stmtCR = $pdo->prepare("
-      INSERT INTO tb_categoria_relacionada
-        (id_categoria, id_categoria_relacionada)
-      VALUES (?, ?)
-    ");
     foreach ($input['categorias_relacionadas'] as $relId) {
-        if ($relId != $id) { // evita vincular a si mesma
-            $stmtCR->execute([$id, intval($relId)]);
+        $relId = intval($relId);
+        if ($relId === $id) {
+            continue; // não vincular a si mesma
         }
+
+        // pega nome da categoria relacionada
+        $stmtGetName->execute([$relId]);
+        $nomeRel = $stmtGetName->fetchColumn() ?: '';
+
+        // gera label sem 's' final (e.g. "Pizzas" → "Pizza")
+        $label = preg_replace('/s$/i', '', trim($nomeRel));
+
+        // lê se foi marcado como obrigatório no form (checkbox name="obrigatorio[<id>]")
+        $obrig = !empty($input['obrigatorio'][$relId]) ? 1 : 0;
+
+        // executa inserção
+        $stmtCR->execute([$id, $relId, $label, $obrig]);
     }
 }
-
 
 echo json_encode(['status' => 'ok', 'id' => $id]);

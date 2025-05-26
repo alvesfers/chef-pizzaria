@@ -146,6 +146,7 @@ function criarPedidoBalcao($pdo, $input)
     $enderecoTexto  = $entrega === 'entrega' ? trim($input['endereco'] ?? '') : null;
     $frete          = floatval($input['valor_frete'] ?? 0);
     $desconto       = floatval($input['desconto'] ?? 0);
+    $dataCriacao = (new DateTime('now', new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d H:i:s');
 
     if (!$nome || !$fone || !is_array($itens) || empty($itens)) {
         echo json_encode(['status' => 'erro', 'mensagem' => 'Dados incompletos']);
@@ -182,7 +183,7 @@ function criarPedidoBalcao($pdo, $input)
                 desconto_aplicado, 
                 criado_em)
             VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?, 'aceito', 'balcao', ?, ?, NOW())
+                (?, ?, ?, ?, ?, ?, ?, ?, 'aceito', 'balcao', ?, ?, ?)
         ");
         $stmt->execute([
             $id_usuario ?: null,
@@ -194,7 +195,8 @@ function criarPedidoBalcao($pdo, $input)
             $entrega,
             $pgto,
             $frete,
-            $desconto
+            $desconto,
+            $dataCriacao
         ]);
         $idPedido = $pdo->lastInsertId();
 

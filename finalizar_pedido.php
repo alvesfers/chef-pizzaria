@@ -26,6 +26,8 @@ $precoKm       = floatval($dadosLoja['preco_km']);
 $enderecoLoja  = trim($dadosLoja['endereco_completo']);
 $googleMapsKey = $dadosLoja['google'];
 $limiteEntrega = isset($dadosLoja['limite_entrega']) ? floatval($dadosLoja['limite_entrega']) : null;
+$tempoEntrega     = isset($dadosLoja['tempo_entrega'])   ? intval($dadosLoja['tempo_entrega'])     : null;
+$tempoRetirada    = isset($dadosLoja['tempo_retirada'])  ? intval($dadosLoja['tempo_retirada']) : null;
 $regrasFrete   = $pdo->query("SELECT * FROM tb_regras_frete WHERE ativo = 1")->fetchAll(PDO::FETCH_ASSOC);
 
 $stmt       = $pdo->prepare("SELECT * FROM tb_endereco WHERE id_usuario = ?");
@@ -51,6 +53,11 @@ foreach ($carrinho as $item) {
             <div class="flex gap-2">
                 <button type="button" id="btnRetirada" class="btn btn-primary w-1/2">Retirada na Loja</button>
                 <button type="button" id="btnEntrega" class="btn btn-outline w-1/2">Entrega</button>
+            </div>
+            <div class="m-2 text-center">
+                <p id="textoPrazo" class="text-sm text-gray-700">
+                    <!-- Será preenchido pelo JS -->
+                </p>
             </div>
             <input type="hidden" name="tipo_entrega" id="inputTipoEntrega" value="retirada">
         </div>
@@ -163,8 +170,23 @@ foreach ($carrinho as $item) {
         const googleApiKey = <?= json_encode($googleMapsKey) ?>;
         const regrasFrete = <?= json_encode($regrasFrete) ?>;
         const limiteEntrega = <?= $limiteEntrega ?? 'null' ?>;
+        const tempoEntrega = <?= $tempoEntrega   ?? 'null' ?>;
+        const tempoRetirada = <?= $tempoRetirada  ?? 'null' ?>;
+
         let subtotal = <?= $subtotal ?>;
         let descontoAtual = 0;
+
+        function atualizarPrazo(tipo) {
+            if (tipo === 'entrega' && tempoEntrega !== null) {
+                $('#textoPrazo').text(`Prazo de entrega: ${tempoEntrega} minutos`);
+            } else if (tipo === 'retirada' && tempoRetirada !== null) {
+                $('#textoPrazo').text(`Prazo de retirada: ${tempoRetirada} minutos`);
+            } else {
+                $('#textoPrazo').text('');
+            }
+        }
+
+        atualizarPrazo('retirada');
 
         function calcularFrete(destino) {
             const url = `https://maps.googleapis.com/maps/api/distancematrix/json?units=metric` +
@@ -225,6 +247,8 @@ foreach ($carrinho as $item) {
             $('#enderecoEntrega').removeClass('hidden');
             $('#btnConfirmarPedido').prop('disabled', true);
             $('.class-frete').removeClass('hidden');
+
+            atualizarPrazo('entrega');
         });
 
         $('#btnRetirada').click(() => {
@@ -232,10 +256,13 @@ foreach ($carrinho as $item) {
             $('#btnRetirada').addClass('btn-primary').removeClass('btn-outline');
             $('#btnEntrega').addClass('btn-outline').removeClass('btn-primary');
             $('#enderecoEntrega').addClass('hidden');
+            $('.class-frete').addClass('hidden');
             $('#valorFreteVisual,#valorDistanciaVisual').text('0,00');
             $('#valorTotal').text(subtotal.toFixed(2).replace('.', ','));
             $('#selectEndereco').val(0);
             $('#btnConfirmarPedido').prop('disabled', false);
+
+            atualizarPrazo('retirada');
         });
 
         $('#selectEndereco').change(function() {

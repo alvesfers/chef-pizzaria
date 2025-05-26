@@ -249,8 +249,7 @@ $iconsPgto = [
                         localStorage.removeItem('link_whatsapp');
                     });
                 } else {
-
-                Swal.fire('Pedido feito com suceso!', '', 'success');
+                    Swal.fire('Pedido feito com suceso!', '', 'success');
                 }
             }
         }

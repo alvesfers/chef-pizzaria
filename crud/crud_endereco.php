@@ -50,7 +50,8 @@ function cadastrar($pdo, $idUsuario)
     $bairro             = trim($_POST['bairro'] ?? '');
     $apelido            = trim($_POST['apelido'] ?? '');
     $enderecoPrincipal  = isset($_POST['endereco_principal']) ? 1 : 0;
-
+    $dataCriacao = (new DateTime('now', new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d H:i:s');
+    
     if (!$cep || !$rua || !$numero || !$bairro || !$apelido) {
         echo json_encode(['status' => 'erro', 'mensagem' => 'Preencha todos os campos obrigatórios.']);
         exit;
@@ -70,7 +71,7 @@ function cadastrar($pdo, $idUsuario)
     $stmt = $pdo->prepare("
         INSERT INTO tb_endereco 
         (id_usuario, apelido, cep, rua, numero, complemento, bairro, ponto_de_referencia, endereco_principal, endereco_ativo, criado_em)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW())
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
     ");
     $stmt->execute([
         $idUsuario,
@@ -81,7 +82,8 @@ function cadastrar($pdo, $idUsuario)
         $complemento,
         $bairro,
         $pontoReferencia,
-        $enderecoPrincipal
+        $enderecoPrincipal,
+        $dataCriacao
     ]);
 
     echo json_encode(['status' => 'ok', 'mensagem' => 'Endereço cadastrado com sucesso.']);

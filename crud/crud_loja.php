@@ -81,17 +81,18 @@ switch ($action) {
         break;
 
     case 'salvar_regras':
+        $dataCriacao = (new DateTime('now', new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d H:i:s');
         $regras = $input['regras'] ?? [];
         $stmtInsert = $pdo->prepare("
             INSERT INTO tb_regras_frete (
                 nome_regra, tipo_regra, valor_minimo, distancia_maxima,
                 valor_desconto, dia_semana, ativo, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) 
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) 
         ");
         $stmtUpdate = $pdo->prepare("
             UPDATE tb_regras_frete SET
                 nome_regra = ?, tipo_regra = ?, valor_minimo = ?, distancia_maxima = ?,
-                valor_desconto = ?, dia_semana = ?, ativo = ?, updated_at = NOW()
+                valor_desconto = ?, dia_semana = ?, ativo = ?, updated_at = ?
             WHERE id_regra = ?
         ");
         foreach ($regras as $r) {
@@ -105,7 +106,9 @@ switch ($action) {
                     $r['valor_desconto'],
                     $r['dia_semana'],
                     $ativo,
-                    $r['id_regra']
+                    $r['id_regra'],
+                    $dataCriacao,
+                    $dataCriacao
                 ]);
             } else {
                 $stmtInsert->execute([
@@ -115,7 +118,8 @@ switch ($action) {
                     $r['distancia_maxima'],
                     $r['valor_desconto'],
                     $r['dia_semana'],
-                    $ativo
+                    $ativo,
+                    $dataCriacao
                 ]);
             }
         }

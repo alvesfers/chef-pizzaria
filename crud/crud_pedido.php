@@ -11,6 +11,7 @@ if (!isset($_SESSION['usuario'])) {
   echo json_encode(['status' => 'erro', 'mensagem' => 'Usuário não autenticado.']);
   exit;
 }
+$dataCriacao = (new DateTime('now', new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d H:i:s');
 
 $raw  = file_get_contents('php://input');
 $json = json_decode($raw, true);
@@ -134,7 +135,7 @@ if ($action === 'cancelar') {
   $pdo->prepare("
         UPDATE tb_pedido
            SET status_pedido       = 'cancelado',
-               cancelado_em        = NOW(),
+               cancelado_em        = $dataCriacao,
                motivo_cancelamento = ?
          WHERE id_pedido = ?
     ")->execute([$mot, $id]);
@@ -203,7 +204,7 @@ if ($action === 'criar_pedido_balcao') {
               ?, ?,
               ?, ?,
               ?, ?,
-              'pendente', NOW()
+              'pendente', ?
             )
         ");
     $ins->execute([
@@ -216,7 +217,8 @@ if ($action === 'criar_pedido_balcao') {
       $valorProdLiquido,
       $valorFrete,
       $idCupom,
-      $descontoAplicado
+      $descontoAplicado,
+      $dataCriacao
     ]);
     $idPedido = $pdo->lastInsertId();
 
@@ -394,7 +396,7 @@ if ($action === 'confirmar') {
               ?, ?,
               ?, ?,
               ?, ?,
-              'pendente', NOW()
+              'pendente', ?
             )
         ");
     $ins->execute([
@@ -407,7 +409,8 @@ if ($action === 'confirmar') {
       $valorProdLiquido,
       $valorFrete,
       $idCupom,
-      $descontoAplicado
+      $descontoAplicado,
+      $dataCriacao
     ]);
     $idPedido = $pdo->lastInsertId();
 

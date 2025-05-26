@@ -150,6 +150,7 @@ $statusLoja = $aberta
                             <li><a href="index.php?#cardapio">Cardápio</a></li>
                             <?php if ($isAdmin): ?>
                                 <li><a href="atendimento.php">Atendimento</a></li>
+                                <li><a href="dashboard.php">Dashboard</a></li>
                                 <li tabindex="0">
                                     <a>Gerenciar</a>
                                     <ul class="p-2 bg-primary">
@@ -194,6 +195,7 @@ $statusLoja = $aberta
 
                     <?php if ($isAdmin): ?>
                         <li><a href="atendimento.php">Atendimento</a></li>
+                        <li><a href="dashboard.php">Dashboard</a></li>
                         <li tabindex="0">
                             <a>Gerenciar</a>
                             <ul class="p-2 bg-primary">

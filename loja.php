@@ -24,25 +24,28 @@
             </div>
         </div>
 
-        <!-- Contato & Redes -->
-        <div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
-            <input type="checkbox" checked />
-            <div class="collapse-title font-medium">Contato & Redes Sociais</div>
-            <div class="collapse-content grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label class="form-control">
-                    <span class="label-text">WhatsApp</span>
-                    <input id="whatsapp" name="whatsapp" class="input input-bordered" />
-                </label>
-                <label class="form-control">
-                    <span class="label-text">Instagram</span>
-                    <input id="instagram" name="instagram" class="input input-bordered" />
-                </label>
-                <label class="form-control md:col-span-2">
-                    <span class="label-text">Chave Google Maps</span>
-                    <input id="google" name="google" type="password" class="input input-bordered" />
-                </label>
+        <?php if ($teste != 1): ?>
+            <!-- Contato & Redes -->
+            <div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">
+                <input type="checkbox" checked />
+                <div class="collapse-title font-medium">Contato & Redes Sociais</div>
+                <div class="collapse-content grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="form-control">
+                        <span class="label-text">WhatsApp</span>
+                        <input id="whatsapp" name="whatsapp" class="input input-bordered" />
+                    </label>
+                    <label class="form-control">
+                        <span class="label-text">Instagram</span>
+                        <input id="instagram" name="instagram" class="input input-bordered" />
+                    </label>
+                    <label class="form-control md:col-span-2">
+                        <span class="label-text">Chave Google Maps</span>
+                        <input id="google" name="google" type="password" class="input input-bordered" />
+                    </label>
+                </div>
             </div>
-        </div>
+
+        <?php endif; ?>
 
         <!-- Entrega -->
         <div class="collapse collapse-arrow border border-base-300 bg-base-100 rounded-box">

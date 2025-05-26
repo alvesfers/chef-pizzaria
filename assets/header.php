@@ -14,6 +14,7 @@ $instagram    = $dadosLoja['instagram'] ?? null;
 $enderecoLoja = $dadosLoja['endereco_completo'] ?? '';
 $emailLoja    = $dadosLoja['email'] ?? '';
 $tema         = $dadosLoja['tema'] ?? 'light';
+$teste        = $dadosLoja['ambiente_teste'] ?? 0;
 
 date_default_timezone_set('America/Sao_Paulo');
 
@@ -108,7 +109,8 @@ $statusLoja = $aberta
             nome: <?= json_encode($nomeLoja) ?>,
             whatsapp: <?= json_encode($whatsapp) ?>,
             instagram: <?= json_encode($instagram) ?>,
-            endereco: <?= json_encode($enderecoLoja) ?>
+            instagram: <?= json_encode($instagram) ?>,
+            teste: <?= json_encode($teste) ?>
         };
     </script>
     <style>

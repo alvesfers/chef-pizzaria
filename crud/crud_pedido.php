@@ -21,6 +21,9 @@ $action = $data['action'] ?? $data['acao'] ?? '';
 $u      = $_SESSION['usuario'];
 $idUser = $u['id'] ?? $u['id_usuario'] ?? null;
 
+$dadosLoja    = $pdo->query("SELECT * FROM tb_dados_loja LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+$teste        = $dadosLoja['ambiente_teste'] ?? 0;
+
 function registrarLogStatus($pdo, $idPedido, $antigo, $novo, $motivo = null)
 {
   $pdo->prepare("
@@ -313,7 +316,12 @@ if ($action === 'criar_pedido_balcao') {
       . "Frete: R$ " . number_format($valorFrete, 2, ',', '.') . "\n"
       . "Total: R$ " . number_format($totalG, 2, ',', '.') . "\n"
       . "Pagamento: {$formaPgto}";
-    $link = "https://wa.me/55{$telLoja}?text=" . urlencode($msg);
+
+    if ($teste != 1) {
+      $link = "https://wa.me/55{$telLoja}?text=" . urlencode($msg);
+    } else {
+      $link = "sem envio";
+    }
 
     echo json_encode([
       'status'        => 'ok',
@@ -490,7 +498,12 @@ if ($action === 'confirmar') {
       . "Frete: R$ " . number_format($valorFrete, 2, ',', '.') . "\n"
       . "Total: R$ " . number_format($totalG, 2, ',', '.') . "\n"
       . "Pagamento: {$formaPgto}";
-    $link = "https://wa.me/55{$telLoja}?text=" . urlencode($msg);
+
+    if ($teste != 1) {
+      $link = "https://wa.me/55{$telLoja}?text=" . urlencode($msg);
+    } else {
+      $link = "sem envio";
+    }
 
     echo json_encode([
       'status'        => 'ok',

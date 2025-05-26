@@ -234,19 +234,24 @@ $iconsPgto = [
         if (<?= json_encode($novoPedido) ?>) {
             const link = localStorage.getItem('link_whatsapp');
             if (link) {
-                Swal.fire({
-                    title: 'Pedido Confirmado!',
-                    text: 'Deseja enviar para o WhatsApp?',
-                    icon: 'success',
-                    showCancelButton: true,
-                    confirmButtonText: 'Enviar',
-                    cancelButtonText: 'Fechar'
-                }).then(({
-                    isConfirmed
-                }) => {
-                    if (isConfirmed) window.open(link, '_blank');
-                    localStorage.removeItem('link_whatsapp');
-                });
+                if (window.LOJA.teste != 1) {
+                    Swal.fire({
+                        title: 'Pedido Confirmado!',
+                        text: 'Deseja enviar para o WhatsApp?',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: 'Enviar',
+                        cancelButtonText: 'Fechar'
+                    }).then(({
+                        isConfirmed
+                    }) => {
+                        if (isConfirmed) window.open(link, '_blank');
+                        localStorage.removeItem('link_whatsapp');
+                    });
+                } else {
+
+                Swal.fire('Pedido feito com suceso!', '', 'success');
+                }
             }
         }
     });

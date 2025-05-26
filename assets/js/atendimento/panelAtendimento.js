@@ -118,90 +118,105 @@
             id_pedido: id,
             status_pedido: novo
         }), () => {
-            Swal.fire({
-                title: 'Enviar WhatsApp?',
-                text: `Deseja informar o cliente que o pedido está "${STATUS_LABEL[novo]}"?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sim, enviar',
-                cancelButtonText: 'Não enviar'
-            }).then((result) => {
-                if (!result.isConfirmed) {
-                    fetchAndRender();
-                    return;
-                }
-
-                if (novo === 'aceito') {
-                    $.post('crud/crud_pedido.php', JSON.stringify({
-                        action: 'get_pedido',
-                        id_pedido: id
-                    }), function (res) {
-                        if (res.status !== 'ok') {
-                            Swal.fire('Erro', 'Não foi possível carregar os dados do pedido.', 'error');
-                            return;
-                        }
-
-                        const pedido = res.pedido;
-                        const itens = res.itens;
-                        const nomeLoja = window.__nomeLoja__ || 'Nossa Pizzaria';
-                        const enderecoLoja = window.__enderecoLoja__ || '';
-                        const formasPgto = window.__formasPagamento__ || [];
-
-                        const tipoEntrega = pedido.tipo_entrega;
-                        const nomeCliente = pedido.cliente || '';
-                        const valorTotal = parseFloat(pedido.valor_total).toFixed(2);
-                        const enderecoEntrega = pedido.endereco || '';
-                        const formaPgtoId = pedido.forma_pagamento;
-                        const formaPgtoNome = formasPgto.find(f => f.id_forma == formaPgtoId)?.nome_pgto || '';
-
-                        let mensagem = `Olá ${nomeCliente}, aqui é da ${nomeLoja}.\n`;
-                        mensagem += `Seu pedido #${id} foi *${STATUS_LABEL[novo]}*.\n\n`;
-
-                        mensagem += `Itens do Pedido:\n`;
-                        itens.forEach(item => {
-                            mensagem += `• ${item.quantidade}x ${item.nome_exibicao}`;
-                            if (item.sabores?.length) {
-                                mensagem += ` (${item.sabores.join(', ')})`;
-                            }
-                            mensagem += ` — R$ ${parseFloat(item.valor_unitario).toFixed(2)}\n`;
-
-                            if (item.adicionais?.length) {
-                                mensagem += `  + Adicionais: `;
-                                mensagem += item.adicionais.map(a => a.nome_adicional).join(', ') + `\n`;
-                            }
-                        });
-
-                        mensagem += `\nTotal: R$ ${valorTotal}\n`;
-
-                        if (formaPgtoNome) {
-                            mensagem += `Forma de pagamento: ${formaPgtoNome}\n`;
-                        }
-
-                        if (tipoEntrega === 'entrega') {
-                            mensagem += `\nEndereço de entrega: ${enderecoEntrega}\n`;
-                            mensagem += `Seu pedido será entregue em até 45 minutos.`;
-                        } else {
-                            mensagem += `Seu pedido estará disponível para retirada em até 25 minutos.`;
-                            if (enderecoLoja) {
-                                mensagem += `\nEndereço da loja: ${enderecoLoja}`;
-                            }
-                        }
-
-                        mensagem += `\n\nQualquer dúvida, estamos à disposição.`;
-
-                        window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(mensagem)}`);
+            if (window.LOJA.teste != 1) {
+                Swal.fire({
+                    title: 'Enviar WhatsApp?',
+                    text: `Deseja informar o cliente que o pedido está "${STATUS_LABEL[novo]}"?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sim, enviar',
+                    cancelButtonText: 'Não enviar'
+                }).then((result) => {
+                    if (!result.isConfirmed) {
                         fetchAndRender();
-                    }, 'json');
-                } else {
-                    const nomeLoja = window.__nomeLoja__ || 'Nossa Pizzaria';
-                    let mensagem = `Olá! Aqui é da ${nomeLoja}.\n`;
-                    mensagem += `Seu pedido #${id} agora está *${STATUS_LABEL[novo]}*.\n`;
-                    mensagem += `Agradecemos por comprar com a gente!`;
+                        return;
+                    }
 
-                    window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(mensagem)}`);
-                    fetchAndRender();
-                }
-            });
+                    if (novo === 'aceito') {
+                        $.post('crud/crud_pedido.php', JSON.stringify({
+                            action: 'get_pedido',
+                            id_pedido: id
+                        }), function (res) {
+                            if (res.status !== 'ok') {
+                                Swal.fire('Erro', 'Não foi possível carregar os dados do pedido.', 'error');
+                                return;
+                            }
+
+                            const pedido = res.pedido;
+                            const itens = res.itens;
+                            const nomeLoja = window.__nomeLoja__ || 'Nossa Pizzaria';
+                            const enderecoLoja = window.__enderecoLoja__ || '';
+                            const formasPgto = window.__formasPagamento__ || [];
+
+                            const tipoEntrega = pedido.tipo_entrega;
+                            const nomeCliente = pedido.cliente || '';
+                            const valorTotal = parseFloat(pedido.valor_total).toFixed(2);
+                            const enderecoEntrega = pedido.endereco || '';
+                            const formaPgtoId = pedido.forma_pagamento;
+                            const formaPgtoNome = formasPgto.find(f => f.id_forma == formaPgtoId)?.nome_pgto || '';
+
+                            let mensagem = `Olá ${nomeCliente}, aqui é da ${nomeLoja}.\n`;
+                            mensagem += `Seu pedido #${id} foi *${STATUS_LABEL[novo]}*.\n\n`;
+
+                            mensagem += `Itens do Pedido:\n`;
+                            itens.forEach(item => {
+                                mensagem += `• ${item.quantidade}x ${item.nome_exibicao}`;
+                                if (item.sabores?.length) {
+                                    mensagem += ` (${item.sabores.join(', ')})`;
+                                }
+                                mensagem += ` — R$ ${parseFloat(item.valor_unitario).toFixed(2)}\n`;
+
+                                if (item.adicionais?.length) {
+                                    mensagem += `  + Adicionais: `;
+                                    mensagem += item.adicionais.map(a => a.nome_adicional).join(', ') + `\n`;
+                                }
+                            });
+
+                            mensagem += `\nTotal: R$ ${valorTotal}\n`;
+
+                            if (formaPgtoNome) {
+                                mensagem += `Forma de pagamento: ${formaPgtoNome}\n`;
+                            }
+
+                            if (tipoEntrega === 'entrega') {
+                                mensagem += `\nEndereço de entrega: ${enderecoEntrega}\n`;
+                                mensagem += `Seu pedido será entregue em até 45 minutos.`;
+                            } else {
+                                mensagem += `Seu pedido estará disponível para retirada em até 25 minutos.`;
+                                if (enderecoLoja) {
+                                    mensagem += `\nEndereço da loja: ${enderecoLoja}`;
+                                }
+                            }
+
+                            mensagem += `\n\nQualquer dúvida, estamos à disposição.`;
+                            if (window.LOJA.teste != 1) {
+                                window.open(`https://wa.me/55${phone}`, '_blank');
+                            } else {
+                                alert('Ambiente de teste ativo: não fara o envio WhatsApp.');
+                            }
+                            fetchAndRender();
+                        }, 'json');
+                    } else {
+                        const nomeLoja = window.__nomeLoja__ || 'Nossa Pizzaria';
+                        let mensagem = `Olá! Aqui é da ${nomeLoja}.\n`;
+                        mensagem += `Seu pedido #${id} agora está *${STATUS_LABEL[novo]}*.\n`;
+                        mensagem += `Agradecemos por comprar com a gente!`;
+                        if (window.LOJA.teste != 1) {
+                            window.open(`https://wa.me/55${phone}`, '_blank');
+                        } else {
+                            alert('Ambiente de teste ativo: não fara o envio WhatsApp.');
+                        }
+                        fetchAndRender();
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'Pedido feito!',
+                    text: `Envio via whatsApp desabilitada!`,
+                    icon: 'question'
+                })
+            }
+
         }, 'json');
     }
 
@@ -220,7 +235,11 @@
                 Swal.fire('Erro', 'Telefone não encontrado.', 'error');
                 return;
             }
-            window.open(`https://wa.me/55${phone}`, '_blank');
+            if (window.LOJA.teste != 1) {
+                window.open(`https://wa.me/55${phone}`, '_blank');
+            } else {
+                alert('Ambiente de teste ativo: não fara o envio WhatsApp.');
+            }
         })
 
         .on('click', '.btn-print', function () {

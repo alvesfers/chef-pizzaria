@@ -21,6 +21,13 @@
         <?php endif; ?>
         <p>© <?= date('Y') ?> <?= htmlspecialchars($nomeLoja, ENT_QUOTES, 'UTF-8') ?>. Todos os direitos reservados.</p>
       </div>
+      <p class="text-sm text-center mt-2">
+        Desenvolvido por
+        <a href="https://alvesdev.com" target="_blank" class="underline hover:text-base-100 transition-colors">
+          alvesDev
+        </a>
+      </p>
+
     </footer>
 
     <div

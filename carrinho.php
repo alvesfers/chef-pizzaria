@@ -128,12 +128,85 @@ foreach ($carrinho as $item) {
         </label>
         <h3 class="text-lg font-bold mb-4">Identifique-se para continuar</h3>
         <form id="formLoginAuto" class="space-y-4">
+            <div>
+                <label class="block font-medium mb-1">Telefone</label>
+                <input type="tel" name="telefone" id="telefone" class="input input-bordered w-full" required placeholder="(11) 91234-5678">
+            </div>
+
+            <div id="divNome" class="hidden">
+                <label class="block font-medium mb-1">Nome</label>Add commentMore actions
+                <input type="text" name="nome" id="nome" class="input input-bordered w-full">
+                <p class="text-sm text-gray-500 mt-1">Sua senha será o telefone com DDD.</p>
+            </div>
+
+            <input type="hidden" name="acao" id="acao" value="buscar_por_telefone">
+            <input type="hidden" name="senha" id="senha" value="">
+            <input type="hidden" name="tipo_usuario" value="cliente">
+            <input type="hidden" name="redirect" value="carrinho.php">
+
+            <button type="submit" id="btnLoginAuto" class="btn btn-primary w-full">Continuar</button>
         </form>
     </div>
 </div>
 
 <script>
     $(function() {
+
+        $('#formLoginAuto').on('submit', function(e) {
+            e.preventDefault();
+            const tel = $('#telefone').val().replace(/\D/g, '');
+            const nome = $('#nome').val();
+            const acao = $('#acao').val();
+            const form = $(this);
+
+            if (tel.length !== 11) {
+                Swal.fire('Telefone inválido', 'Digite um telefone válido com DDD.', 'warning');
+                return;
+            }
+
+            if (acao === 'buscar_por_telefone') {
+                $.post('crud/crud_usuario.php', {
+                        acao: 'buscar_por_telefone',
+                        telefone: tel
+                    }, 'json')
+                    .done(res => {
+                        if (res.status === 'ok') {
+                            Swal.fire('Sucesso', 'Login feito com sucesso!', 'success');
+                            location.reload();
+                        } else {
+                            $('#divNome').removeClass('hidden');
+                            $('#acao').val('cadastrar_e_logar');
+                            $('#senha').val(tel);
+                            $('#btnLoginAuto').text('Criar Conta');
+                        }
+                    });
+            } else if (acao === 'cadastrar_e_logar') {
+                if (!nome.trim()) {
+                    Swal.fire('Informe seu nome', 'Preencha o nome para criar a conta.', 'warning');
+                    return;
+                }
+
+                const data = {
+                    acao: 'cadastrar_e_logar',
+                    nome: nome.trim(),
+                    telefone: tel,
+                    senha: tel,
+                    tipo_usuario: 'cliente',
+                    redirect: 'carrinho.php'
+                };
+
+                $.post('crud/crud_usuario.php', data, 'json')
+                    .done(res => {
+                        if (res.status === 'ok') {
+                            Swal.fire('Sucesso', 'Conta criada com sucesso!', 'success');
+                            location.reload();
+                        } else {
+                            Swal.fire('Erro', res.mensagem || 'Erro ao cadastrar.', 'error');
+                        }
+                    });
+            }
+        });
+
         $('[data-toggle]').on('click', function() {
             const tgt = $(this).data('toggle');
             $('#' + tgt).toggleClass('hidden');

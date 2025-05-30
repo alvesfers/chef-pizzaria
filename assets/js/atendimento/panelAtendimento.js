@@ -190,7 +190,8 @@
 
                             mensagem += `\n\nQualquer dúvida, estamos à disposição.`;
                             if (window.LOJA.teste != 1) {
-                                window.open(`https://wa.me/55${phone}`, '_blank');
+                                const url = `https://wa.me/55${phone}?text=${encodeURIComponent(mensagem)}`;
+                                window.open(url, '_blank');
                             } else {
                                 alert('Ambiente de teste ativo: não fara o envio WhatsApp.');
                             }
@@ -202,7 +203,8 @@
                         mensagem += `Seu pedido #${id} agora está *${STATUS_LABEL[novo]}*.\n`;
                         mensagem += `Agradecemos por comprar com a gente!`;
                         if (window.LOJA.teste != 1) {
-                            window.open(`https://wa.me/55${phone}`, '_blank');
+                            const url = `https://wa.me/55${phone}?text=${encodeURIComponent(mensagem)}`;
+                            window.open(url, '_blank');
                         } else {
                             alert('Ambiente de teste ativo: não fara o envio WhatsApp.');
                         }

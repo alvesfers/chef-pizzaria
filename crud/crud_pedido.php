@@ -579,6 +579,42 @@ if ($action === 'get_pedido') {
   exit;
 }
 
+// 8) LISTAR_PEDIDOS_COMPLETO
+if ($action === 'listar_pedidos_completo') {
+  $status = $data['status'] ?? null;
+  $de     = $data['data_de'] ?? null;
+  $ate    = $data['data_ate'] ?? null;
+
+  $sql = "
+      SELECT p.*, COALESCE(u.nome_usuario, p.nome_cliente) AS cliente
+        FROM tb_pedido p
+        LEFT JOIN tb_usuario u USING(id_usuario)
+       WHERE 1=1
+  ";
+  $params = [];
+
+  if ($status) {
+    $sql .= " AND p.status_pedido = :status";
+    $params['status'] = $status;
+  }
+  if ($de) {
+    $sql .= " AND p.criado_em >= :de";
+    $params['de'] = $de . ' 00:00:00';
+  }
+  if ($ate) {
+    $sql .= " AND p.criado_em <= :ate";
+    $params['ate'] = $ate . ' 23:59:59';
+  }
+
+  $sql .= " ORDER BY p.criado_em DESC";
+
+  $stmt = $pdo->prepare($sql);
+  $stmt->execute($params);
+
+  echo json_encode(['status' => 'ok', 'pedidos' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+  exit;
+}
+
 // ação desconhecida
 echo json_encode(['status' => 'erro', 'mensagem' => 'Ação inválida.']);
 exit;

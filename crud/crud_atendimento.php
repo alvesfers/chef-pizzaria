@@ -124,15 +124,21 @@ function detalharProduto($pdo, $idProduto)
 
 function listarPedidos($pdo)
 {
-    $stmt = $pdo->query("
+    $dataLimite = (new DateTime('-2 days', new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d H:i:s');
+
+    $stmt = $pdo->prepare("
         SELECT p.id_pedido, p.nome_cliente AS cliente, p.telefone_cliente, p.status_pedido,
                p.valor_total, p.criado_em, p.id_entregador
         FROM tb_pedido p
+        WHERE p.criado_em >= :data_limite
         ORDER BY p.criado_em DESC
     ");
+    $stmt->execute(['data_limite' => $dataLimite]);
+
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     exit;
 }
+
 
 function criarPedidoBalcao($pdo, $input)
 {

@@ -215,6 +215,7 @@
                     text: `Envio via whatsApp desabilitada!`,
                     icon: 'question'
                 })
+                window.location.reload();
             }
 
         }, 'json');

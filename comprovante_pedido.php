@@ -23,6 +23,32 @@ foreach ($itens as $i) $totalItens += $i['quantidade'] * $i['valor_unitario'];
 $frete = floatval($pedido['valor_frete'] ?? 0);
 $desconto = floatval($pedido['desconto_aplicado'] ?? 0);
 $total = max(0, $totalItens + $frete - $desconto);
+
+$idEndereco = $pedido['endereco'] ?? null;
+$enderecoCompleto = '';
+
+if ($idEndereco) {
+    $stmtEndereco = $pdo->prepare("SELECT * FROM tb_endereco WHERE id_endereco = ?");
+    $stmtEndereco->execute([$idEndereco]);
+    $endereco = $stmtEndereco->fetch(PDO::FETCH_ASSOC);
+
+    if ($endereco) {
+        $enderecoCompleto = "{$endereco['rua']}, {$endereco['numero']}";
+        if (!empty($endereco['complemento'])) {
+            $enderecoCompleto .= " ({$endereco['complemento']})";
+        }
+        $enderecoCompleto .= " — {$endereco['bairro']}";
+        if (!empty($endereco['cep'])) {
+            $cepFormatado = preg_replace('/(\d{5})(\d{3})/', '$1-$2', $endereco['cep']);
+            $enderecoCompleto .= " — CEP: $cepFormatado";
+        }
+    }
+}
+
+    $stmtPagamento = $pdo->prepare("SELECT * FROM tb_forma_pgto WHERE id_forma = ?");
+    $stmtPagamento->execute([$pedido['forma_pagamento']]);
+    $pagamento = $stmtPagamento->fetch(PDO::FETCH_ASSOC);
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -38,7 +64,8 @@ $total = max(0, $totalItens + $frete - $desconto);
 
         body {
             margin: 0;
-            padding: 10px;
+            padding: 0 5px;
+            width: 100%;
         }
 
         .center {
@@ -70,6 +97,11 @@ $total = max(0, $totalItens + $frete - $desconto);
                 display: none;
             }
         }
+
+        @page {
+            size: 80mm auto;
+            margin: 3px 8px;
+        }
     </style>
 </head>
 
@@ -88,10 +120,11 @@ $total = max(0, $totalItens + $frete - $desconto);
         Pedido: #<?= $pedido['id_pedido'] ?><br>
         Data: <?= date('d/m/Y H:i', strtotime($pedido['criado_em'])) ?><br>
         Cliente: <?= htmlspecialchars($pedido['nome_cliente']) ?><br>
-        Entrega: <?= ucfirst($pedido['tipo_entrega']) ?><br>
-        <?php if ($pedido['tipo_entrega'] === 'entrega' && !empty($pedido['endereco'])): ?>
-            Endereço: <?= htmlspecialchars($pedido['endereco']) ?><br>
+        Tipo Entrega: <?= ucfirst($pedido['tipo_entrega']) ?><br>
+        <?php if ($pedido['tipo_entrega'] === 'entrega' && !empty($enderecoCompleto)): ?>
+            Endereço: <?= htmlspecialchars($enderecoCompleto) ?><br>
         <?php endif; ?>
+
     </p>
 
     <div class="line"></div>
@@ -144,7 +177,7 @@ $total = max(0, $totalItens + $frete - $desconto);
     <strong>TOTAL: R$ <?= number_format($total, 2, ',', '.') ?></strong><br>
 
     <div class="line"></div>
-    <p class="center">Forma de pagamento:<br><?= htmlspecialchars($pedido['forma_pagamento']) ?></p>
+    <p class="center">Forma de pagamento:<br><?= htmlspecialchars($pagamento['nome_pgto']) ?></p>
     <script>
         window.onafterprint = () => window.close();
     </script>

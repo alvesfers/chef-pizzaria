@@ -45,9 +45,9 @@ if ($idEndereco) {
     }
 }
 
-    $stmtPagamento = $pdo->prepare("SELECT * FROM tb_forma_pgto WHERE id_forma = ?");
-    $stmtPagamento->execute([$pedido['forma_pagamento']]);
-    $pagamento = $stmtPagamento->fetch(PDO::FETCH_ASSOC);
+$stmtPagamento = $pdo->prepare("SELECT * FROM tb_forma_pgto WHERE id_forma = ?");
+$stmtPagamento->execute([$pedido['forma_pagamento']]);
+$pagamento = $stmtPagamento->fetch(PDO::FETCH_ASSOC);
 
 ?>
 <!DOCTYPE html>
@@ -107,10 +107,8 @@ if ($idEndereco) {
 
 <body onload="window.print()">
     <div class="center">
-        <?php if (!empty($dadosLoja['logo'])): ?>
-            <img src="assets/images/logo" class="logo" alt="Logo">
-        <?php endif; ?>
         <strong><?= strtoupper($dadosLoja['nome_loja'] ?? 'PIZZARIA') ?></strong><br>
+        <strong><?= strtoupper($dadosLoja['whatsapp']) ?></strong><br>
         <?= $dadosLoja['endereco_completo'] ?? '' ?>
     </div>
 
@@ -178,6 +176,12 @@ if ($idEndereco) {
 
     <div class="line"></div>
     <p class="center">Forma de pagamento:<br><?= htmlspecialchars($pagamento['nome_pgto']) ?></p>
+    <div class="line"></div>
+    <div class="center">
+        <img src="assets/images/logo.png" class="logo" alt="Logo" style="filter: contrast(200%) brightness(0%);">
+    </div>
+    <div class="line"></div>
+
     <script>
         window.onafterprint = () => window.close();
     </script>

@@ -8,14 +8,14 @@ if (empty($_GET['id']) || !is_numeric($_GET['id'])) {
     include_once 'assets/footer.php';
     exit;
 }
-
 $idProduto = (int) $_GET['id'];
 
-// 1) Busca produto ativo e verifica estoque
+// 1) Carrega produto (inclui valor_extra_sabores)
 $stmt = $pdo->prepare("
     SELECT *,
-           valor_produto    AS base,
-           qtd_produto
+           valor_produto         AS base,
+           qtd_produto,
+           valor_extra_sabores
       FROM tb_produto
      WHERE id_produto   = ?
        AND produto_ativo = 1
@@ -28,19 +28,13 @@ if (!$produto) {
     exit;
 }
 
-// determina estoque lógico
-// se qtd_produto > 0 => estoque real
-// se qtd_produto < 0 => ilimitado, mas vamos tratar max 10
-// se qtd_produto = 0 => sem estoque
+// estoque lógico
 $estoque = (int)$produto['qtd_produto'];
 $maxQtd  = $estoque === 0
     ? 0
-    : ($estoque > 0
-        ? $estoque
-        : 10
-    );
+    : ($estoque > 0 ? $estoque : 10);
 
-// 2) Verifica promoção do dia
+// promoção do dia
 $stmtPromo = $pdo->prepare("
     SELECT valor_promocional
       FROM tb_campanha_produto_dia
@@ -54,10 +48,12 @@ $valorBase = $promo !== false
     ? (float)$promo
     : (float)$produto['base'];
 
-// 3) Sabores (se multi-sabores)
-$qtdSabores  = (int) $produto['qtd_sabores'];
-$tipoCalculo = $produto['tipo_calculo_preco'];
+// sobretaxa e multi-sabores
+$valorExtra  = (float)$produto['valor_extra_sabores'];
+$qtdSabores   = (int)$produto['qtd_sabores'];
+$tipoCalculo  = $produto['tipo_calculo_preco'];
 
+// sabores (se multi-sabores)
 $sabores = [];
 if ($qtdSabores > 1) {
     $stmtSabores = $pdo->prepare("
@@ -78,7 +74,7 @@ if ($qtdSabores > 1) {
     $sabores = $stmtSabores->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// 4) Adicionais inclusos por padrão
+// adicionais inclusos por padrão
 $stmtIncl = $pdo->prepare("
     SELECT id_adicional
       FROM tb_produto_adicional_incluso
@@ -87,7 +83,7 @@ $stmtIncl = $pdo->prepare("
 $stmtIncl->execute([$idProduto]);
 $adicionaisInclusos = array_map('intval', $stmtIncl->fetchAll(PDO::FETCH_COLUMN));
 
-// 5) Tipos de adicionais para o produto
+// tipos de adicionais
 $stmtTipos = $pdo->prepare("
     SELECT ta.id_tipo_adicional,
            ta.nome_tipo_adicional,
@@ -101,7 +97,7 @@ $stmtTipos = $pdo->prepare("
 $stmtTipos->execute([$idProduto]);
 $tiposAdicionais = $stmtTipos->fetchAll(PDO::FETCH_ASSOC);
 
-// 6) Carrega cada adicional por tipo
+// adicionais por tipo
 $adicionaisPorTipo = [];
 $stmtAdd = $pdo->prepare("
     SELECT id_adicional, nome_adicional, valor_adicional
@@ -118,112 +114,103 @@ foreach ($tiposAdicionais as $tipo) {
 }
 ?>
 
-<div class="container mx-auto px-4 py-10 max-w-2xl"
+<div
     x-data="produtoHandler(
-         <?= $valorBase ?>,
-         <?= $qtdSabores ?>,
-         '<?= $tipoCalculo ?>',
-         <?= $maxQtd ?>
-     )">
+      <?= $valorBase ?>,
+      <?= $qtdSabores ?>,
+      '<?= $tipoCalculo ?>',
+      <?= $maxQtd ?>,
+      <?= $valorExtra ?>
+  )"
+    x-init="init()"
+    class="relative">
+    <!-- Conteúdo principal -->
+    <div class="container mx-auto px-4 py-10 max-w-2xl">
+        <!-- Título e badge -->
+        <div class="flex items-center justify-center relative mb-6">
+            <a href="index.php"
+                class="absolute left-0 text-primary hover:underline flex items-center gap-1">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            <h1 class="text-2xl font-bold text-center flex items-center gap-3">
+                <?= htmlspecialchars($produto['nome_produto']) ?>
+            </h1>
+        </div>
 
-    <div class="flex items-center justify-center relative mb-6">
-        <a href="index.php"
-            class="absolute left-0 text-primary hover:underline flex items-center gap-1">
-            <i class="fas fa-arrow-left"></i> Voltar
-        </a>
-        <h1 class="text-xl font-bold text-center">
-            <?= htmlspecialchars($produto['nome_produto']) ?>
-        </h1>
-    </div>
+        <!-- Descrição -->
+        <p class="text-gray-600 mb-6">
+            <?= nl2br(htmlspecialchars($produto['descricao_produto'] ?? '')) ?>
+        </p>
 
-    <p class="text-gray-500 mb-6">
-        <?= nl2br(htmlspecialchars($produto['descricao_produto'] ?? '')) ?>
-    </p>
-
-    <form id="formProduto" @submit.prevent="enviarFormulario">
-        <input type="hidden" name="id_produto" value="<?= $idProduto ?>">
-
-        <div class="space-y-6">
-            <!-- estoque -->
-            <template x-if="maxQtd === 0">
-                <p class="text-red-500">Produto sem estoque no momento.</p>
-            </template>
+        <form id="formProduto" @submit.prevent="enviarFormulario">
+            <input type="hidden" name="id_produto" value="<?= $idProduto ?>">
 
             <!-- Sabores -->
             <?php if ($qtdSabores > 1): ?>
-                <div class="space-y-4">
-                    <h3 class="font-semibold text-lg mb-2">
-                        Escolha <?= $qtdSabores ?> sabor(es)
-                    </h3>
+                <div class="card bg-base-100 shadow p-4 mb-6">
+                    <h2 class="font-semibold mb-3 text-lg">Escolha <?= $qtdSabores ?> sabor(es)</h2>
                     <div class="flex gap-2 overflow-x-auto mb-4">
                         <button type="button"
                             @click="filtroSubcategoria = ''"
-                            class="btn btn-sm"
-                            :class="filtroSubcategoria === '' ? 'btn-primary' : 'btn-outline'">
-                            Todos
-                        </button>
+                            :class="filtroSubcategoria === '' ? 'btn-primary' : 'btn-outline'"
+                            class="btn btn-sm">Todos</button>
                         <template x-for="sub in subcategorias" :key="sub">
                             <button type="button"
                                 @click="filtroSubcategoria = sub"
-                                class="btn btn-sm"
-                                :class="filtroSubcategoria === sub ? 'btn-primary' : 'btn-outline'">
-                                <span x-text="sub"></span>
-                            </button>
+                                :class="filtroSubcategoria === sub ? 'btn-primary' : 'btn-outline'"
+                                class="btn btn-sm"><span x-text="sub"></span></button>
                         </template>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <?php foreach ($sabores as $s): ?>
-                            <label class="flex items-center gap-2"
+                            <div class="border rounded p-2 flex items-center gap-2 hover:bg-gray-50 transition"
                                 x-show="filtroSubcategoria === '' || filtroSubcategoria === '<?= htmlspecialchars($s['nome_subcategoria']) ?>'">
                                 <input type="checkbox"
                                     name="sabores[]"
                                     value="<?= $s['id_produto'] ?>"
-                                    class="checkbox checkbox-sm checkbox-sabor"
+                                    class="checkbox checkbox-sabor"
                                     data-valor="<?= $s['valor_produto'] ?>"
                                     @change="atualizarSabores">
                                 <span class="text-sm"><?= htmlspecialchars($s['nome_produto']) ?></span>
-                            </label>
+                            </div>
                         <?php endforeach; ?>
                     </div>
-                    <div class="text-sm text-gray-600 mt-2">
-                        <span x-text="saboresSelecionados.length"></span>
-                        / <?= $qtdSabores ?> selecionados
+                    <div class="mt-3 text-sm text-gray-700">
+                        <span x-text="saboresSelecionados.length"></span> / <?= $qtdSabores ?> selecionados
                     </div>
                 </div>
             <?php endif; ?>
 
-            <!-- Adicionais por tipo -->
+            <!-- Adicionais -->
             <?php foreach ($adicionaisPorTipo as $grupo):
-                $tipo = $grupo['tipo'];
+                $tipoAd = $grupo['tipo'];
             ?>
-                <div>
-                    <label class="font-semibold block mb-1">
-                        <?= htmlspecialchars($tipo['nome_tipo_adicional']) ?>
-                        <?php if ($tipo['max_inclusos'] > 0): ?>
-                            <span class="text-sm text-gray-400">
-                                (até <?= $tipo['max_inclusos'] ?> inclusos)
-                            </span>
+                <div class="card bg-base-100 shadow p-4 mb-6">
+                    <h2 class="font-semibold mb-3 text-lg">
+                        <?= htmlspecialchars($tipoAd['nome_tipo_adicional']) ?>
+                        <?php if ($tipoAd['max_inclusos'] > 0): ?>
+                            <span class="text-sm text-gray-500">(até <?= $tipoAd['max_inclusos'] ?> inclusos)</span>
                         <?php endif; ?>
-                    </label>
+                    </h2>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         <?php foreach ($grupo['adicionais'] as $add):
                             $in = in_array($add['id_adicional'], $adicionaisInclusos);
                         ?>
-                            <label class="flex items-center gap-2">
+                            <label class="flex items-center gap-2 hover:bg-gray-50 p-2 rounded transition">
                                 <input type="checkbox"
-                                    name="adicionais[<?= $tipo['id_tipo_adicional'] ?>][]"
+                                    name="adicionais[<?= $tipoAd['id_tipo_adicional'] ?>][]"
                                     value="<?= $add['id_adicional'] ?>"
-                                    class="checkbox checkbox-sm adicional"
+                                    class="checkbox adicional"
                                     data-valor="<?= $add['valor_adicional'] ?>"
-                                    data-tipo="<?= $tipo['id_tipo_adicional'] ?>"
-                                    data-max="<?= $tipo['max_inclusos'] ?>"
+                                    data-tipo="<?= $tipoAd['id_tipo_adicional'] ?>"
+                                    data-max="<?= $tipoAd['max_inclusos'] ?>"
                                     data-incluso="<?= $in ? '1' : '0' ?>"
                                     <?= $in ? 'checked' : '' ?>
                                     @change="calcularTotal">
-                                <span class="text-sm"><?= htmlspecialchars($add['nome_adicional']) ?></span>
-                                <span class="text-xs text-gray-500">
-                                    R$<?= number_format($add['valor_adicional'], 2, ',', '.') ?>
-                                </span>
+                                <div>
+                                    <div class="text-sm"><?= htmlspecialchars($add['nome_adicional']) ?></div>
+                                    <div class="text-xs text-gray-500">R$<?= number_format($add['valor_adicional'], 2, ',', '.') ?></div>
+                                </div>
                             </label>
                         <?php endforeach; ?>
                     </div>
@@ -231,52 +218,103 @@ foreach ($tiposAdicionais as $tipo) {
             <?php endforeach; ?>
 
             <!-- Quantidade -->
-            <div>
-                <label class="block mb-1 font-semibold">Quantidade</label>
-                <input type="number"
-                    name="quantidade"
-                    min="1"
-                    :max="maxQtd"
-                    x-model="quantidade"
-                    class="input input-bordered w-24"
-                    @input="calcularTotal">
-                <p class="text-sm text-gray-500 mt-1" x-show="maxQtd > 0">
+            <div class="card bg-base-100 shadow p-4 mb-6 flex items-center justify-between">
+                <!-- Label -->
+                <span class="font-semibold">Quantidade</span>
+
+                <!-- Controles de decrement/increment -->
+                <div class="flex items-center gap-2">
+                    <button type="button" class="btn btn-sm" @click="decrement()">–</button>
+                    <input
+                        type="text"
+                        readonly
+                        x-model="quantidade"
+                        class="input input-bordered w-16 text-center">
+                    <button type="button" class="btn btn-sm" @click="increment()">+</button>
+                </div>
+
+                <!-- Máximo -->
+                <span class="text-sm text-gray-500" x-show="maxQtd > 0">
                     Máximo: <span x-text="maxQtd"></span>
-                </p>
+                </span>
             </div>
 
-            <!-- Total -->
-            <div class="text-xl font-bold">
-                Total: <span x-text="formatarPreco(total)"></span>
-            </div>
+        </form>
+    </div>
 
-            <button type="submit"
-                class="btn btn-primary w-full mt-4"
-                :disabled="maxQtd === 0 || quantidade > maxQtd">
-                Adicionar ao Carrinho
-            </button>
+    <!-- Sticky footer -->
+    <div class="fixed bottom-0 left-0 right-0 bg-base-100 border-t p-4 flex justify-between items-center">
+        <div class="flex items-center gap-2 cursor-pointer" @click="showBreakdown = !showBreakdown">
+            <span class="font-bold text-lg">Total:</span>
+            <span class="text-xl font-bold text-primary" x-text="formatarPreco(total)"></span>
+            <i class="fas fa-chevron-up transition-transform" :class="{'rotate-180': showBreakdown}"></i>
         </div>
-    </form>
+        <button class="btn btn-accent"
+            :disabled="maxQtd === 0 || quantidade > maxQtd"
+            @click="enviarFormulario()">
+            Adicionar ao Carrinho
+        </button>
+    </div>
+
+    <!-- Breakdown Collapsible -->
+    <div class="fixed bottom-16 left-0 right-0 bg-white border-t shadow-inner p-4"
+        x-show="showBreakdown" x-transition>
+        <div class="space-y-1 text-sm">
+            <div class="flex justify-between"><span>Base:</span><span x-text="formatarPreco(breakdown.base)"></span></div>
+            <template x-if="qtdSabores > 1 && valorExtra > 0">
+                <div class="flex justify-between"><span>Taxa sabores:</span><span x-text="formatarPreco(valorExtra)"></span></div>
+            </template>
+            <div class="flex justify-between"><span>Adicionais:</span><span x-text="formatarPreco(breakdown.extras)"></span></div>
+            <hr>
+            <div class="flex justify-between font-semibold"><span>Total:</span><span x-text="formatarPreco(breakdown.total)"></span></div>
+        </div>
+    </div>
 </div>
 
 <script>
-    function produtoHandler(valorBase, qtdSabores, tipoCalculo, maxQtd) {
+    function produtoHandler(valorBase, qtdSabores, tipoCalculo, maxQtd, valorExtra) {
         return {
+            valorBase,
+            qtdSabores,
+            tipoCalculo,
+            maxQtd,
+            valorExtra,
             quantidade: 1,
-            total: valorBase,
+            total: 0,
+            breakdown: {
+                base: 0,
+                extras: 0,
+                total: 0
+            },
             saboresSelecionados: [],
             filtroSubcategoria: '',
             subcategorias: <?= json_encode(array_values(array_unique(array_column($sabores, 'nome_subcategoria'))), JSON_UNESCAPED_UNICODE) ?>,
+            showBreakdown: false,
+
+            init() {
+                this.calcularTotal();
+            },
+            decrement() {
+                if (this.quantidade > 1) {
+                    this.quantidade--;
+                    this.calcularTotal();
+                }
+            },
+            increment() {
+                if (this.quantidade < this.maxQtd) {
+                    this.quantidade++;
+                    this.calcularTotal();
+                }
+            },
 
             atualizarSabores(e) {
                 const checked = [...document.querySelectorAll('.checkbox-sabor:checked')];
                 if (checked.length > qtdSabores) {
                     e.target.checked = false;
-                    Swal.fire('Atenção', 'Escolha no máximo ' + qtdSabores + ' sabor(es).', 'warning');
+                    Swal.fire('Atenção', `Escolha no máximo ${qtdSabores} sabor(es).`, 'warning');
                     return;
                 }
                 this.saboresSelecionados = checked.map(ch => ({
-                    id: ch.value,
                     valor: parseFloat(ch.dataset.valor)
                 }));
                 this.calcularTotal();
@@ -289,23 +327,25 @@ foreach ($tiposAdicionais as $tipo) {
                     base = tipoCalculo === 'media' ?
                         vals.reduce((a, b) => a + b, 0) / vals.length :
                         Math.max(...vals);
+                    base += valorExtra;
                 }
-                let extras = 0;
-                const byTipo = {};
+                let extras = 0,
+                    byTipo = {};
                 document.querySelectorAll('input.adicional:checked').forEach(ch => {
                     const tp = ch.dataset.tipo;
                     (byTipo[tp] = byTipo[tp] || []).push(ch);
                 });
                 Object.values(byTipo).forEach(list => {
-                    const maxInc = parseInt(list[0].dataset.max, 10);
-                    const sorted = list.sort((a, b) =>
-                        (b.dataset.incluso === '1' ? 1 : 0) - (a.dataset.incluso === '1' ? 1 : 0)
-                    );
-                    sorted.slice(maxInc).forEach(ch => {
-                        extras += parseFloat(ch.dataset.valor);
-                    });
+                    const maxInc = +list[0].dataset.max;
+                    list.sort((a, b) => (b.dataset.incluso === '1') - (a.dataset.incluso === '1'))
+                        .slice(maxInc).forEach(ch => extras += +ch.dataset.valor);
                 });
                 this.total = (base + extras) * this.quantidade;
+                this.breakdown = {
+                    base,
+                    extras,
+                    total: this.total
+                };
             },
 
             formatarPreco(v) {
@@ -313,33 +353,30 @@ foreach ($tiposAdicionais as $tipo) {
             },
 
             enviarFormulario() {
-                if (maxQtd === 0) {
+                if (this.maxQtd === 0) {
                     Swal.fire('Erro', 'Produto sem estoque.', 'error');
                     return;
                 }
-                if (this.quantidade > maxQtd) {
-                    Swal.fire('Erro', 'Quantidade máxima é ' + maxQtd + '.', 'warning');
+                if (this.quantidade > this.maxQtd) {
+                    Swal.fire('Erro', `Máximo ${this.maxQtd}.`, 'warning');
                     return;
                 }
                 if (qtdSabores > 1 && this.saboresSelecionados.length !== qtdSabores) {
-                    Swal.fire('Atenção', 'Selecione exatamente ' + qtdSabores + ' sabor(es).', 'warning');
+                    Swal.fire('Atenção', `Selecione ${qtdSabores} sabor(es).`, 'warning');
                     return;
                 }
                 const payload = {
                     action: 'add',
-                    id_produto: parseInt($('[name="id_produto"]').val(), 10),
-                    quantidade: parseInt(this.quantidade, 10),
+                    id_produto: +$('[name="id_produto"]').val(),
+                    quantidade: this.quantidade,
                     sabores: [],
                     adicionais: {}
                 };
-                $('#formProduto input[name="sabores[]"]:checked').each((_, el) => {
-                    payload.sabores.push(parseInt(el.value, 10));
-                });
+                $('#formProduto input[name="sabores[]"]:checked').each((_, el) => payload.sabores.push(+el.value));
                 $('#formProduto input.adicional:checked').each((_, el) => {
                     const $el = $(el),
                         tp = $el.data('tipo');
-                    (payload.adicionais[tp] = payload.adicionais[tp] || [])
-                    .push(parseInt(el.value, 10));
+                    (payload.adicionais[tp] = payload.adicionais[tp] || []).push(+el.value);
                 });
                 $.ajax({
                     url: 'crud/crud_carrinho.php',
@@ -358,17 +395,11 @@ foreach ($tiposAdicionais as $tipo) {
                             cancelButtonText: 'Continuar'
                         }).then(({
                             isConfirmed
-                        }) => {
-                            window.location = isConfirmed ? 'carrinho.php' : 'index.php';
-                        });
-                    } else {
-                        Swal.fire('Erro', res.mensagem || 'Não foi possível adicionar.', 'error');
-                    }
-                }).fail(() => {
-                    Swal.fire('Erro', 'Falha de comunicação.', 'error');
-                });
+                        }) => window.location = isConfirmed ? 'carrinho.php' : 'index.php');
+                    } else Swal.fire('Erro', res.mensagem || 'Não foi possível adicionar.', 'error');
+                }).fail(() => Swal.fire('Erro', 'Falha de comunicação.', 'error'));
             }
-        };
+        }
     }
 </script>
 

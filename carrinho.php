@@ -1,22 +1,36 @@
 <?php
-
+// carrinho.php
 include_once 'assets/header.php';
 
 $carrinho = $_SESSION['carrinho'] ?? [];
 $usuario  = $_SESSION['usuario'] ?? null;
 
+// 1) Prepared statements
 $stmtStock = $pdo->prepare("SELECT qtd_produto FROM tb_produto WHERE id_produto = ?");
+$stmtProd  = $pdo->prepare("
+    SELECT
+      valor_produto         AS valor_padrao,
+      valor_extra_sabores,
+      qtd_sabores,
+      tipo_calculo_preco
+    FROM tb_produto
+   WHERE id_produto = ?
+");
+$stmtPromo = $pdo->prepare("
+    SELECT valor_promocional
+      FROM tb_campanha_produto_dia
+     WHERE id_produto = ?
+       AND dia_semana = ?
+       AND ativo      = 1
+");
 
 $totalGeral = 0;
-foreach ($carrinho as $item) {
-    $totalGeral += $item['valor_unitario'] * $item['quantidade'];
-}
 ?>
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10" id="cart-container">
     <div class="flex items-center justify-between mb-6">
-        <h1 class="text-2xl font-bold text-center w-full sm:text-left sm:w-auto">Carrinho de Compras</h1>
+        <h1 class="text-2xl font-bold">Carrinho de Compras</h1>
         <?php if (!empty($carrinho)): ?>
-            <button id="btnLimparCarrinho" class="btn btn-sm btn-warning ml-4">
+            <button id="btnLimparCarrinho" class="btn btn-sm btn-warning">
                 <i class="fas fa-trash-alt mr-1"></i> Limpar
             </button>
         <?php endif; ?>
@@ -25,22 +39,60 @@ foreach ($carrinho as $item) {
     <?php if (empty($carrinho)): ?>
         <p class="text-gray-500">Seu carrinho está vazio.</p>
         <a href="index.php" class="btn btn-accent mt-4">Voltar ao cardápio</a>
+
     <?php else: ?>
         <div class="space-y-6 mb-8">
             <?php foreach ($carrinho as $key => $item):
-                $stmtStock->execute([$item['id_produto']]);
-                $row = $stmtStock->fetch(PDO::FETCH_ASSOC);
-                $stock = $row ? intval($row['qtd_produto']) : 0;
 
-                if ($stock === 0) {
-                    $maxQtd = 0;
-                } elseif ($stock > 0) {
-                    $maxQtd = $stock;
-                } else {
-                    $maxQtd = 10;
+                // --- estoque lógico ---
+                $stmtStock->execute([$item['id_produto']]);
+                $rowStock = $stmtStock->fetch(PDO::FETCH_ASSOC);
+                $stock = $rowStock ? (int)$rowStock['qtd_produto'] : 0;
+                if ($stock === 0) $maxQtd = 0;
+                elseif ($stock > 0)   $maxQtd = $stock;
+                else                   $maxQtd = 10;
+
+                // --- dados do produto ---
+                $stmtProd->execute([$item['id_produto']]);
+                $p = $stmtProd->fetch(PDO::FETCH_ASSOC);
+                $valorPadrao      = (float)$p['valor_padrao'];
+                $valorExtraSabores = (float)$p['valor_extra_sabores'];
+                $qtdSaboresProd   = (int)$p['qtd_sabores'];
+                $tipoCalculo      = $p['tipo_calculo_preco'];
+
+                // --- promoção do dia ---
+                $stmtPromo->execute([$item['id_produto'], $diaSemana]);
+                $promoVal = $stmtPromo->fetchColumn();
+                $base = $promoVal !== false ? (float)$promoVal : $valorPadrao;
+
+                // --- cálculo multi-sabores ---
+                if (!empty($item['sabores']) && count($item['sabores']) === $qtdSaboresProd) {
+                    $vals = array_map(fn($s) => (float)$s['valor'], $item['sabores']);
+                    if ($tipoCalculo === 'media') {
+                        $base = array_sum($vals) / count($vals);
+                    } else {
+                        $base = max($vals);
+                    }
+                    $base += $valorExtraSabores;
                 }
+
+                // --- adicionais extra ---
+                $extraTotal = 0;
+                if (!empty($item['adicionais'])) {
+                    foreach ($item['adicionais'] as $add) {
+                        if (!empty($add['extra'])) {
+                            $extraTotal += (float)$add['valor'];
+                        }
+                    }
+                }
+
+                // --- unitário e subtotal ---
+                $unitario = $base + $extraTotal;
+                $subTotal = $unitario * $item['quantidade'];
+                $totalGeral += $subTotal;
             ?>
-                <div class="card bg-base-100 shadow p-4 relative" data-key="<?= $key ?>" data-max="<?= $maxQtd ?>">
+                <div class="card bg-base-100 shadow p-4 relative"
+                    data-key="<?= $key ?>" data-max="<?= $maxQtd ?>">
                     <div class="flex justify-between items-center">
                         <h2 class="text-lg font-semibold"><?= htmlspecialchars($item['nome_produto']) ?></h2>
                         <div class="flex items-center space-x-2">
@@ -102,7 +154,7 @@ foreach ($carrinho as $item) {
                     <?php endif; ?>
 
                     <div class="text-right mt-4 text-lg font-bold">
-                        Total: R$<?= number_format($item['valor_unitario'] * $item['quantidade'], 2, ',', '.') ?>
+                        Total: R$<?= number_format($subTotal, 2, ',', '.') ?>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -134,7 +186,7 @@ foreach ($carrinho as $item) {
             </div>
 
             <div id="divNome" class="hidden">
-                <label class="block font-medium mb-1">Nome</label>Add commentMore actions
+                <label class="block font-medium mb-1">Nome</label>
                 <input type="text" name="nome" id="nome" class="input input-bordered w-full">
                 <p class="text-sm text-gray-500 mt-1">Sua senha será o telefone com DDD.</p>
             </div>

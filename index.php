@@ -45,6 +45,17 @@ $produtos = $pdo
     ")
     ->fetchAll(PDO::FETCH_ASSOC);
 
+// Ordena para que produtos com múltiplos sabores (“qtd_sabores > 1”) venham primeiro,
+// e, dentro de cada grupo, mantém ordem alfabética por nome.
+usort($produtos, function ($a, $b) {
+    $aMulti = $a['qtd_sabores'] > 1 ? 1 : 0;
+    $bMulti = $b['qtd_sabores'] > 1 ? 1 : 0;
+    if ($aMulti !== $bMulti) {
+        return $bMulti - $aMulti;
+    }
+    return strcmp($a['nome_produto'], $b['nome_produto']);
+});
+
 // 4) promoções do dia
 $stmtPromo = $pdo->prepare("
     SELECT p.nome_produto,
@@ -56,6 +67,7 @@ $stmtPromo = $pdo->prepare("
 ");
 $stmtPromo->execute([$diaSemana]);
 $promocoes = $stmtPromo->fetchAll(PDO::FETCH_ASSOC);
+$promoNames = array_column($promocoes, 'nome_produto');
 
 // 5) brindes do dia
 $stmtBrinde = $pdo->prepare("
@@ -69,7 +81,7 @@ $stmtBrinde = $pdo->prepare("
 $stmtBrinde->execute([$diaSemana]);
 $brindes = $stmtBrinde->fetchAll(PDO::FETCH_ASSOC);
 
-// 6) Carrega todos os horários de atendimento ativos
+// 6) horários de atendimento ativos
 $stmtAll = $pdo->query("
     SELECT dia_semana, hora_abertura, hora_fechamento
       FROM tb_horario_atendimento
@@ -87,7 +99,10 @@ $stmtAll = $pdo->query("
 ");
 $horarios = $stmtAll->fetchAll(PDO::FETCH_ASSOC);
 
-if (!$aberta): ?>
+// mapeia ID => nome de categoria para breadcrumbs
+$catNamesMap = array_column($categorias, 'nome_categoria', 'id_categoria');
+?>
+<?php if (!$aberta): ?>
     <!-- Modal Loja Fechada -->
     <div id="modal-loja-fechada"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -121,7 +136,7 @@ if (!$aberta): ?>
             class="btn btn-sm btn-outline btn-accent mb-2">
             Ver promoções do dia
         </button>
-        <div x-show="mostrarPromocoes" class="bg-base-100 shadow p-4 rounded-lg">
+        <div x-show="mostrarPromocoes" x-transition class="bg-base-100 shadow p-4 rounded-lg">
             <h3 class="text-lg font-bold mb-2">
                 Promoções de <?= ucfirst($diaSemana) ?>
             </h3>
@@ -155,121 +170,173 @@ if (!$aberta): ?>
 <section
     id="cardapio"
     class="py-10 bg-base-200"
-    x-data="{
-      categoriaAtiva: 'todas',
-      subcategoriaAtiva: 'todas',
-      termoBusca: '',
-    }">
+    x-data='{ 
+      etapa: "categorias", 
+      categoriaAtiva: null, 
+      subcategoriaAtiva: "todas", 
+      termoBusca: "", 
+      categoriaIdToName: <?= json_encode($catNamesMap, JSON_HEX_APOS | JSON_HEX_QUOT) ?> 
+    }'>
     <div class="container mx-auto px-4">
-        <h2 class="text-3xl font-bold text-center mb-6">Nosso Cardápio</h2>
 
-        <!-- Busca por nome -->
-        <div class="mb-6 flex justify-center">
-            <input
-                type="text"
-                x-model="termoBusca"
-                class="input input-bordered w-full max-w-md"
-                placeholder="Buscar por nome..." />
-        </div>
-
-        <!-- Filtro de Categorias -->
-        <div class="mb-4 overflow-x-auto">
-            <div class="flex space-x-2 w-max min-w-full px-2">
-                <button
-                    @click="categoriaAtiva = 'todas'"
-                    :class="categoriaAtiva === 'todas' ? 'btn-primary' : 'btn-outline'"
-                    class="btn">Todas</button>
-                <?php foreach ($categorias as $cat): ?>
-                    <button
-                        @click="categoriaAtiva = '<?= $cat['id_categoria'] ?>'"
-                        :class="categoriaAtiva === '<?= $cat['id_categoria'] ?>' ? 'btn-primary' : 'btn-outline'"
-                        class="btn">
-                        <?= htmlspecialchars($cat['nome_categoria']) ?>
-                    </button>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <!-- Filtro de Subcategorias -->
-        <div class="mb-3 overflow-x-auto">
-            <div class="flex space-x-2 w-max min-w-full px-2">
-                <button
-                    @click="subcategoriaAtiva = 'todas'"
-                    :class="subcategoriaAtiva === 'todas' ? 'btn-primary' : 'btn-outline'"
-                    class="btn btn-sm">Todas</button>
-                <?php foreach ($subcategorias as $sub): ?>
-                    <button
-                        @click="subcategoriaAtiva = '<?= $sub['id_subcategoria'] ?>'"
-                        :class="subcategoriaAtiva === '<?= $sub['id_subcategoria'] ?>' ? 'btn-primary' : 'btn-outline'"
-                        class="btn btn-sm">
-                        <?= htmlspecialchars($sub['nome_subcategoria']) ?>
-                    </button>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <div class="flex justify-center mb-6">
-            <span class="text-sm text-secondary">
-                ( Deslize para o lado para ver as categorias e subcategorias )
-            </span>
-        </div>
-        <!-- Lista de produtos -->
-        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            <?php foreach ($produtos as $produto): ?>
-                <?php
-                $stmt = $pdo->prepare("
-                    SELECT id_subcategoria
-                      FROM tb_subcategoria_produto
-                     WHERE id_produto = ?
-                ");
-                $stmt->execute([$produto['id_produto']]);
-                $subs = $stmt->fetchAll(PDO::FETCH_COLUMN);
-                $subList    = implode(',', $subs);
-                $isCombo    = stripos($produto['nome_produto'], 'combo') !== false;
-                $categoriaId = $isCombo ? 'combo' : $produto['id_categoria'];
-                $nomeProdMin = strtolower($produto['nome_produto']);
-                ?>
-                <div
-                    class="card bg-base-100 shadow-md rounded-lg overflow-hidden p-2"
-                    x-show="
-                        (categoriaAtiva === 'todas' || categoriaAtiva == '<?= $categoriaId ?>')
-                        && (subcategoriaAtiva === 'todas' || '<?= $subList ?>'.split(',').includes(subcategoriaAtiva.toString()))
-                        && '<?= $nomeProdMin ?>'.includes(termoBusca.toLowerCase())
-                    ">
-                    <div class="card-body flex flex-col p-4 space-y-3">
-                        <!-- Linha com título à esquerda e preço à direita, ambos verticalmente centrados -->
-                        <div class="flex justify-between items-center w-full">
-                            <h3 class="card-title mb-0 leading-tight">
-                                <?= htmlspecialchars($produto['nome_produto']) ?>
-                            </h3>
-                            <span class="text-sm text-gray-600 mb-0 leading-tight">
-                                <?php if ($produto['qtd_sabores'] > 1): ?>
-                                    <b>(valor <?= $produto['tipo_calculo_preco'] ?>)</b>
-                                <?php else: ?>
-                                    R$ <?= number_format($produto['valor_produto'], 2, ',', '.') ?>
-                                <?php endif; ?>
-
-                            </span>
+        <!-- CATEGORIAS -->
+        <template x-if="etapa === 'categorias'" x-transition>
+            <div>
+                <h2 class="text-3xl font-bold text-center mb-6">Escolha uma Categoria</h2>
+                <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                    <?php foreach ($categorias as $cat): ?>
+                        <div
+                            class="card bg-base-100 shadow-md rounded-lg p-4 cursor-pointer hover:shadow-xl transition"
+                            @click="
+                              categoriaAtiva = '<?= $cat['id_categoria'] ?>';
+                              etapa = 'produtos';
+                              history.pushState(null, '', '?cat=<?= $cat['id_categoria'] ?>');
+                            ">
+                            <div class="card-body flex flex-col items-center">
+                                <h3 class="card-title text-center mb-2">
+                                    <?= htmlspecialchars($cat['nome_categoria']) ?>
+                                </h3>
+                                <!-- imagem opcional -->
+                            </div>
                         </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </template>
 
-                        <!-- Descrição com truncamento após 3 linhas (requer plugin line-clamp) -->
-                        <?php if (!empty($produto['descricao_produto'])): ?>
-                            <p class="text-sm text-gray-600 overflow-hidden line-clamp-3">
-                                <?= htmlspecialchars($produto['descricao_produto']) ?>
-                            </p>
-                        <?php endif; ?>
+        <!-- PRODUTOS -->
+        <template x-if="etapa === 'produtos'" x-transition>
+            <div>
 
-                        <!-- Botão sempre “grudado” na base do card -->
-                        <a
-                            href="produto.php?id=<?= $produto['id_produto'] ?>"
-                            class="btn btn-primary w-full mt-auto"
-                            <?= $aberta ? '' : 'disabled' ?>>
-                            Fazer Pedido
-                        </a>
-                    </div>
+                <!-- Breadcrumbs & Voltar -->
+                <div class="mb-4 flex items-center">
+                    <button
+                        class="btn btn-sm btn-outline mr-4"
+                        @click="
+                          etapa = 'categorias';
+                          categoriaAtiva = null;
+                          subcategoriaAtiva = 'todas';
+                          termoBusca = '';
+                          history.pushState(null, '', 'shop.php');
+                        ">
+                        ← Categorias
+                    </button>
+                    <nav class="text-sm text-gray-600">
+                        Você está em:
+                        <span class="font-semibold" x-text="categoriaIdToName[categoriaAtiva]"></span>
+                    </nav>
                 </div>
 
-            <?php endforeach; ?>
-        </div>
+                <!-- Contador de resultados -->
+                <div class="mb-4 text-center text-sm text-gray-700">
+                    <span
+                        x-text="`${Array.from($refs.produtosList.children)
+                        .filter(el => el.style.display !== 'none').length} produtos encontrados`">
+                    </span>
+                    <button
+                        class="ml-4 text-xs underline"
+                        @click="
+                          subcategoriaAtiva = 'todas';
+                          termoBusca = '';
+                        ">
+                        Limpar filtros
+                    </button>
+                </div>
+
+                <!-- Busca -->
+                <div class="mb-6 flex justify-center">
+                    <input
+                        type="text"
+                        x-model="termoBusca"
+                        class="input input-bordered w-full max-w-md"
+                        placeholder="Buscar por nome..." />
+                </div>
+
+                <!-- Subcategorias -->
+                <div class="mb-4 overflow-x-auto">
+                    <div class="flex space-x-2 w-max min-w-full px-2">
+                        <button
+                            @click="subcategoriaAtiva = 'todas'"
+                            :class="subcategoriaAtiva === 'todas' ? 'btn-primary' : 'btn-outline'"
+                            class="btn btn-sm">
+                            Todas
+                        </button>
+                        <?php foreach ($subcategorias as $sub): ?>
+                            <button
+                                @click="subcategoriaAtiva = '<?= $sub['id_subcategoria'] ?>'"
+                                :class="subcategoriaAtiva === '<?= $sub['id_subcategoria'] ?>' ? 'btn-primary' : 'btn-outline'"
+                                class="btn btn-sm">
+                                <?= htmlspecialchars($sub['nome_subcategoria']) ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div class="flex justify-center mb-6">
+                    <span class="text-sm text-secondary">
+                        ( Deslize para o lado para ver as subcategorias )
+                    </span>
+                </div>
+
+                <!-- Grid de Produtos -->
+                <div
+                    class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                    x-ref="produtosList">
+                    <?php foreach ($produtos as $produto): ?>
+                        <?php
+                        $stmt = $pdo->prepare("
+                            SELECT id_subcategoria
+                              FROM tb_subcategoria_produto
+                             WHERE id_produto = ?
+                        ");
+                        $stmt->execute([$produto['id_produto']]);
+                        $subs = $stmt->fetchAll(PDO::FETCH_COLUMN);
+                        $subList     = implode(',', $subs);
+                        $isCombo     = stripos($produto['nome_produto'], 'combo') !== false;
+                        $categoriaId = $isCombo ? 'combo' : $produto['id_categoria'];
+                        $nomeProdMin = strtolower($produto['nome_produto']);
+                        ?>
+                        <div
+                            class="relative card bg-base-100 shadow-md rounded-lg overflow-hidden p-2"
+                            x-show="
+                                categoriaAtiva == '<?= $categoriaId ?>'
+                                && (subcategoriaAtiva === 'todas' || '<?= $subList ?>'.split(',').includes(subcategoriaAtiva.toString()))
+                                && '<?= $nomeProdMin ?>'.includes(termoBusca.toLowerCase())
+                            "
+                            x-transition>
+
+                            <div class="card-body flex flex-col p-4 space-y-3">
+                                <div class="flex justify-between items-center w-full">
+                                    <h3 class="card-title mb-0 leading-tight">
+                                        <?= htmlspecialchars($produto['nome_produto']) ?>
+                                    </h3>
+                                    <span class="text-sm text-gray-600 mb-0 leading-tight">
+                                        <?php if ($produto['qtd_sabores'] > 1): ?>
+                                            <b>(valor <?= $produto['tipo_calculo_preco'] ?>)</b>
+                                        <?php else: ?>
+                                            R$ <?= number_format($produto['valor_produto'], 2, ',', '.') ?>
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
+
+                                <?php if (!empty($produto['descricao_produto'])): ?>
+                                    <p class="text-sm text-gray-600 overflow-hidden line-clamp-3">
+                                        <?= htmlspecialchars($produto['descricao_produto']) ?>
+                                    </p>
+                                <?php endif; ?>
+
+                                <a
+                                    href="produto.php?id=<?= $produto['id_produto'] ?>"
+                                    class="btn btn-primary w-full mt-auto"
+                                    <?= $aberta ? '' : 'disabled' ?>>
+                                    Fazer Pedido
+                                </a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </template>
+
     </div>
 </section>
 
@@ -279,7 +346,7 @@ if (!$aberta): ?>
     style="display:none"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
     <div class="bg-white p-6 rounded-lg max-w-md w-full">
-        <h2 class="text-2xl font-bold mb-4">Horário de Atendimento</h2>
+        <h2 class="text-2xl font-bold mb-4">Hor&nbsp;rio de Atendimento</h2>
         <table class="table table-zebra w-full mb-4">
             <thead>
                 <tr>

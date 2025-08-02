@@ -119,8 +119,8 @@ $pagamento = $stmtPagamento->fetch(PDO::FETCH_ASSOC);
         Data: <?= date('d/m/Y H:i', strtotime($pedido['criado_em'])) ?><br>
         Cliente: <?= htmlspecialchars($pedido['nome_cliente']) ?><br>
         Tipo Entrega: <?= ucfirst($pedido['tipo_entrega']) ?><br>
-        <?php if ($pedido['tipo_entrega'] === 'entrega' && !empty($enderecoCompleto)): ?>
-            Endereço: <?= htmlspecialchars($enderecoCompleto) ?><br>
+        <?php if ($pedido['tipo_entrega'] === 'entrega' && !empty($pedido['endereco'])): ?>
+            Endereço: <?= htmlspecialchars($pedido['endereco']) ?><br>
         <?php endif; ?>
 
     </p>
@@ -175,7 +175,7 @@ $pagamento = $stmtPagamento->fetch(PDO::FETCH_ASSOC);
     <strong>TOTAL: R$ <?= number_format($total, 2, ',', '.') ?></strong><br>
 
     <div class="line"></div>
-    <p class="center">Forma de pagamento:<br><?= htmlspecialchars($pagamento['nome_pgto']) ?></p>
+    <p class="center">Forma de pagamento: <?= htmlspecialchars($pedido['forma_pagamento']) ?></p>
     <div class="line"></div>
     <div class="center">
         <img src="assets/images/logo.png" class="logo" alt="Logo" style="filter: contrast(200%) brightness(0%);">
